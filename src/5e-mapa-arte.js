@@ -834,6 +834,88 @@ const MA_PISOS = [
       g.fillRect(x, y, s, s);
       maSpeck(g, x, y, s, s, R, 8, ["rgba(190,140,255,.6)", "rgba(255,255,255,.5)"], s * 0.003, s * 0.008);
     }
+  ],
+  [
+    "X",
+    "lodo",
+    "Lodo da Morte",
+    "Paranormal",
+    "#1c1d1f",
+    7,
+    (g, x, y, s, R) => {
+      fpNoise("#1b1c1e", ["#26282b", "#121314", "#2f3134"], { n: 40, grime: 0.35 })(g, x, y, s, R);
+      // espirais de lodo
+      g.strokeStyle = "rgba(150,150,160,.16)";
+      g.lineWidth = Math.max(1, s * 0.02);
+      const cx = x + s * (0.3 + R() * 0.4),
+        cy = y + s * (0.3 + R() * 0.4);
+      g.beginPath();
+      for (let a = 0; a < 12; a += 0.25) {
+        const r = s * 0.025 * a;
+        g[a ? "lineTo" : "moveTo"](cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      }
+      g.stroke();
+      g.fillStyle = "rgba(0,0,0,.35)";
+      g.beginPath();
+      g.ellipse(x + R() * s, y + R() * s, s * 0.18, s * 0.1, R() * 3, 0, 7);
+      g.fill();
+    }
+  ],
+  [
+    "Y",
+    "sigilos",
+    "Sigilos do Conhecimento",
+    "Paranormal",
+    "#2a2316",
+    7,
+    (g, x, y, s, R, cx, cy) => {
+      fpTiles(1, "#2b2418", "#2b2418", "#1a150d", { shine: false })(g, x, y, s, R, cx, cy);
+      if (R() < 0.55) {
+        // um sigilo dourado e apagado
+        const mx = x + s * (0.3 + R() * 0.4),
+          my = y + s * (0.3 + R() * 0.4),
+          r = s * (0.12 + R() * 0.1);
+        g.strokeStyle = "rgba(230,180,60,.5)";
+        g.lineWidth = Math.max(1, s * 0.018);
+        g.beginPath();
+        g.arc(mx, my, r, 0, 7);
+        const n = 3 + Math.floor(R() * 3);
+        for (let i = 0; i < n; i++) {
+          const a = R() * 6.28;
+          g.moveTo(mx, my);
+          g.lineTo(mx + Math.cos(a) * r * 1.35, my + Math.sin(a) * r * 1.35);
+        }
+        g.stroke();
+      }
+    }
+  ],
+  [
+    "z",
+    "energia",
+    "Fendas de Energia",
+    "Paranormal",
+    "#140f1e",
+    8,
+    (g, x, y, s, R) => {
+      fpNoise("#15101f", ["#1d1630", "#0e0a16", "#241a3a"], { n: 30, grime: 0.2 })(g, x, y, s, R);
+      // rachaduras que brilham em cores que não combinam
+      const cor = maPick(["rgba(190,90,255,.75)", "rgba(60,230,230,.7)", "rgba(255,90,170,.65)"], R);
+      g.strokeStyle = cor;
+      g.shadowColor = cor;
+      g.shadowBlur = s * 0.08;
+      g.lineWidth = Math.max(1, s * 0.022);
+      g.beginPath();
+      let px = x + R() * s,
+        py = y;
+      g.moveTo(px, py);
+      for (let i = 0; i < 5; i++) {
+        px += (R() - 0.5) * s * 0.4;
+        py += s / 5;
+        g.lineTo(px, py);
+      }
+      g.stroke();
+      g.shadowBlur = 0;
+    }
   ]
 ];
 const MA_PISO = {};
@@ -1093,6 +1175,45 @@ const MA_PAREDES = [
         });
     }
   },
+  {
+    id: "morte",
+    nome: "Lodo e ossos (Morte)",
+    t: 0.36,
+    cor: "#202124",
+    miolo: (g, s) => {
+      g.fillStyle = "#1d1e21";
+      g.fillRect(0, 0, s, s);
+      const R = maRng(7);
+      for (let i = 0; i < 3; i++)
+        maBlob(g, R() * s, R() * s, s * 0.2, R, maPick(["#2a2b2f", "#141517"], R), { ink: false });
+      for (let i = 0; i < 2; i++) {
+        g.fillStyle = "rgba(205,198,180,.55)";
+        g.beginPath();
+        g.ellipse(R() * s, R() * s, s * 0.12, s * 0.04, R() * 3, 0, 7);
+        g.fill();
+      }
+    }
+  },
+  {
+    id: "energia",
+    nome: "Estática (Energia)",
+    t: 0.3,
+    cor: "#1a1030",
+    miolo: (g, s) => {
+      g.fillStyle = "#170e2a";
+      g.fillRect(0, 0, s, s);
+      const R = maRng(11);
+      g.lineWidth = Math.max(1, s * 0.05);
+      for (let i = 0; i < 3; i++) {
+        g.strokeStyle = maPick(["#b45cff", "#3ee6e6", "#ff5aa8"], R);
+        g.beginPath();
+        g.moveTo(R() * s, 0);
+        g.lineTo(R() * s, s * 0.5);
+        g.lineTo(R() * s, s);
+        g.stroke();
+      }
+    }
+  },
   { id: "cercam", nome: "Cerca de madeira", t: 0.1, cor: "#5a3e28", cerca: "madeira" },
   { id: "cercaa", nome: "Cerca de arame", t: 0.06, cor: "#8a8f94", cerca: "arame" },
   { id: "grade", nome: "Grade de ferro", t: 0.08, cor: "#2a2c30", cerca: "grade" }
@@ -1102,6 +1223,7 @@ MA_PAREDES.forEach(p => (MA_PAREDE[p.id] = p));
 // portas e janelas (ficam no lugar de um trecho de parede)
 const MA_ABERTURAS = [
   { id: "porta", nome: "Porta de madeira", cor: "#6a4a30" },
+  { id: "portat", nome: "Porta trancada (cadeado na mesa)", cor: "#6a4a30" },
   { id: "portam", nome: "Porta de metal", cor: "#4a5058" },
   { id: "portad", nome: "Porta dupla", cor: "#5a3c26" },
   { id: "portaq", nome: "Porta arrombada", cor: "#5a3c26" },
@@ -1469,6 +1591,7 @@ function maDrawWalls(g, M, s) {
         leaf(post * 0.25, L / 2 - post * 0.3, 0.55);
         leaf(L - post * 0.25, L / 2 - post * 0.3, -0.55, true);
       } else leaf(post * 0.25, L - post * 0.5, 0.5);
+      if (tipo === "portat") maCirc(g, L / 2, 0, Math.max(2, s * 0.09), "#d9a441", { k: 0.25 });
     }
     g.restore();
   });

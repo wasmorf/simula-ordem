@@ -559,7 +559,11 @@ let pan = null,
   pinch = null,
   act = null;
 board.addEventListener("pointerdown", e => {
-  if (e.target.closest(".tok,.mdoc,.zoom,.board-top,.tokbar,.board-empty button,.callbar,.screens,.maptools"))
+  if (
+    e.target.closest(
+      ".tok,.mdoc,.porta,.passagem,.zoom,.board-top,.tokbar,.board-empty button,.callbar,.screens,.maptools"
+    )
+  )
     return;
   if (e.isPrimary) {
     ptr.clear();
@@ -1183,6 +1187,8 @@ function renderBoard() {
      <svg id="drawL" class="layer" viewBox="0 0 ${V.w} ${V.h}" width="${V.w}" height="${V.h}"></svg>
      <div id="nomesL" class="layer nomes" style="width:${V.w}px;height:${V.h}px"></div>
      <canvas id="fogC" class="layer" width="${V.w}" height="${V.h}" hidden></canvas>
+     <div id="portasL" class="layer portas" style="width:${V.w}px;height:${V.h}px"></div>
+     <div id="passL" class="layer passagens" style="width:${V.w}px;height:${V.h}px"></div>
      <div id="toks">${toks}</div>
      <svg id="ovL" class="layer" viewBox="0 0 ${V.w} ${V.h}" width="${V.w}" height="${V.h}"></svg>`;
     vp.dataset.sid = S.viewSid + ":" + sc.w + ":" + (sc.ver || 0);
@@ -1194,8 +1200,12 @@ function renderBoard() {
     renderDraws();
     renderFog();
     renderNomes();
+    renderPortas();
+    renderPassagens();
   } else {
     renderNomes();
+    renderPortas();
+    renderPassagens();
     const g = vp.querySelector(".grid-ov");
     if (g) g.remove();
     if (grid) vp.querySelector("img.map").insertAdjacentHTML("afterend", grid);

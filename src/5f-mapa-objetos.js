@@ -1194,7 +1194,7 @@ const MA_OBJS = [
   {
     id: "onibus",
     nome: "Ônibus",
-    cat: "Rua",
+    cat: "Transporte",
     w: 1.5,
     h: 5,
     cores: ["#d8d0c0", "#2a4a6a", "#6e1c22"],
@@ -2953,6 +2953,1894 @@ const MA_OBJS = [
       maBox(g, W * 0.2, H * 0.4, W * 0.6, H * 0.2, W * 0.08, "#222");
       maCirc(g, W * 0.8, H * 0.5, W * 0.1, "#f0f4ff", { k: 0.1 });
     }
+  },
+  /* ---------- AEROPORTO E BUNKER ---------- */
+  {
+    id: "elevador",
+    nome: "Elevador de carga",
+    cat: "Aeroporto e bunker",
+    w: 3,
+    h: 3,
+    z: 0,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 2, "#3a3e44", { k: 0.1 });
+      // faixa zebrada de segurança na borda
+      const b = W * 0.08;
+      g.save();
+      maRR(g, 0, 0, W, H, 2);
+      g.clip();
+      for (let i = -H; i < W + H; i += b * 1.6) {
+        g.beginPath();
+        g.moveTo(i, 0);
+        g.lineTo(i + b * 0.8, 0);
+        g.lineTo(i + b * 0.8 - H, H);
+        g.lineTo(i - H, H);
+        g.closePath();
+        g.fillStyle = "#c9a227";
+        g.fill();
+      }
+      g.restore();
+      maBox(g, b, b, W - b * 2, H - b * 2, 1, "#4a4f56", { k: 0.12 });
+      // chapa xadrez
+      g.strokeStyle = "rgba(255,255,255,.08)";
+      g.lineWidth = 1;
+      for (let x = b * 1.5; x < W - b; x += W * 0.07)
+        for (let y = b * 1.5; y < H - b; y += H * 0.07) {
+          g.beginPath();
+          g.moveTo(x, y);
+          g.lineTo(x + W * 0.03, y + H * 0.02);
+          g.stroke();
+        }
+      // portas (em cima) e seta para baixo
+      maBox(g, W * 0.12, 0, W * 0.37, H * 0.06, 1, "#7a8088");
+      maBox(g, W * 0.51, 0, W * 0.37, H * 0.06, 1, "#7a8088");
+      g.fillStyle = "rgba(201,162,39,.85)";
+      g.beginPath();
+      g.moveTo(W * 0.5, H * 0.72);
+      g.lineTo(W * 0.36, H * 0.52);
+      g.lineTo(W * 0.45, H * 0.52);
+      g.lineTo(W * 0.45, H * 0.3);
+      g.lineTo(W * 0.55, H * 0.3);
+      g.lineTo(W * 0.55, H * 0.52);
+      g.lineTo(W * 0.64, H * 0.52);
+      g.closePath();
+      g.fill();
+      maBox(g, W * 0.88, H * 0.12, W * 0.08, H * 0.14, 1, "#22262a");
+      maCirc(g, W * 0.92, H * 0.17, W * 0.018, "#e04040", { ink: false });
+    }
+  },
+  {
+    id: "aviao",
+    nome: "Avião de carga",
+    cat: "Aeroporto e bunker",
+    w: 8,
+    h: 7,
+    cores: ["#d9dde2", "#c8ccd0", "#e6e1d4"],
+    draw: (g, W, H, R, c) => {
+      const poly = (pts, cor) => {
+        g.beginPath();
+        pts.forEach(([x, y], i) => (i ? g.lineTo(x * W, y * H) : g.moveTo(x * W, y * H)));
+        g.closePath();
+        g.fillStyle = maGrad(g, 0, 0, W, H, cor, 0.1);
+        g.fill();
+        g.lineWidth = maLW();
+        g.strokeStyle = MA_INK;
+        g.stroke();
+      };
+      // asas e cauda
+      poly(
+        [
+          [0.42, 0.44],
+          [0.62, 0.44],
+          [0.5, 0.02],
+          [0.44, 0.02]
+        ],
+        maTone(c, -0.08)
+      );
+      poly(
+        [
+          [0.42, 0.56],
+          [0.62, 0.56],
+          [0.5, 0.98],
+          [0.44, 0.98]
+        ],
+        maTone(c, -0.08)
+      );
+      poly(
+        [
+          [0.06, 0.47],
+          [0.16, 0.47],
+          [0.1, 0.27],
+          [0.06, 0.27]
+        ],
+        maTone(c, -0.08)
+      );
+      poly(
+        [
+          [0.06, 0.53],
+          [0.16, 0.53],
+          [0.1, 0.73],
+          [0.06, 0.73]
+        ],
+        maTone(c, -0.08)
+      );
+      // motores
+      [0.2, 0.32, 0.68, 0.8].forEach(y =>
+        maBox(g, W * 0.52, H * y - H * 0.03, W * 0.11, H * 0.06, H * 0.03, "#8a9098")
+      );
+      // fuselagem
+      maEll(g, W * 0.5, H * 0.5, W * 0.47, H * 0.075, c);
+      maEll(g, W * 0.93, H * 0.5, W * 0.035, H * 0.045, "#2a3440", { ink: false });
+      g.fillStyle = "rgba(0,0,0,.12)";
+      g.fillRect(W * 0.1, H * 0.5, W * 0.78, H * 0.012);
+      g.fillStyle = "#6e1c22";
+      g.fillRect(W * 0.04, H * 0.485, W * 0.06, H * 0.03);
+    }
+  },
+  {
+    id: "empilhadeira",
+    nome: "Empilhadeira",
+    cat: "Aeroporto e bunker",
+    w: 1,
+    h: 2,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.3, 0, W * 0.08, H * 0.32, 1, "#9aa0a6");
+      maBox(g, W * 0.62, 0, W * 0.08, H * 0.32, 1, "#9aa0a6");
+      maBox(g, W * 0.15, H * 0.3, W * 0.7, H * 0.06, 1, "#2a2c30");
+      maBox(g, W * 0.1, H * 0.36, W * 0.8, H * 0.6, W * 0.12, "#d4a017", { k: 0.18 });
+      maBox(g, W * 0.24, H * 0.5, W * 0.52, H * 0.26, 2, "#2a2c30");
+      [0.42, 0.86].forEach(y => {
+        maBox(g, 0, H * y - H * 0.05, W * 0.12, H * 0.1, 2, "#111");
+        maBox(g, W * 0.88, H * y - H * 0.05, W * 0.12, H * 0.1, 2, "#111");
+      });
+    }
+  },
+  {
+    id: "carrinhobag",
+    nome: "Carrinho de bagagens",
+    cat: "Aeroporto e bunker",
+    w: 2,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, W * 0.02, H * 0.1, W * 0.96, H * 0.8, 2, "#5a6068", { k: 0.1 });
+      const cs = ["#6e1c22", "#2a4a6a", "#3c3c3c", "#7a5a2a", "#4a6a3a"];
+      let x = W * 0.06;
+      while (x < W * 0.86) {
+        const w = W * (0.16 + R() * 0.12);
+        maBox(
+          g,
+          x,
+          H * (0.18 + R() * 0.08),
+          Math.min(w, W * 0.92 - x),
+          H * 0.56,
+          2,
+          cs[Math.floor(R() * cs.length)]
+        );
+        x += w + W * 0.02;
+      }
+      maLine(
+        g,
+        [
+          [W * 0.98, H * 0.3],
+          [W, H * 0.3],
+          [W, H * 0.7],
+          [W * 0.98, H * 0.7]
+        ],
+        "#222",
+        maLW(1.4)
+      );
+    }
+  },
+  {
+    id: "esteira",
+    nome: "Esteira de bagagens",
+    cat: "Aeroporto e bunker",
+    w: 4,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 3, "#4a4e54", { k: 0.08 });
+      maBox(g, W * 0.02, H * 0.15, W * 0.96, H * 0.7, 2, "#1d1f22", { k: 0.05 });
+      g.strokeStyle = "rgba(255,255,255,.1)";
+      g.lineWidth = 1;
+      for (let x = W * 0.03; x < W * 0.97; x += W * 0.03) {
+        g.beginPath();
+        g.moveTo(x, H * 0.16);
+        g.lineTo(x, H * 0.84);
+        g.stroke();
+      }
+      [0.15, 0.45, 0.72].forEach(f =>
+        maBox(
+          g,
+          W * f,
+          H * 0.25,
+          W * 0.12,
+          H * 0.5,
+          2,
+          maPick(["#6e1c22", "#2a4a6a", "#7a5a2a", "#3c3c3c"], R)
+        )
+      );
+    }
+  },
+  {
+    id: "catraca",
+    nome: "Catraca de segurança",
+    cat: "Aeroporto e bunker",
+    w: 1,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, 0, H * 0.15, W * 0.25, H * 0.7, 2, "#8a9098");
+      maBox(g, W * 0.75, H * 0.15, W * 0.25, H * 0.7, 2, "#8a9098");
+      maLine(
+        g,
+        [
+          [W * 0.25, H * 0.5],
+          [W * 0.75, H * 0.5]
+        ],
+        "#c9a227",
+        maLW(1.6)
+      );
+      maCirc(g, W * 0.12, H * 0.5, H * 0.12, "#3fbf5f", { ink: false });
+    }
+  },
+  {
+    id: "portacofre",
+    nome: "Porta blindada (cofre)",
+    cat: "Aeroporto e bunker",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 2, "#3a3e44");
+      maBox(g, W * 0.06, H * 0.15, W * 0.88, H * 0.7, 2, "#6a7078", { k: 0.2 });
+      maCirc(g, W * 0.5, H * 0.5, H * 0.3, "#8a9098");
+      maLine(
+        g,
+        [
+          [W * 0.5 - H * 0.3, H * 0.5],
+          [W * 0.5 + H * 0.3, H * 0.5]
+        ],
+        "#2a2c30",
+        maLW(0.8)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.2],
+          [W * 0.5, H * 0.8]
+        ],
+        "#2a2c30",
+        maLW(0.8)
+      );
+    }
+  },
+  {
+    id: "alvo",
+    nome: "Alvo de tiro",
+    cat: "Aeroporto e bunker",
+    w: 1,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.05, H * 0.35, W * 0.9, H * 0.3, 1, "#5a3e28");
+      maBox(g, W * 0.2, H * 0.1, W * 0.6, H * 0.8, 1, "#e8e2d0");
+      maCirc(g, W * 0.5, H * 0.5, H * 0.32, "#e8e2d0", { lw: 0.7 });
+      maCirc(g, W * 0.5, H * 0.5, H * 0.2, "#c0392b", { lw: 0.7 });
+      maCirc(g, W * 0.5, H * 0.5, H * 0.08, "#111", { ink: false });
+    }
+  },
+  {
+    id: "saco",
+    nome: "Saco de pancada",
+    cat: "Aeroporto e bunker",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.42, "#6e1c22", { k: 0.25 });
+      maCirc(g, W / 2, H / 2, W * 0.1, "#9aa0a6", { ink: false });
+    }
+  },
+  {
+    id: "tatame",
+    nome: "Tatame",
+    cat: "Aeroporto e bunker",
+    w: 3,
+    h: 3,
+    z: 0,
+    cores: ["#2a4a6a", "#6e1c22", "#2f5a3a"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, 0, W, H, 3, c, { k: 0.06 });
+      g.strokeStyle = "rgba(0,0,0,.35)";
+      g.lineWidth = 1;
+      for (let i = 1; i < 3; i++) {
+        g.beginPath();
+        g.moveTo((W * i) / 3, 0);
+        g.lineTo((W * i) / 3, H);
+        g.moveTo(0, (H * i) / 3);
+        g.lineTo(W, (H * i) / 3);
+        g.stroke();
+      }
+      g.strokeStyle = "rgba(255,255,255,.25)";
+      g.lineWidth = maLW(0.8);
+      g.beginPath();
+      g.arc(W / 2, H / 2, W * 0.28, 0, Math.PI * 2);
+      g.stroke();
+    }
+  },
+  {
+    id: "ventilacao",
+    nome: "Grade de ventilação",
+    cat: "Aeroporto e bunker",
+    w: 1,
+    h: 1,
+    z: 0,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.1, H * 0.1, W * 0.8, H * 0.8, 2, "#3a3e44");
+      g.strokeStyle = "rgba(0,0,0,.55)";
+      g.lineWidth = maLW(0.6);
+      for (let y = H * 0.2; y < H * 0.85; y += H * 0.1) {
+        g.beginPath();
+        g.moveTo(W * 0.18, y);
+        g.lineTo(W * 0.82, y);
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "painel",
+    nome: "Painel de controle",
+    cat: "Aeroporto e bunker",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 2, "#2a2e34");
+      for (let i = 0; i < 10; i++)
+        maCirc(
+          g,
+          W * (0.08 + i * 0.09),
+          H * 0.35,
+          H * 0.08,
+          maPick(["#3fbf5f", "#e04040", "#e0b030", "#3f8fbf"], R),
+          { ink: false }
+        );
+      maBox(g, W * 0.06, H * 0.6, W * 0.88, H * 0.22, 1, "#14171b");
+    }
+  },
+  /* ---------- BIBLIOTECA ---------- */
+  {
+    id: "escada",
+    nome: "Escada (descendo)",
+    cat: "Biblioteca",
+    w: 2,
+    h: 3,
+    z: 0,
+    cores: ["#4a4038", "#5a5e64", "#3a2a20"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, 0, W, H, 2, "#15161a", { k: 0.05 });
+      const n = 9;
+      for (let i = 0; i < n; i++) {
+        // degraus ficam mais escuros conforme descem
+        const k = -0.06 * i;
+        maBox(g, W * 0.06, (H * i) / n + 1, W * 0.88, H / n - 2, 1, maTone(c, k), { k: 0.08, lw: 0.6 });
+      }
+      g.fillStyle = "rgba(0,0,0,.45)";
+      g.fillRect(0, H * 0.7, W, H * 0.3);
+      maLine(
+        g,
+        [
+          [W * 0.04, H * 0.02],
+          [W * 0.04, H * 0.98]
+        ],
+        "#2a2c30",
+        maLW(1.2)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.96, H * 0.02],
+          [W * 0.96, H * 0.98]
+        ],
+        "#2a2c30",
+        maLW(1.2)
+      );
+    }
+  },
+  {
+    id: "estantebib",
+    nome: "Estante dupla de biblioteca",
+    cat: "Biblioteca",
+    w: 3,
+    h: 1,
+    cores: MC.mad,
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, 0, W, H, 1, c);
+      const cs = ["#6e1c22", "#23324a", "#3a5a3a", "#8a6a3a", "#4a2a5a", "#d8d0c0", "#5a3a2a"];
+      [0.06, 0.54].forEach(y0 => {
+        let x = W * 0.02;
+        while (x < W * 0.97) {
+          const w = W * (0.03 + R() * 0.02);
+          maBox(g, x, H * y0, Math.min(w, W * 0.98 - x), H * 0.4, 0, maPick(cs, R), { lw: 0.4, k: 0.12 });
+          x += w + 0.5;
+        }
+      });
+      g.fillStyle = maTone(c, -0.3);
+      g.fillRect(0, H * 0.48, W, H * 0.04);
+    }
+  },
+  {
+    id: "globo",
+    nome: "Globo antigo",
+    cat: "Biblioteca",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.42, "#5a3e28");
+      maCirc(g, W / 2, H / 2, W * 0.32, "#3f6a7a");
+      g.fillStyle = "rgba(170,150,90,.75)";
+      [
+        [0.4, 0.4, 0.1],
+        [0.58, 0.55, 0.08],
+        [0.45, 0.62, 0.06]
+      ].forEach(([x, y, r]) => {
+        g.beginPath();
+        g.ellipse(W * x, H * y, W * r, H * r * 0.7, 0.6, 0, Math.PI * 2);
+        g.fill();
+      });
+      maLine(
+        g,
+        [
+          [W * 0.2, H * 0.2],
+          [W * 0.8, H * 0.8]
+        ],
+        "#c9a227",
+        maLW(0.8)
+      );
+    }
+  },
+  {
+    id: "vitrine",
+    nome: "Vitrine de relíquias",
+    cat: "Biblioteca",
+    w: 2,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 2, "#3e2b1f");
+      maBox(g, W * 0.05, H * 0.1, W * 0.9, H * 0.8, 1, "#1d2a30", { k: 0.05 });
+      [0.22, 0.5, 0.78].forEach(x => {
+        const t = R();
+        if (t < 0.33) maCirc(g, W * x, H * 0.5, H * 0.18, "#c9a227", { lw: 0.6 });
+        else if (t < 0.66) maBox(g, W * x - W * 0.07, H * 0.3, W * 0.14, H * 0.4, 1, "#d8d0c0", { lw: 0.6 });
+        else maCirc(g, W * x, H * 0.5, H * 0.15, "#8a2a2a", { lw: 0.6 });
+      });
+      g.fillStyle = "rgba(200,230,255,.12)";
+      g.fillRect(W * 0.05, H * 0.1, W * 0.9, H * 0.25);
+    }
+  },
+  /* ---------- CEMITÉRIO E IGREJA ---------- */
+  {
+    id: "lapide",
+    nome: "Lápide",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 0.5,
+    cores: ["#8a8d90", "#6a6d70", "#b8b4aa", "#4a4c50"],
+    draw: (g, W, H, R, c) => {
+      maRR(g, W * 0.12, H * 0.08, W * 0.76, H * 0.84, H * 0.4);
+      g.fillStyle = maGrad(g, 0, 0, W, H, c, 0.18);
+      g.fill();
+      g.lineWidth = maLW();
+      g.strokeStyle = MA_INK;
+      g.stroke();
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.25],
+          [W * 0.5, H * 0.72]
+        ],
+        "rgba(0,0,0,.35)",
+        maLW(0.6)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.4, H * 0.4],
+          [W * 0.6, H * 0.4]
+        ],
+        "rgba(0,0,0,.35)",
+        maLW(0.6)
+      );
+      if (R() < 0.5) maBox(g, W * 0.7, H * 0.55, W * 0.14, H * 0.3, 2, "#3a5a2a", { ink: false });
+    }
+  },
+  {
+    id: "tumulo",
+    nome: "Túmulo",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 2,
+    cores: ["#9a9c9e", "#d8d4ca", "#5a5c60", "#7a6a5a"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.06, H * 0.02, W * 0.88, H * 0.96, 2, maTone(c, -0.1));
+      maBox(g, W * 0.14, H * 0.2, W * 0.72, H * 0.74, 2, c, { k: 0.2 });
+      maRR(g, W * 0.12, H * 0.02, W * 0.76, H * 0.2, W * 0.25);
+      g.fillStyle = maTone(c, 0.12);
+      g.fill();
+      g.lineWidth = maLW();
+      g.strokeStyle = MA_INK;
+      g.stroke();
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.35],
+          [W * 0.5, H * 0.75]
+        ],
+        "rgba(0,0,0,.3)",
+        maLW(0.7)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.35, H * 0.47],
+          [W * 0.65, H * 0.47]
+        ],
+        "rgba(0,0,0,.3)",
+        maLW(0.7)
+      );
+      if (R() < 0.6)
+        for (let i = 0; i < 5; i++)
+          maCirc(
+            g,
+            W * (0.3 + R() * 0.4),
+            H * (0.82 + R() * 0.1),
+            W * 0.06,
+            maPick(["#c0392b", "#e8d24a", "#e8e2d0", "#8e44ad"], R),
+            { ink: false }
+          );
+    }
+  },
+  {
+    id: "cova",
+    nome: "Cova aberta",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 2,
+    z: 0,
+    draw: (g, W, H, R) => {
+      maBlob(g, W * 0.5, H * 0.08, W * 0.45, R, "#5a4030", { n: 10 });
+      maBox(g, W * 0.12, H * 0.2, W * 0.76, H * 0.76, 2, "#14100c", { k: 0.05 });
+      g.fillStyle = "rgba(90,64,48,.5)";
+      g.fillRect(W * 0.12, H * 0.2, W * 0.76, H * 0.06);
+    }
+  },
+  {
+    id: "mausoleu",
+    nome: "Mausoléu pequeno",
+    cat: "Cemitério e igreja",
+    w: 3,
+    h: 3,
+    cores: ["#a8a49a", "#6a6c70", "#d8d4ca"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.04, H * 0.04, W * 0.92, H * 0.86, 3, maTone(c, -0.12));
+      // telhado de duas águas
+      g.beginPath();
+      g.moveTo(W * 0.08, H * 0.08);
+      g.lineTo(W * 0.92, H * 0.08);
+      g.lineTo(W * 0.92, H * 0.47);
+      g.lineTo(W * 0.08, H * 0.47);
+      g.closePath();
+      g.fillStyle = maGrad(g, 0, 0, W, H * 0.5, c, 0.2);
+      g.fill();
+      g.beginPath();
+      g.moveTo(W * 0.08, H * 0.47);
+      g.lineTo(W * 0.92, H * 0.47);
+      g.lineTo(W * 0.92, H * 0.86);
+      g.lineTo(W * 0.08, H * 0.86);
+      g.closePath();
+      g.fillStyle = maGrad(g, 0, H * 0.5, W, H * 0.5, maTone(c, -0.15), 0.2);
+      g.fill();
+      g.lineWidth = maLW();
+      g.strokeStyle = MA_INK;
+      g.strokeRect(W * 0.08, H * 0.08, W * 0.84, H * 0.78);
+      maLine(
+        g,
+        [
+          [W * 0.08, H * 0.47],
+          [W * 0.92, H * 0.47]
+        ],
+        MA_INK,
+        maLW()
+      );
+      // cruz no topo, colunas e porta
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.2],
+          [W * 0.5, H * 0.38]
+        ],
+        "rgba(0,0,0,.45)",
+        maLW(1.2)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.43, H * 0.26],
+          [W * 0.57, H * 0.26]
+        ],
+        "rgba(0,0,0,.45)",
+        maLW(1.2)
+      );
+      [0.14, 0.86].forEach(x => maCirc(g, W * x, H * 0.92, W * 0.05, maTone(c, 0.1)));
+      maBox(g, W * 0.38, H * 0.84, W * 0.24, H * 0.13, 1, "#2a2420");
+    }
+  },
+  {
+    id: "cruz",
+    nome: "Cruz",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 1,
+    cores: ["#5a3e28", "#8a8d90", "#2d211a"],
+    draw: (g, W, H, R, c) => {
+      g.fillStyle = "rgba(0,0,0,.3)";
+      g.fillRect(W * 0.5, H * 0.18, W * 0.14, H * 0.76);
+      maBox(g, W * 0.43, H * 0.06, W * 0.14, H * 0.88, 1, c);
+      maBox(g, W * 0.18, H * 0.26, W * 0.64, H * 0.14, 1, c);
+    }
+  },
+  {
+    id: "coroa",
+    nome: "Coroa de flores",
+    cat: "Cemitério e igreja",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H, R) => {
+      g.lineWidth = W * 0.16;
+      g.strokeStyle = "#2f5a2a";
+      g.beginPath();
+      g.arc(W / 2, H / 2, W * 0.32, 0, Math.PI * 2);
+      g.stroke();
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * Math.PI * 2;
+        maCirc(
+          g,
+          W / 2 + Math.cos(a) * W * 0.32,
+          H / 2 + Math.sin(a) * H * 0.32,
+          W * 0.07,
+          maPick(["#c0392b", "#e8e2d0", "#e8d24a", "#8e44ad"], R),
+          { ink: false }
+        );
+      }
+      maLine(
+        g,
+        [
+          [W * 0.45, H * 0.85],
+          [W * 0.38, H],
+          [W * 0.55, H * 0.85],
+          [W * 0.62, H]
+        ],
+        "#6e1c22",
+        maLW(0.8)
+      );
+    }
+  },
+  {
+    id: "anjo",
+    nome: "Estátua de anjo",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.1, H * 0.1, W * 0.8, H * 0.8, 2, "#6a6c70");
+      [-1, 1].forEach(sd =>
+        maEll(g, W * (0.5 + sd * 0.2), H * 0.45, W * 0.2, H * 0.12, "#b8b4aa", { rot: sd * 0.5 })
+      );
+      maCirc(g, W * 0.5, H * 0.52, W * 0.15, "#c8c4ba");
+      maCirc(g, W * 0.5, H * 0.32, W * 0.09, "#d0ccc2");
+    }
+  },
+  {
+    id: "bancoigreja",
+    nome: "Banco de igreja",
+    cat: "Cemitério e igreja",
+    w: 3,
+    h: 1,
+    cores: MC.mad,
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, H * 0.1, W, H * 0.5, 2, c, { k: 0.18 });
+      maBox(g, 0, H * 0.62, W, H * 0.18, 1, maTone(c, -0.15));
+      maBox(g, 0, H * 0.05, W * 0.04, H * 0.8, 1, maTone(c, -0.2));
+      maBox(g, W * 0.96, H * 0.05, W * 0.04, H * 0.8, 1, maTone(c, -0.2));
+    }
+  },
+  {
+    id: "pulpito",
+    nome: "Púlpito",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.1, H * 0.15, W * 0.8, H * 0.7, W * 0.12, "#5a3e28", { k: 0.2 });
+      maBox(g, W * 0.22, H * 0.2, W * 0.56, H * 0.35, 1, "#3e2b1f");
+      maBox(g, W * 0.3, H * 0.25, W * 0.4, H * 0.25, 1, "#d8d0c0", { lw: 0.5 });
+    }
+  },
+  {
+    id: "crucifixo",
+    nome: "Crucifixo de parede",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.44, 0, W * 0.12, H * 0.95, 1, "#5a3e28");
+      maBox(g, W * 0.2, H * 0.22, W * 0.6, H * 0.16, 1, "#5a3e28");
+      maCirc(g, W * 0.5, H * 0.3, W * 0.05, "#c9a227", { ink: false });
+    }
+  },
+  {
+    id: "vitral",
+    nome: "Vitral",
+    cat: "Cemitério e igreja",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 2, "#22262a");
+      const cs = ["#8e2a3a", "#2a4a8e", "#c9a227", "#2f7a4a", "#6a2a8e"];
+      for (let i = 0; i < 8; i++)
+        maBox(g, W * (0.04 + i * 0.115), H * 0.18, W * 0.105, H * 0.64, 0, maPick(cs, R), {
+          lw: 0.4,
+          k: 0.25
+        });
+      g.fillStyle = "rgba(255,240,200,.18)";
+      g.fillRect(0, H, W, 0);
+    }
+  },
+  {
+    id: "confessionario",
+    nome: "Confessionário",
+    cat: "Cemitério e igreja",
+    w: 2,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 2, "#3e2b1f", { k: 0.16 });
+      maBox(g, W * 0.05, H * 0.1, W * 0.42, H * 0.8, 1, "#2d211a");
+      maBox(g, W * 0.53, H * 0.1, W * 0.42, H * 0.8, 1, "#2d211a");
+      g.strokeStyle = "rgba(201,162,39,.4)";
+      g.lineWidth = 1;
+      for (let x = W * 0.48; x < W * 0.53; x += 2) {
+        g.beginPath();
+        g.moveTo(x, H * 0.2);
+        g.lineTo(x, H * 0.8);
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "piabatismal",
+    nome: "Pia batismal",
+    cat: "Cemitério e igreja",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.42, "#c8c4ba");
+      maCirc(g, W / 2, H / 2, W * 0.28, "#5a8aa0", { k: 0.3 });
+    }
+  },
+  /* ---------- COMÉRCIO ---------- */
+  {
+    id: "gondola",
+    nome: "Gôndola de mercado",
+    cat: "Comércio",
+    w: 3,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 1, "#c8ccd0", { k: 0.08 });
+      const cs = ["#c0392b", "#e8d24a", "#2a6a9a", "#3f9a4a", "#e07a2a", "#e8e2d0", "#7a3a8a"];
+      [0.06, 0.54].forEach(y0 => {
+        let x = W * 0.02;
+        while (x < W * 0.96) {
+          const w = W * (0.04 + R() * 0.05);
+          maBox(g, x, H * y0, Math.min(w, W * 0.98 - x), H * 0.38, 1, maPick(cs, R), { lw: 0.4 });
+          x += w + 1;
+        }
+      });
+      g.fillStyle = "#8a8f94";
+      g.fillRect(0, H * 0.47, W, H * 0.06);
+    }
+  },
+  {
+    id: "caixareg",
+    nome: "Caixa (checkout)",
+    cat: "Comércio",
+    w: 2,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, 0, H * 0.1, W, H * 0.55, 2, "#3a3e44");
+      maBox(g, W * 0.04, H * 0.18, W * 0.5, H * 0.38, 1, "#1d1f22");
+      maBox(g, W * 0.62, H * 0.15, W * 0.3, H * 0.4, 2, "#d8d4ca");
+      maBox(g, W * 0.66, H * 0.2, W * 0.16, H * 0.14, 1, "#2a6a5a", { ink: false });
+      mChair(g, W * 0.77, H * 0.85, W * 0.2, "#2f4a6a");
+    }
+  },
+  {
+    id: "freezer",
+    nome: "Freezer horizontal",
+    cat: "Comércio",
+    w: 2,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 3, "#e0e4e8");
+      maBox(g, W * 0.05, H * 0.12, W * 0.43, H * 0.76, 2, "#9ad0e8", { k: 0.25 });
+      maBox(g, W * 0.52, H * 0.12, W * 0.43, H * 0.76, 2, "#9ad0e8", { k: 0.25 });
+      g.fillStyle = "rgba(255,255,255,.35)";
+      g.fillRect(W * 0.08, H * 0.18, W * 0.15, H * 0.1);
+      g.fillRect(W * 0.55, H * 0.18, W * 0.15, H * 0.1);
+    }
+  },
+  {
+    id: "geladeiravert",
+    nome: "Geladeira de bebidas",
+    cat: "Comércio",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 2, "#2a2e34");
+      for (let i = 0; i < 12; i++)
+        maBox(
+          g,
+          W * (0.04 + i * 0.077),
+          H * 0.2,
+          W * 0.06,
+          H * 0.55,
+          1,
+          maPick(["#c0392b", "#2a6a9a", "#3f9a4a", "#e8d24a"], R),
+          { lw: 0.4 }
+        );
+      g.fillStyle = "rgba(200,230,255,.15)";
+      g.fillRect(0, 0, W, H * 0.3);
+    }
+  },
+  {
+    id: "carrinhomerc",
+    nome: "Carrinho de compras",
+    cat: "Comércio",
+    w: 0.5,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.1, H * 0.15, W * 0.8, H * 0.65, 2, "#8a9098", { k: 0.1 });
+      g.strokeStyle = "rgba(0,0,0,.35)";
+      g.lineWidth = 1;
+      for (let y = H * 0.22; y < H * 0.78; y += H * 0.08) {
+        g.beginPath();
+        g.moveTo(W * 0.15, y);
+        g.lineTo(W * 0.85, y);
+        g.stroke();
+      }
+      maLine(
+        g,
+        [
+          [W * 0.05, H * 0.9],
+          [W * 0.95, H * 0.9]
+        ],
+        "#c0392b",
+        maLW(1.4)
+      );
+    }
+  },
+  /* ---------- TRANSPORTE ---------- */
+  {
+    id: "trilhos",
+    nome: "Trilhos (trecho)",
+    cat: "Transporte",
+    w: 2,
+    h: 3,
+    z: 0,
+    draw: (g, W, H) => {
+      g.fillStyle = "#3a332c";
+      g.fillRect(W * 0.08, 0, W * 0.84, H);
+      for (let y = H * 0.04; y < H; y += H / 9)
+        maBox(g, W * 0.06, y, W * 0.88, H * 0.06, 1, "#4a3420", { lw: 0.5 });
+      [0.24, 0.76].forEach(x => {
+        g.fillStyle = "#9aa0a6";
+        g.fillRect(W * x - W * 0.03, 0, W * 0.06, H);
+        g.fillStyle = "rgba(255,255,255,.3)";
+        g.fillRect(W * x - W * 0.01, 0, W * 0.015, H);
+      });
+    }
+  },
+  {
+    id: "vagao",
+    nome: "Vagão (trem ou metrô)",
+    cat: "Transporte",
+    w: 2,
+    h: 6,
+    cores: ["#c8ccd0", "#6e1c22", "#2a4a6a", "#3a4a2a"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.04, H * 0.01, W * 0.92, H * 0.98, W * 0.25, c, { k: 0.12 });
+      maBox(g, W * 0.14, H * 0.05, W * 0.72, H * 0.9, W * 0.12, maTone(c, -0.12), { k: 0.08 });
+      for (let i = 0; i < 6; i++)
+        maBox(g, W * 0.3, H * (0.1 + i * 0.14), W * 0.4, H * 0.05, 1, "#5a5e64", { lw: 0.5 });
+      [0.25, 0.5, 0.75].forEach(y => {
+        maBox(g, 0, H * y - H * 0.04, W * 0.05, H * 0.08, 0, "#1d1f22", { ink: false });
+        maBox(g, W * 0.95, H * y - H * 0.04, W * 0.05, H * 0.08, 0, "#1d1f22", { ink: false });
+      });
+    }
+  },
+  {
+    id: "barco",
+    nome: "Barco a motor",
+    cat: "Transporte",
+    w: 2,
+    h: 4,
+    cores: ["#e8e2d0", "#2a4a6a", "#6e1c22"],
+    draw: (g, W, H, R, c) => {
+      g.beginPath();
+      g.moveTo(W * 0.5, H * 0.02);
+      g.quadraticCurveTo(W * 0.98, H * 0.25, W * 0.92, H * 0.96);
+      g.lineTo(W * 0.08, H * 0.96);
+      g.quadraticCurveTo(W * 0.02, H * 0.25, W * 0.5, H * 0.02);
+      g.closePath();
+      g.fillStyle = maGrad(g, 0, 0, W, H, c, 0.15);
+      g.fill();
+      g.lineWidth = maLW();
+      g.strokeStyle = MA_INK;
+      g.stroke();
+      maBox(g, W * 0.22, H * 0.4, W * 0.56, H * 0.25, 3, "#5a3e28");
+      maBox(g, W * 0.3, H * 0.3, W * 0.4, H * 0.1, 2, "#9ad0e8", { k: 0.2 });
+      maBox(g, W * 0.38, H * 0.95, W * 0.24, H * 0.05, 1, "#1d1f22");
+    }
+  },
+  {
+    id: "helicoptero",
+    nome: "Helicóptero",
+    cat: "Transporte",
+    w: 5,
+    h: 5,
+    cores: ["#2a2e34", "#c8ccd0", "#6e1c22"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.47, H * 0.5, W * 0.06, H * 0.42, 2, maTone(c, -0.1));
+      maBox(g, W * 0.38, H * 0.88, W * 0.24, H * 0.04, 2, maTone(c, -0.1));
+      [0.33, 0.67].forEach(x => maBox(g, W * x - W * 0.015, H * 0.25, W * 0.03, H * 0.45, 1, "#4a4e54"));
+      maEll(g, W * 0.5, H * 0.42, W * 0.13, H * 0.2, c);
+      maEll(g, W * 0.5, H * 0.3, W * 0.09, H * 0.08, "#5a8aa0", { k: 0.3 });
+      g.strokeStyle = "rgba(30,30,34,.85)";
+      g.lineWidth = W * 0.025;
+      g.lineCap = "round";
+      [0.4, 0.4 + Math.PI / 2].forEach(a => {
+        g.beginPath();
+        g.moveTo(W * 0.5 - Math.cos(a) * W * 0.47, H * 0.42 - Math.sin(a) * H * 0.47);
+        g.lineTo(W * 0.5 + Math.cos(a) * W * 0.47, H * 0.42 + Math.sin(a) * H * 0.47);
+        g.stroke();
+      });
+      maCirc(g, W * 0.5, H * 0.42, W * 0.03, "#888", { ink: false });
+    }
+  },
+  {
+    id: "heliponto",
+    nome: "Heliponto",
+    cat: "Transporte",
+    w: 4,
+    h: 4,
+    z: 0,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.46, "#3a3e44", { k: 0.05 });
+      g.strokeStyle = "#e8e2d0";
+      g.lineWidth = W * 0.02;
+      g.beginPath();
+      g.arc(W / 2, H / 2, W * 0.4, 0, Math.PI * 2);
+      g.stroke();
+      g.lineWidth = W * 0.05;
+      g.beginPath();
+      g.moveTo(W * 0.36, H * 0.32);
+      g.lineTo(W * 0.36, H * 0.68);
+      g.moveTo(W * 0.64, H * 0.32);
+      g.lineTo(W * 0.64, H * 0.68);
+      g.moveTo(W * 0.36, H * 0.5);
+      g.lineTo(W * 0.64, H * 0.5);
+      g.stroke();
+    }
+  },
+  {
+    id: "faixaplat",
+    nome: "Faixa amarela de plataforma",
+    cat: "Transporte",
+    w: 3,
+    h: 0.5,
+    z: 0,
+    draw: (g, W, H) => {
+      g.fillStyle = "#c9a227";
+      g.fillRect(0, H * 0.25, W, H * 0.5);
+      g.fillStyle = "rgba(0,0,0,.25)";
+      for (let x = W * 0.02; x < W; x += W * 0.04) g.fillRect(x, H * 0.35, W * 0.015, H * 0.3);
+    }
+  },
+  /* ---------- ESCOLA ---------- */
+  {
+    id: "lousa",
+    nome: "Lousa grande",
+    cat: "Escola",
+    w: 4,
+    h: 0.5,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, 0, W, H, 1, "#5a3e28");
+      maBox(g, W * 0.02, H * 0.15, W * 0.96, H * 0.6, 0, "#2a4a3a", { k: 0.06 });
+      g.strokeStyle = "rgba(240,240,230,.55)";
+      g.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        const x = W * (0.08 + R() * 0.6);
+        g.beginPath();
+        g.moveTo(x, H * (0.3 + i * 0.1));
+        g.lineTo(x + W * (0.1 + R() * 0.15), H * (0.3 + i * 0.1));
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "carteiras",
+    nome: "Fileira de carteiras",
+    cat: "Escola",
+    w: 3,
+    h: 1,
+    draw: (g, W, H) => {
+      for (let i = 0; i < 4; i++) {
+        const x = W * (0.02 + i * 0.25);
+        maBox(g, x, H * 0.04, W * 0.21, H * 0.38, 2, "#8a6a44");
+        mChair(g, x + W * 0.105, H * 0.72, H * 0.42, "#2f4a6a");
+      }
+    }
+  },
+  {
+    id: "mesaprof",
+    nome: "Mesa do professor",
+    cat: "Escola",
+    w: 2,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, H * 0.05, W, H * 0.62, 2, "#6a4630");
+      maBox(g, W * 0.1, H * 0.15, W * 0.25, H * 0.3, 1, "#d8d0c0", { lw: 0.5 });
+      maCirc(g, W * 0.75, H * 0.3, H * 0.1, "#c0392b", { lw: 0.5 });
+      mChair(g, W * 0.5, H * 0.85, H * 0.32, "#3e2b1f");
+    }
+  },
+  {
+    id: "armarioesc",
+    nome: "Armários de corredor",
+    cat: "Escola",
+    w: 3,
+    h: 0.5,
+    cores: ["#2a6a9a", "#c0392b", "#3f7a4a", "#c9a227"],
+    draw: (g, W, H, R, c) => {
+      for (let i = 0; i < 6; i++) {
+        maBox(g, (W * i) / 6, 0, W / 6, H, 1, c, { k: 0.15 });
+        g.fillStyle = "rgba(0,0,0,.35)";
+        for (let k = 0; k < 3; k++) g.fillRect((W * i) / 6 + W * 0.03, H * (0.2 + k * 0.12), W * 0.1, 1);
+        maCirc(g, (W * i) / 6 + W * 0.14, H * 0.6, H * 0.06, "#ccc", { ink: false });
+      }
+    }
+  },
+  {
+    id: "bebedouro",
+    nome: "Bebedouro",
+    cat: "Escola",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.1, H * 0.1, W * 0.8, H * 0.8, 3, "#c8ccd0");
+      maCirc(g, W / 2, H / 2, W * 0.2, "#7ab0c8", { ink: false });
+    }
+  },
+  /* ---------- RURAL ---------- */
+  {
+    id: "fardo",
+    nome: "Fardo de feno (redondo)",
+    cat: "Rural",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.45, "#c8a24a", { k: 0.2 });
+      g.strokeStyle = "rgba(90,60,20,.45)";
+      g.lineWidth = 1;
+      for (let r = W * 0.1; r < W * 0.44; r += W * 0.07) {
+        g.beginPath();
+        g.arc(W / 2, H / 2, r, 0.3, Math.PI * 1.8);
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "fardoq",
+    nome: "Fardo de feno (quadrado)",
+    cat: "Rural",
+    w: 1,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.03, H * 0.06, W * 0.94, H * 0.88, 2, "#d0ae58", { k: 0.18 });
+      maLine(
+        g,
+        [
+          [W * 0.3, H * 0.06],
+          [W * 0.3, H * 0.94]
+        ],
+        "#7a5a2a",
+        maLW(0.6)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.7, H * 0.06],
+          [W * 0.7, H * 0.94]
+        ],
+        "#7a5a2a",
+        maLW(0.6)
+      );
+    }
+  },
+  {
+    id: "trator",
+    nome: "Trator",
+    cat: "Rural",
+    w: 2,
+    h: 3,
+    cores: ["#c0392b", "#2f7a3a", "#2a4a8e"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, H * 0.55, W * 0.24, H * 0.4, 4, "#1a1a1a");
+      maBox(g, W * 0.76, H * 0.55, W * 0.24, H * 0.4, 4, "#1a1a1a");
+      maBox(g, W * 0.08, H * 0.04, W * 0.16, H * 0.22, 3, "#1a1a1a");
+      maBox(g, W * 0.76, H * 0.04, W * 0.16, H * 0.22, 3, "#1a1a1a");
+      maBox(g, W * 0.28, H * 0.02, W * 0.44, H * 0.5, 4, c, { k: 0.2 });
+      maBox(g, W * 0.22, H * 0.5, W * 0.56, H * 0.46, 3, maTone(c, -0.1));
+      maBox(g, W * 0.3, H * 0.58, W * 0.4, H * 0.3, 2, "#2a2c30");
+      maCirc(g, W * 0.5, H * 0.08, W * 0.05, "#3a3a3a", { ink: false });
+    }
+  },
+  {
+    id: "poco",
+    nome: "Poço",
+    cat: "Rural",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.46, "#7a7468");
+      maCirc(g, W / 2, H / 2, W * 0.3, "#08090a", { k: 0.02 });
+      maLine(
+        g,
+        [
+          [W * 0.08, H * 0.5],
+          [W * 0.92, H * 0.5]
+        ],
+        "#5a3e28",
+        maLW(1.6)
+      );
+      maBox(g, W * 0.44, H * 0.42, W * 0.12, H * 0.16, 1, "#5a3e28");
+    }
+  },
+  {
+    id: "plantacao",
+    nome: "Plantação",
+    cat: "Rural",
+    w: 3,
+    h: 3,
+    z: 0,
+    cores: ["#4a7a2a", "#8a8a2a", "#5a3a20"],
+    draw: (g, W, H, R, c) => {
+      g.fillStyle = "#3a2a1c";
+      g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 6; i++) {
+        const x = W * (0.08 + i * 0.168);
+        g.fillStyle = "rgba(0,0,0,.25)";
+        g.fillRect(x - W * 0.02, 0, W * 0.04, H);
+        for (let y = H * 0.05; y < H; y += H * 0.09)
+          maCirc(g, x + (R() - 0.5) * W * 0.02, y, W * (0.035 + R() * 0.02), maTone(c, (R() - 0.5) * 0.2), {
+            ink: false
+          });
+      }
+    }
+  },
+  {
+    id: "espantalho",
+    nome: "Espantalho",
+    cat: "Rural",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maLine(
+        g,
+        [
+          [W * 0.1, H * 0.42],
+          [W * 0.9, H * 0.42]
+        ],
+        "#5a3e28",
+        maLW(1.4)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.1],
+          [W * 0.5, H * 0.95]
+        ],
+        "#5a3e28",
+        maLW(1.4)
+      );
+      maBox(g, W * 0.3, H * 0.34, W * 0.4, H * 0.36, 3, "#6a5a3a");
+      maCirc(g, W * 0.5, H * 0.24, W * 0.13, "#c8a86a");
+      maEll(g, W * 0.5, H * 0.2, W * 0.22, H * 0.07, "#8a6a2a");
+      g.fillStyle = "#111";
+      g.fillRect(W * 0.45, H * 0.23, 2, 2);
+      g.fillRect(W * 0.53, H * 0.23, 2, 2);
+    }
+  },
+  {
+    id: "cocho",
+    nome: "Cocho (bebedouro de gado)",
+    cat: "Rural",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 3, "#5a3e28");
+      maBox(g, W * 0.04, H * 0.2, W * 0.92, H * 0.6, 2, "#3a5a5a", { k: 0.2 });
+    }
+  },
+  /* ---------- PORTO E PRAIA ---------- */
+  {
+    id: "boia",
+    nome: "Boia",
+    cat: "Porto e praia",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H) => {
+      g.lineWidth = W * 0.22;
+      for (let i = 0; i < 4; i++) {
+        g.strokeStyle = i % 2 ? "#e8e2d0" : "#c0392b";
+        g.beginPath();
+        g.arc(W / 2, H / 2, W * 0.3, (i * Math.PI) / 2, ((i + 1) * Math.PI) / 2);
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "rede",
+    nome: "Rede de pesca",
+    cat: "Porto e praia",
+    w: 2,
+    h: 2,
+    z: 0,
+    draw: (g, W, H, R) => {
+      g.strokeStyle = "rgba(200,190,160,.55)";
+      g.lineWidth = 1;
+      for (let i = 0; i <= 10; i++) {
+        g.beginPath();
+        g.moveTo(W * 0.05 + (W * 0.9 * i) / 10, H * 0.1 + R() * 4);
+        g.lineTo(W * 0.1 + (W * 0.8 * i) / 10, H * 0.9);
+        g.stroke();
+        g.beginPath();
+        g.moveTo(W * 0.08, H * 0.1 + (H * 0.8 * i) / 10);
+        g.lineTo(W * 0.92, H * 0.12 + (H * 0.8 * i) / 10);
+        g.stroke();
+      }
+      [0.2, 0.5, 0.8].forEach(x => maCirc(g, W * x, H * 0.1, W * 0.04, "#e07a2a", { ink: false }));
+    }
+  },
+  {
+    id: "guardasol",
+    nome: "Guarda-sol",
+    cat: "Porto e praia",
+    w: 2,
+    h: 2,
+    cores: ["#c0392b", "#2a6a9a", "#e8d24a", "#3f9a4a"],
+    draw: (g, W, H, R, c) => {
+      for (let i = 0; i < 8; i++) {
+        g.beginPath();
+        g.moveTo(W / 2, H / 2);
+        g.arc(W / 2, H / 2, W * 0.46, (i * Math.PI) / 4, ((i + 1) * Math.PI) / 4);
+        g.closePath();
+        g.fillStyle = i % 2 ? "#e8e2d0" : c;
+        g.fill();
+      }
+      g.lineWidth = maLW();
+      g.strokeStyle = MA_INK;
+      g.beginPath();
+      g.arc(W / 2, H / 2, W * 0.46, 0, Math.PI * 2);
+      g.stroke();
+      maCirc(g, W / 2, H / 2, W * 0.03, "#555", { ink: false });
+    }
+  },
+  {
+    id: "cadeirapraia",
+    nome: "Cadeira de praia",
+    cat: "Porto e praia",
+    w: 0.5,
+    h: 1,
+    cores: ["#2a6a9a", "#c0392b", "#e8d24a"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.08, H * 0.04, W * 0.84, H * 0.92, 2, "#c8ccd0");
+      for (let y = H * 0.1; y < H * 0.9; y += H * 0.16)
+        maBox(g, W * 0.14, y, W * 0.72, H * 0.08, 0, c, { ink: false });
+    }
+  },
+  {
+    id: "cabeco",
+    nome: "Poste de amarração",
+    cat: "Porto e praia",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.38, "#2a2c30", { k: 0.3 });
+      g.strokeStyle = "#c8a86a";
+      g.lineWidth = maLW(0.8);
+      g.beginPath();
+      g.arc(W / 2, H / 2, W * 0.44, 0.5, 2.6);
+      g.stroke();
+    }
+  },
+  {
+    id: "ancora",
+    nome: "Âncora",
+    cat: "Porto e praia",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      const c = "#4a4e54";
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.15],
+          [W * 0.5, H * 0.85]
+        ],
+        c,
+        maLW(2)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.32, H * 0.28],
+          [W * 0.68, H * 0.28]
+        ],
+        c,
+        maLW(1.6)
+      );
+      g.strokeStyle = c;
+      g.lineWidth = maLW(2);
+      g.beginPath();
+      g.arc(W * 0.5, H * 0.55, W * 0.3, 0.3, Math.PI - 0.3);
+      g.stroke();
+      maCirc(g, W * 0.5, H * 0.12, W * 0.06, c, { ink: false });
+    }
+  },
+  /* ---------- PRÉDIO ---------- */
+  {
+    id: "escadasobe",
+    nome: "Escada (subindo)",
+    cat: "Prédio",
+    w: 2,
+    h: 3,
+    z: 0,
+    cores: ["#8a8478", "#5a5e64", "#6a4630"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, 0, W, H, 2, "#2a2c30", { k: 0.05 });
+      const n = 9;
+      for (let i = 0; i < n; i++)
+        maBox(g, W * 0.06, (H * i) / n + 1, W * 0.88, H / n - 2, 1, maTone(c, 0.05 * (n - i) - 0.2), {
+          k: 0.08,
+          lw: 0.6
+        });
+      g.fillStyle = "rgba(201,162,39,.8)";
+      g.beginPath();
+      g.moveTo(W * 0.5, H * 0.22);
+      g.lineTo(W * 0.32, H * 0.42);
+      g.lineTo(W * 0.68, H * 0.42);
+      g.closePath();
+      g.fill();
+      maLine(
+        g,
+        [
+          [W * 0.04, H * 0.02],
+          [W * 0.04, H * 0.98]
+        ],
+        "#2a2c30",
+        maLW(1.2)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.96, H * 0.02],
+          [W * 0.96, H * 0.98]
+        ],
+        "#2a2c30",
+        maLW(1.2)
+      );
+    }
+  },
+  {
+    id: "elevadorap",
+    nome: "Elevador de prédio",
+    cat: "Prédio",
+    w: 2,
+    h: 2,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 2, "#3a3e44");
+      maBox(g, W * 0.08, H * 0.08, W * 0.84, H * 0.8, 1, "#5a5e64", { k: 0.1 });
+      maBox(g, W * 0.12, H * 0.86, W * 0.37, H * 0.12, 1, "#a8aeb4");
+      maBox(g, W * 0.51, H * 0.86, W * 0.37, H * 0.12, 1, "#a8aeb4");
+      maBox(g, W * 0.92, H * 0.55, W * 0.06, H * 0.18, 1, "#22262a");
+      maCirc(g, W * 0.95, H * 0.6, W * 0.015, "#e0b030", { ink: false });
+    }
+  },
+  {
+    id: "capacho",
+    nome: "Capacho",
+    cat: "Prédio",
+    w: 1,
+    h: 0.5,
+    z: 0,
+    cores: ["#5a3e28", "#3a3e44", "#6e1c22"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.05, H * 0.1, W * 0.9, H * 0.8, 2, c, { k: 0.08, lw: 0.5 });
+      g.strokeStyle = "rgba(0,0,0,.25)";
+      for (let x = W * 0.1; x < W * 0.9; x += 3) {
+        g.beginPath();
+        g.moveTo(x, H * 0.15);
+        g.lineTo(x, H * 0.85);
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "correio",
+    nome: "Caixas de correio",
+    cat: "Prédio",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H) => {
+      for (let i = 0; i < 8; i++) {
+        maBox(g, (W * i) / 8, 0, W / 8, H, 1, "#8a7a4a", { k: 0.15, lw: 0.5 });
+        g.fillStyle = "rgba(0,0,0,.5)";
+        g.fillRect((W * i) / 8 + W * 0.02, H * 0.4, W * 0.08, 1.5);
+      }
+    }
+  },
+  {
+    id: "extintor",
+    nome: "Extintor",
+    cat: "Prédio",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maCirc(g, W / 2, H / 2, W * 0.28, "#c0392b", { k: 0.3 });
+      maCirc(g, W / 2, H / 2, W * 0.08, "#222", { ink: false });
+    }
+  },
+  /* ---------- HOSPITAL ---------- */
+  {
+    id: "gavetas",
+    nome: "Gavetas do necrotério",
+    cat: "Hospital e laboratório",
+    w: 3,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, 0, 0, W, H, 1, "#6a7078");
+      for (let i = 0; i < 3; i++)
+        for (let j = 0; j < 2; j++) {
+          maBox(g, W * (0.02 + i * 0.33), H * (0.06 + j * 0.47), W * 0.3, H * 0.42, 1, "#a8aeb4", {
+            k: 0.15,
+            lw: 0.6
+          });
+          maBox(g, W * (0.14 + i * 0.33), H * (0.22 + j * 0.47), W * 0.06, H * 0.1, 1, "#3a3e44", {
+            ink: false
+          });
+        }
+    }
+  },
+  {
+    id: "autopsia",
+    nome: "Mesa de autópsia",
+    cat: "Hospital e laboratório",
+    w: 1,
+    h: 2,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.06, H * 0.03, W * 0.88, H * 0.94, 3, "#9aa0a6", { k: 0.2 });
+      maBox(g, W * 0.14, H * 0.08, W * 0.72, H * 0.84, 2, "#b8bec4", { k: 0.1 });
+      maCirc(g, W * 0.5, H * 0.88, W * 0.06, "#2a2c30", { ink: false });
+      g.strokeStyle = "rgba(0,0,0,.2)";
+      for (let y = H * 0.15; y < H * 0.85; y += H * 0.06) {
+        g.beginPath();
+        g.moveTo(W * 0.2, y);
+        g.lineTo(W * 0.8, y);
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "esperacad",
+    nome: "Cadeiras de espera",
+    cat: "Hospital e laboratório",
+    w: 3,
+    h: 0.5,
+    cores: ["#2a4a6a", "#3a3e44", "#6e1c22"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, H * 0.7, W, H * 0.12, 1, "#5a5e64", { lw: 0.5 });
+      for (let i = 0; i < 5; i++)
+        maBox(g, W * (0.02 + i * 0.196), H * 0.08, W * 0.17, H * 0.78, 2, c, { k: 0.18 });
+    }
+  },
+  {
+    id: "cortina",
+    nome: "Cortina hospitalar",
+    cat: "Hospital e laboratório",
+    w: 2,
+    h: 0.5,
+    draw: (g, W, H) => {
+      g.strokeStyle = "#6a9aa8";
+      g.lineWidth = H * 0.35;
+      g.lineCap = "round";
+      g.beginPath();
+      for (let x = 0; x <= W; x += W * 0.05) g.lineTo(x, H * 0.5 + Math.sin(x / (W * 0.05)) * H * 0.18);
+      g.stroke();
+    }
+  },
+  {
+    id: "monitorcard",
+    nome: "Monitor cardíaco",
+    cat: "Hospital e laboratório",
+    w: 0.5,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.05, H * 0.15, W * 0.9, H * 0.7, 2, "#2a2e34");
+      maLine(
+        g,
+        [
+          [W * 0.12, H * 0.5],
+          [W * 0.35, H * 0.5],
+          [W * 0.45, H * 0.25],
+          [W * 0.55, H * 0.72],
+          [W * 0.62, H * 0.5],
+          [W * 0.88, H * 0.5]
+        ],
+        "#3fbf5f",
+        maLW(0.6)
+      );
+    }
+  },
+  /* ---------- DELEGACIA ---------- */
+  {
+    id: "balcaodp",
+    nome: "Balcão de atendimento",
+    cat: "Delegacia",
+    w: 3,
+    h: 1,
+    cores: MC.mad,
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, H * 0.1, W, H * 0.8, 3, c, { k: 0.18 });
+      maBox(g, W * 0.02, H * 0.14, W * 0.96, H * 0.3, 2, "rgba(170,210,225,.55)", { k: 0.1, lw: 0.6 });
+      mPaper(g, W * 0.2, H * 0.62, H * 0.32, R);
+      mPaper(g, W * 0.62, H * 0.6, H * 0.3, R);
+      maCirc(g, W * 0.85, H * 0.62, H * 0.1, "#c9a227");
+      maBox(g, W * 0.38, H * 0.5, W * 0.14, H * 0.3, 2, "#2a2c30");
+    }
+  },
+  {
+    id: "beliche",
+    nome: "Cama de cela",
+    cat: "Delegacia",
+    w: 1,
+    h: 2,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.06, H * 0.03, W * 0.88, H * 0.94, 2, "#3a3e44");
+      maBox(g, W * 0.12, H * 0.07, W * 0.76, H * 0.86, 2, "#7a7a70", { k: 0.12 });
+      maBox(g, W * 0.18, H * 0.1, W * 0.64, H * 0.14, 3, "#a8a69a", { k: 0.1 });
+      maLine(
+        g,
+        [
+          [W * 0.14, H * 0.6],
+          [W * 0.86, H * 0.62]
+        ],
+        "rgba(0,0,0,.35)",
+        maLW(1)
+      );
+    }
+  },
+  {
+    id: "evidencias",
+    nome: "Estante de evidências",
+    cat: "Delegacia",
+    w: 2,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, 0, H * 0.1, W, H * 0.8, 2, "#4a5058", { k: 0.12 });
+      for (let i = 0; i < 6; i++) {
+        const x = W * (0.04 + i * 0.16);
+        if (R() < 0.5) maBox(g, x, H * 0.2, W * 0.13, H * 0.6, 2, "#9a7a4a", { k: 0.15, lw: 0.6 });
+        else maBox(g, x, H * 0.25, W * 0.12, H * 0.5, 4, "rgba(220,225,230,.75)", { k: 0.08, lw: 0.6 });
+        maBox(g, x + W * 0.02, H * 0.32, W * 0.06, H * 0.12, 1, "#c03030", { ink: false });
+      }
+    }
+  },
+  {
+    id: "mesainterr",
+    nome: "Mesa de interrogatório",
+    cat: "Delegacia",
+    w: 2,
+    h: 1,
+    luz: { r: 2, c: "#ffe2a8" },
+    draw: (g, W, H, R) => {
+      maBox(g, W * 0.05, H * 0.08, W * 0.9, H * 0.84, 2, "#6a7078", { k: 0.15 });
+      mPaper(g, W * 0.3, H * 0.5, H * 0.4, R);
+      maCirc(g, W * 0.7, H * 0.45, H * 0.12, "#2a2c30");
+      maCirc(g, W * 0.7, H * 0.45, H * 0.05, "#fff3c0", { ink: false });
+    }
+  },
+  /* ---------- MANSÃO E HOTEL ---------- */
+  {
+    id: "dossel",
+    nome: "Cama de dossel",
+    cat: "Mansão e hotel",
+    w: 2,
+    h: 3,
+    cores: ["#5e1f2a", "#2f4a3a", "#3f2b5c", "#7a6a52"],
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.04, H * 0.02, W * 0.92, H * 0.96, W * 0.04, "#2d211a");
+      maBox(g, W * 0.1, H * 0.06, W * 0.8, H * 0.88, W * 0.04, "#e4dccb", { k: 0.1 });
+      mCushion(g, W * 0.15, H * 0.09, W * 0.32, H * 0.1, "#efe8da");
+      mCushion(g, W * 0.53, H * 0.09, W * 0.32, H * 0.1, "#efe8da");
+      maBox(g, W * 0.1, H * 0.3, W * 0.8, H * 0.64, W * 0.04, c, { k: 0.22 });
+      // cortinas do dossel nas laterais e colunas
+      g.fillStyle = maA(maTone(c, -0.15), 0.85);
+      g.fillRect(W * 0.02, H * 0.02, W * 0.08, H * 0.96);
+      g.fillRect(W * 0.9, H * 0.02, W * 0.08, H * 0.96);
+      [
+        [0.06, 0.03],
+        [0.94, 0.03],
+        [0.06, 0.97],
+        [0.94, 0.97]
+      ].forEach(([a, b]) => maCirc(g, W * a, H * b, W * 0.06, "#4a3424"));
+    }
+  },
+  {
+    id: "armadura",
+    nome: "Armadura antiga",
+    cat: "Mansão e hotel",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maCirc(g, W * 0.5, H * 0.5, W * 0.42, "#2d211a");
+      maEll(g, W * 0.5, H * 0.55, W * 0.3, H * 0.2, "#8a9098", { k: 0.3 });
+      maCirc(g, W * 0.5, H * 0.45, W * 0.15, "#a8aeb6", { k: 0.35 });
+      maLine(
+        g,
+        [
+          [W * 0.42, H * 0.45],
+          [W * 0.58, H * 0.45]
+        ],
+        "#1a1c20",
+        maLW(1)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.85, H * 0.1],
+          [W * 0.85, H * 0.9]
+        ],
+        "#6b7078",
+        maLW(1.4)
+      );
+    }
+  },
+  {
+    id: "relogio",
+    nome: "Relógio de pêndulo",
+    cat: "Mansão e hotel",
+    w: 1,
+    h: 0.5,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.15, 0, W * 0.7, H, 2, "#3e2b1f", { k: 0.2 });
+      maCirc(g, W * 0.5, H * 0.45, H * 0.3, "#e8dcc0");
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.45],
+          [W * 0.5, H * 0.25]
+        ],
+        "#1a1a1a",
+        maLW(0.6)
+      );
+      maLine(
+        g,
+        [
+          [W * 0.5, H * 0.45],
+          [W * 0.62, H * 0.5]
+        ],
+        "#1a1a1a",
+        maLW(0.6)
+      );
+    }
+  },
+  {
+    id: "chafariz",
+    nome: "Chafariz",
+    cat: "Mansão e hotel",
+    w: 3,
+    h: 3,
+    draw: (g, W, H, R) => {
+      maCirc(g, W / 2, H / 2, W * 0.47, "#8a8478", { k: 0.2 });
+      maCirc(g, W / 2, H / 2, W * 0.4, "#2e4a52", { k: 0.25 });
+      g.strokeStyle = "rgba(200,230,235,.3)";
+      g.lineWidth = maLW(0.8);
+      for (let i = 1; i < 4; i++) {
+        g.beginPath();
+        g.arc(W / 2, H / 2, W * 0.08 * i + W * 0.05, 0, 7);
+        g.stroke();
+      }
+      maCirc(g, W / 2, H / 2, W * 0.1, "#9a948a", { k: 0.3 });
+      maSpeck(g, W * 0.15, H * 0.15, W * 0.7, H * 0.7, R, 6, ["rgba(60,90,40,.6)"], W * 0.01, W * 0.025);
+    }
+  },
+  {
+    id: "vending",
+    nome: "Máquina de refrigerante",
+    cat: "Mansão e hotel",
+    w: 1,
+    h: 1,
+    cores: ["#a01e24", "#1f3f8a", "#2a2c30"],
+    luz: { r: 1.6, c: "#cfe8ff" },
+    draw: (g, W, H, R, c) => {
+      maBox(g, W * 0.06, H * 0.12, W * 0.88, H * 0.76, 3, c, { k: 0.2 });
+      maBox(g, W * 0.12, H * 0.2, W * 0.5, H * 0.5, 2, "rgba(200,230,255,.8)", { k: 0.05, lw: 0.6 });
+      for (let i = 0; i < 4; i++)
+        maBox(g, W * 0.7, H * (0.22 + i * 0.1), W * 0.14, H * 0.06, 1, "#e0e0e0", { ink: false });
+    }
+  },
+  {
+    id: "neon",
+    nome: "Letreiro neon",
+    cat: "Mansão e hotel",
+    w: 3,
+    h: 1,
+    z: 2,
+    cores: ["#ff3a8a", "#3ae6ff", "#ff4030"],
+    luz: { r: 3, c: "#ff3a8a" },
+    draw: (g, W, H, R, c) => {
+      maBox(g, 0, H * 0.15, W, H * 0.7, 4, "#15121a", { k: 0.05 });
+      g.save();
+      g.font = `bold ${Math.round(H * 0.42)}px sans-serif`;
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.shadowColor = c;
+      g.shadowBlur = H * 0.25;
+      g.fillStyle = c;
+      g.fillText("MOTEL", W / 2, H / 2 + 1);
+      g.restore();
+    }
+  },
+  {
+    id: "carrinholimp",
+    nome: "Carrinho de camareira",
+    cat: "Mansão e hotel",
+    w: 1,
+    h: 1,
+    draw: (g, W, H, R) => {
+      maBox(g, W * 0.1, H * 0.2, W * 0.8, H * 0.6, 2, "#5a6068");
+      maBox(g, W * 0.14, H * 0.25, W * 0.34, H * 0.5, 2, "#e8e8e0", { k: 0.08, lw: 0.6 });
+      maBox(g, W * 0.52, H * 0.25, W * 0.34, H * 0.5, 2, "#2b2b30", { k: 0.1, lw: 0.6 });
+      maCirc(g, W * 0.7, H * 0.4, W * 0.06, "#3a7ac8");
+    }
+  },
+  {
+    id: "lavadora",
+    nome: "Máquina de lavar",
+    cat: "Mansão e hotel",
+    w: 1,
+    h: 1,
+    draw: (g, W, H) => {
+      maBox(g, W * 0.08, H * 0.08, W * 0.84, H * 0.84, 3, "#e4e4de", { k: 0.12 });
+      maCirc(g, W * 0.5, H * 0.55, W * 0.28, "#5a6068");
+      maCirc(g, W * 0.5, H * 0.55, W * 0.2, "#9ab4c4", { k: 0.3 });
+      maBox(g, W * 0.15, H * 0.13, W * 0.4, H * 0.08, 1, "#3a3e44", { ink: false });
+    }
+  },
+  /* ---------- PARANORMAL (Outro Lado) ---------- */
+  {
+    id: "monolito",
+    nome: "Monólito",
+    cat: "Paranormal",
+    w: 1,
+    h: 1,
+    luz: { r: 1.8, c: "#c9a227" },
+    draw: (g, W, H) => {
+      g.beginPath();
+      g.moveTo(W * 0.5, H * 0.05);
+      g.lineTo(W * 0.85, H * 0.4);
+      g.lineTo(W * 0.68, H * 0.95);
+      g.lineTo(W * 0.32, H * 0.95);
+      g.lineTo(W * 0.15, H * 0.4);
+      g.closePath();
+      g.fillStyle = maGrad(g, 0, 0, W, H, "#16151a", 0.3);
+      g.fill();
+      g.lineWidth = maLW();
+      g.strokeStyle = MA_INK;
+      g.stroke();
+      g.strokeStyle = "rgba(230,180,60,.85)";
+      g.lineWidth = maLW(0.8);
+      g.beginPath();
+      g.arc(W * 0.5, H * 0.52, W * 0.13, 0, 7);
+      g.moveTo(W * 0.5, H * 0.32);
+      g.lineTo(W * 0.5, H * 0.75);
+      g.moveTo(W * 0.36, H * 0.42);
+      g.lineTo(W * 0.64, H * 0.62);
+      g.stroke();
+    }
+  },
+  {
+    id: "olhos",
+    nome: "Olhos",
+    cat: "Paranormal",
+    w: 1,
+    h: 1,
+    draw: (g, W, H, R) => {
+      for (let i = 0; i < 6; i++) {
+        const x = W * (0.2 + R() * 0.6),
+          y = H * (0.2 + R() * 0.6),
+          r = W * (0.06 + R() * 0.07);
+        maEll(g, x, y, r * 1.4, r, "#e8e0d0", { k: 0.1 });
+        maCirc(g, x + (R() - 0.5) * r * 0.5, y, r * 0.55, maPick(["#7a1018", "#c9a227", "#5a2a8a"], R), {
+          ink: false
+        });
+        maCirc(g, x, y, r * 0.22, "#050505", { ink: false });
+      }
+    }
+  },
+  {
+    id: "portal",
+    nome: "Portal para o Outro Lado",
+    cat: "Paranormal",
+    w: 2,
+    h: 2,
+    z: 0,
+    luz: { r: 3.5, c: "#a24aff" },
+    draw: (g, W, H, R) => {
+      const gr = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.48);
+      gr.addColorStop(0, "#000");
+      gr.addColorStop(0.55, "#1a0830");
+      gr.addColorStop(0.85, "rgba(160,70,255,.75)");
+      gr.addColorStop(1, "rgba(160,70,255,0)");
+      g.fillStyle = gr;
+      g.beginPath();
+      g.arc(W / 2, H / 2, W * 0.48, 0, 7);
+      g.fill();
+      g.strokeStyle = "rgba(220,180,255,.5)";
+      g.lineWidth = maLW(0.8);
+      for (let k = 0; k < 3; k++) {
+        g.beginPath();
+        for (let a = 0; a < 9; a += 0.2) {
+          const r = W * (0.04 + a * 0.042);
+          const t = a + k * 2.1;
+          g[a ? "lineTo" : "moveTo"](W / 2 + Math.cos(t) * r, H / 2 + Math.sin(t) * r);
+        }
+        g.stroke();
+      }
+    }
+  },
+  {
+    id: "raizes",
+    nome: "Veias de Sangue",
+    cat: "Paranormal",
+    w: 2,
+    h: 2,
+    z: 0,
+    draw: (g, W, H, R) => {
+      g.lineCap = "round";
+      for (let i = 0; i < 7; i++) {
+        let x = W / 2,
+          y = H / 2,
+          a = R() * 6.28;
+        g.strokeStyle = maPick(["#6a1520", "#8a1a26", "#4d0d15"], R);
+        g.lineWidth = maLW(1.6 - i * 0.12);
+        g.beginPath();
+        g.moveTo(x, y);
+        for (let k = 0; k < 6; k++) {
+          a += (R() - 0.5) * 1.2;
+          x += Math.cos(a) * W * 0.08;
+          y += Math.sin(a) * H * 0.08;
+          g.lineTo(x, y);
+        }
+        g.stroke();
+      }
+      maCirc(g, W / 2, H / 2, W * 0.09, "#7a1a26", { k: 0.3 });
+    }
   }
 ];
 const MA_OBJ = {};
@@ -2970,6 +4858,17 @@ const MA_CATS = [
   "Natureza",
   "Industrial",
   "Paranormal",
+  "Aeroporto e bunker",
+  "Biblioteca",
+  "Cemitério e igreja",
+  "Comércio",
+  "Transporte",
+  "Escola",
+  "Rural",
+  "Porto e praia",
+  "Prédio",
+  "Delegacia",
+  "Mansão e hotel",
   "Marcas",
   "Luzes"
 ];

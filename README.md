@@ -44,6 +44,7 @@ python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 | `firestore.rules` | Quem pode ler e escrever o quê no Firebase |
 | `data/` | Material de origem usado para montar a lista de rituais (o site não carrega) |
 | `assets/` | Logos em PNG e WebP (para redes sociais e divulgação; o site usa o logo em SVG) |
+| `audio/` | Músicas livres (MP3) da Trilha sonora, sem anúncio. Os nomes dos arquivos estão em `TRILHAS_LIVRES` (`5d-extra.js`). Músicas de Kevin MacLeod (incompetech.com), licença CC BY 4.0 |
 
 ## Os arquivos de `src/`, na ordem em que entram no site
 
@@ -57,11 +58,11 @@ python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 | `4b-mapa.js` | Tabuleiro: zoom, arrastar, tokens, névoa, réguas, desenhos e pings |
 | `5a-ficha.js` | A ficha do agente inteira (abas, cálculos, inventário, rituais, ataques) |
 | `5c-resto.js` | Rolagens, combate, escudo do mestre, regras e homebrew |
-| `5d-extra.js` | Condições, membros da mesa, backup da mesa e de fichas, trilha sonora, NPCs |
-| `5e-mapa-arte.js` | Desenho dos pisos e paredes do criador de mapas |
-| `5f-mapa-objetos.js` | Os objetos e decorações do criador de mapas |
+| `5d-extra.js` | Condições, membros da mesa, backup da mesa e de fichas, trilha sonora (com as músicas livres da pasta `audio/`), NPCs |
+| `5e-mapa-arte.js` | Desenho dos pisos, paredes e portas do criador de mapas (inclui pisos e paredes dos elementos: Sangue, Morte, Conhecimento, Energia) |
+| `5f-mapa-objetos.js` | Os objetos e decorações do criador de mapas (inclui Aeroporto e bunker, Biblioteca, Cemitério e igreja, Comércio, Transporte, Escola, Rural, Porto e praia, Prédio, Hospital e laboratório, Delegacia, Mansão e hotel) |
 | `5g-mapa-editor.js` | O criador de mapas (ferramentas, salvar, usar como cena) |
-| `5h-mapa-modelos.js` | Mapas prontos (base da Ordem, rua, casa, clareira...) |
+| `5h-mapa-modelos.js` | Mapas prontos (base sob a biblioteca, bunker do aeroporto, cemitério, paróquia, mercado, metrô, escola, fazenda, porto, prédio de apartamentos, hospital, delegacia, mansão, motel, Outro Lado, rua, casa, clareira...) |
 | `5i-documentos.js` | Documentos com tarjas: modelos, editor, entregar, revelar |
 | `5j-ajuda.js` | Tela "Como usar o site" |
 | `5k-npcs.js` | NPCs do mestre com ficha rápida e modelos prontos |
@@ -73,6 +74,7 @@ python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 | `5q-sobrevivente.js` | Classe Sobrevivente, aba de suplementos nas regras e aviso de versão nova |
 | `5r-docs-passar.js` | Documentos entregues: passar para outro jogador, mudar de dono, recolher |
 | `5s-docs-mapa.js` | Documentos no mapa, foto de NPC no token, copiar cena ou mapa para outra mesa |
+| `5t-portas-andares.js` | Portas que abrem, fecham e trancam na cena (e revelam o local do outro lado) e passagens entre cenas (andares ligados) |
 | `7-end.html` | Fecha a página e chama `boot()` |
 
 Cada `.js` é um ou mais blocos `<script>` independentes. Tudo fica no escopo global: uma função de um arquivo
@@ -85,7 +87,7 @@ Os recursos mais novos chamam uns aos outros **pelo nome, de forma explícita**.
 - `documentosHTML()` (em `5i`) monta o painel juntando `documentosBaseHTML()`, `docsPassarHTML()` (`5r`) e
   `docsMapaHTML()` (`5s`).
 - `escudoHTML()` (em `5c`) chama `escudoCapaHTML()` (`5p`) e `escudoApagarHTML()` (`5n`).
-- `renderBoard()` (em `4b`) segura o redesenho enquanto um token é arrastado e agenda `agendarSyncFotoNpc()` (`5s`).
+- `renderBoard()` (em `4b`) desenha as portas e passagens com `renderPortas()` e `renderPassagens()` (`5t`), segura o redesenho enquanto um token é arrastado e agenda `agendarSyncFotoNpc()` (`5s`).
 
 Alguns módulos ainda **estendem** uma função de outro arquivo, guardando a original e trocando por uma versão
 que faz algo a mais:
@@ -127,7 +129,7 @@ Tudo de uma mesa fica em `mesas/<código>/...`. As regras completas estão em `f
 | `.../membros`, `.../bloqueados`, `.../entrada` | Quem está na mesa, quem foi bloqueado, pedidos de entrada | Ver regras |
 | `.../fichas` | Fichas dos agentes | Todos leem; cada um edita a sua; o mestre edita todas |
 | `.../npcs` | NPCs e criaturas | O mestre; jogadores só leem os visíveis |
-| `.../cenas`, `.../cenaImg`, `.../nevoa` | Cenas, imagens e névoa | O mestre; jogadores só a cena exibida |
+| `.../cenas`, `.../cenaImg`, `.../nevoa` | Cenas (com portas e passagens), imagens e névoa | O mestre; jogadores só a cena exibida |
 | `.../pos` | Posição dos tokens | O mestre move todos; cada jogador só o próprio |
 | `.../tokens` | Biblioteca de tokens | Todos leem; cada um edita os seus |
 | `.../docs` | Biblioteca de documentos com as tarjas originais | Só o mestre |

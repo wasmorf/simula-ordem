@@ -975,6 +975,13 @@ function renderRail() {
           `<button data-tool="${k}" aria-pressed="${S.tool === k}">${ic}<span>${n}</span></button>`
       )
       .join("") + `<button id="toLobby2">${I.sair}<span>Mesas</span></button>`;
+  {
+    // marca quando ainda há ferramentas escondidas à direita (o CSS mostra uma sombra)
+    const nav = $("#bottomnav");
+    const marcar = () => nav.classList.toggle("mais", nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
+    nav.onscroll = marcar;
+    requestAnimationFrame(marcar);
+  }
   $$("[data-tool]").forEach(
     b => (b.onclick = () => openTool(S.tool === b.dataset.tool ? null : b.dataset.tool))
   );
@@ -1076,7 +1083,7 @@ function cenasHTML() {
       const isL = c.id === live;
       return `<div class="scene ${isL ? "live" : ""}">${c.thumb ? `<img class="th" src="${c.thumb}" alt="">` : `<div class="th"></div>`}
     <div class="stack" style="gap:4px;min-width:0"><div class="st">${isL ? "Exibindo para jogadores" : "Oculta para jogadores"}${S.viewSid === c.id ? " · você está vendo" : ""}</div><div class="nm">${esc(c.nome)}</div>
-    <div class="row">${isL ? `<button class="btn sm" data-stop>Parar de exibir</button>` : `<button class="btn sm primary" data-live="${esc(c.id)}">Exibir para jogadores</button>`}${S.viewSid !== c.id ? `<button class="btn sm" data-view="${esc(c.id)}">Ver</button>` : ""}${c.mapaId ? `<button class="btn sm ghost" data-emapa="${esc(c.mapaId)}">Editar mapa</button>` : ""}<button class="btn sm ghost" data-edit="${esc(c.id)}">Editar</button><button class="btn sm ghost" data-scopy="${esc(c.id)}" title="Copiar esta cena para outra mesa sua">Copiar p/ outra mesa</button><button class="btn sm ghost" data-del="${esc(c.id)}" aria-label="Apagar cena">✕</button></div></div></div>`;
+    <div class="row">${isL ? `<button class="btn sm" data-stop>Parar de exibir</button>` : `<button class="btn sm primary" data-live="${esc(c.id)}">Exibir para jogadores</button>`}${S.viewSid !== c.id ? `<button class="btn sm" data-view="${esc(c.id)}">Ver</button>` : ""}${c.mapaId ? `<button class="btn sm ghost" data-emapa="${esc(c.mapaId)}">Editar mapa</button>` : ""}<button class="btn sm ghost" data-edit="${esc(c.id)}">Editar</button><button class="btn sm ghost" data-scopy="${esc(c.id)}" title="Copiar esta cena para outra mesa sua">Copiar p/ outra mesa</button><button class="btn sm ghost" data-spass="${esc(c.id)}" title="Escadas e elevadores que levam o grupo para outra cena">Passagens${(c.passagens || []).length ? ` (${c.passagens.length})` : ""}</button><button class="btn sm ghost" data-del="${esc(c.id)}" aria-label="Apagar cena">✕</button></div></div></div>`;
     })
     .join("");
   return `<div class="row" style="flex-wrap:nowrap"><button class="btn primary" style="flex:1" id="novaCena">Cena com imagem</button><button class="btn primary" style="flex:1" id="btnCriarMapa2">Criar mapa</button></div>
@@ -1088,6 +1095,7 @@ function bindCenas() {
   const n = $("#novaCena");
   if (n) n.onclick = novaCena;
   $$("[data-scopy]").forEach(b => (b.onclick = () => copiarCena(b.dataset.scopy))); // 5s-docs-mapa.js
+  $$("[data-spass]").forEach(b => (b.onclick = () => passagensModal(b.dataset.spass))); // 5t-portas-andares.js
   const cm = $("#btnCriarMapa2");
   if (cm) cm.onclick = escolherModelo;
   const mb = $("#mapasBox");

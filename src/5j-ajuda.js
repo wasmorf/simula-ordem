@@ -37,8 +37,16 @@ const AJUDA = {
         "Na barrinha do mapa: <b>régua</b> (mede em metros), <b>ping</b> (chama a atenção de todos para um ponto), <b>desenho</b> e <b>borracha</b>. Atalhos no computador: V, R, P, D, E."
       ],
       [
+        "Portas, cadeados e escadas",
+        "As portas do mapa abrem e fecham na hora, mas quem mexe nelas é o mestre: diga o que seu agente faz. Quando uma porta abre, a sala do outro lado aparece. Uma porta com <b>cadeado</b> está trancada; toque nela para ver e combine com o mestre um teste (Crime para a fechadura, Força para arrombar). Um botão roxo com uma escadinha é uma <b>passagem</b> para outro lugar (outro andar, a rua...): o mestre usa e leva o grupo junto, com os tokens."
+      ],
+      [
         "Documentos e pistas",
-        `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois.`
+        `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer como pinos no mapa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
+      ],
+      [
+        "Guardar e compartilhar personagens",
+        "Na página inicial, em <b>Meus personagens</b>, toque em <b>Baixar</b> para guardar um arquivo do personagem. Mande esse arquivo para um amigo e ele usa <b>Importar personagem</b>."
       ]
     ]
   },
@@ -57,7 +65,15 @@ const AJUDA = {
       ],
       [
         "Criador de mapas",
-        "Comece de um mapa pronto (Base de Operações, casa, rua, floresta…) ou em branco. Ferramentas: <b>Sala</b> (arraste um retângulo e já sai com piso e paredes), <b>Piso</b>, <b>Balde</b>, <b>Parede</b>, <b>Porta</b>, <b>Objetos</b> (tem busca), <b>Texto</b> e <b>Borracha</b>. Ctrl+Z desfaz; R gira; Delete apaga. No fim, <b>Usar como cena</b>."
+        "Comece de um mapa pronto (Base de Operações, bunker, casa, rua, floresta, cemitério, escola, hospital, delegacia, mansão, motel, Outro Lado…) ou em branco. Ferramentas: <b>Sala</b> (arraste um retângulo e já sai com piso e paredes), <b>Piso</b>, <b>Balde</b>, <b>Parede</b>, <b>Porta</b>, <b>Objetos</b> (tem busca), <b>Texto</b> e <b>Borracha</b>. Ctrl+Z desfaz; R gira; Delete apaga. No fim, <b>Usar como cena</b>. Em Cenas, <b>Copiar p/ outra mesa</b> leva a cena ou o mapa para outra mesa sua."
+      ],
+      [
+        "Portas que abrem e fecham",
+        "As portas que você põe no criador viram portas de verdade na mesa (em cenas feitas ou atualizadas com <b>Usar como cena</b>). Toque numa porta para abrir ou fechar: ao abrir, o local escondido do outro lado aparece para os jogadores. <b>Segure o dedo</b> (ou clique com o botão direito) numa porta para trancar: os jogadores veem um cadeado, e você toca nela para destrancar quando alguém passar no teste. A <b>Porta trancada</b> do criador já começa assim. A <b>passagem secreta</b> parece parede para os jogadores até você abrir."
+      ],
+      [
+        "Andares e lugares ligados",
+        `Em ${AJ_I("Cenas")}, no cartão da cena, toque em <b>Passagens</b>: dê um nome (Escada, Elevador, Saída) e escolha para qual cena leva. Marque para criar a volta na outra cena. A passagem aparece no mapa; arraste para cima da escada. Na hora, toque nela: todos vão para a outra cena, e os tokens dos agentes vão junto.`
       ],
       [
         "Locais escondidos",
@@ -85,7 +101,7 @@ const AJUDA = {
       ],
       [
         "Documentos",
-        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa; depois, <b>Revelar trechos</b>.`
+        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda. <b>Pôr no mapa</b> deixa o documento como um pino na cena.`
       ],
       [
         "Trilha sonora",
@@ -93,7 +109,7 @@ const AJUDA = {
       ],
       [
         "Escudo do mestre",
-        `O ${AJ_I("Escudo")} mostra a vida, sanidade e PE de todos os agentes, as rolagens secretas e suas anotações. Lá também fica o <b>Backup da mesa</b>: baixe de vez em quando.`
+        `O ${AJ_I("Escudo")} mostra a vida, sanidade e PE de todos os agentes, as rolagens secretas e suas anotações. Lá também fica o <b>Backup da mesa</b>: baixe de vez em quando. Para entregar um personagem a um jogador (ou tomar de volta), abra a ficha dele em ${AJ_I("Agentes")} e use <b>Dar a um jogador</b>.`
       ]
     ]
   },

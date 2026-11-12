@@ -1294,7 +1294,9 @@ async function meUsarCena() {
   btn.textContent = "Desenhando…";
   try {
     await new Promise(r => setTimeout(r, 30));
-    const img = await maImagem({ ...M, textos: [] });
+    // as portas saem da imagem e viram peças que abrem e fecham na mesa (5t-portas-andares.js)
+    const pm = portasDoMapa(M);
+    const img = await maImagem({ ...M, paredes: pm.paredes, textos: [] });
     const nomes = (M.textos || []).map(t => ({
       t: t.t,
       x: Math.round(t.x * img.tam),
@@ -1320,6 +1322,7 @@ async function meUsarCena() {
           await S.db.set(P() + "/pos/" + sid, pos);
         }
       }
+      const portas = portasEmPixels(pm.lista, img.tam, old && old.portas);
       const hid = new Set(((old && old.nomes) || []).filter(n => n.h).map(n => n.t));
       nomes.forEach(n => {
         if (hid.has(n.t)) n.h = true;
@@ -1331,6 +1334,7 @@ async function meUsarCena() {
         h: img.h,
         tam: img.tam,
         nomes,
+        portas,
         ver: Date.now()
       });
       S.sceneImg[sid] = img.url;
@@ -1347,6 +1351,7 @@ async function meUsarCena() {
         encaixe: true,
         tam: img.tam,
         nomes,
+        portas: portasEmPixels(pm.lista, img.tam),
         nomesOn: true,
         mapaId: ME.id,
         ver: Date.now(),

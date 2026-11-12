@@ -875,11 +875,91 @@ async function salvarTrilha(p) {
     fail(e);
   }
 }
+/* Músicas livres (sem anúncio): arquivos MP3 na pasta audio/ do próprio site.
+   Todas de Kevin MacLeod (incompetech.com), licença Creative Commons BY 4.0.
+   [ocasião, nome da música, arquivo] */
+const TRILHAS_LIVRES = [
+  ["Calma", "Healing", "healing.mp3"],
+  ["Calma", "Dreamy Flashback", "dreamy-flashback.mp3"],
+  ["Investigação", "Investigations", "investigations.mp3"],
+  ["Investigação", "Hiding Your Reality", "hiding-your-reality.mp3"],
+  ["Tensão", "Long Note Four", "long-note-four.mp3"],
+  ["Tensão", "Gathering Darkness", "gathering-darkness.mp3"],
+  ["Tensão", "Dark Times", "dark-times.mp3"],
+  ["Terror", "Ossuary 6 - Air", "ossuary-6-air.mp3"],
+  ["Terror", "Darkest Child", "darkest-child.mp3"],
+  ["Terror", "Ghost Story", "ghost-story.mp3"],
+  ["Ritual", "Satiate", "satiate.mp3"],
+  ["Ritual", "Rites", "rites.mp3"],
+  ["Combate", "Volatile Reaction", "volatile-reaction.mp3"],
+  ["Combate", "Five Armies", "five-armies.mp3"],
+  ["Combate", "Clash Defiant", "clash-defiant.mp3"],
+  ["Combate", "Unholy Knight", "unholy-knight.mp3"],
+  ["Triste", "Sad Trio", "sad-trio.mp3"],
+  ["Triste", "Lightless Dawn", "lightless-dawn.mp3"]
+];
+const livreUrl = arq => new URL("audio/" + arq, location.href.split("#")[0]).href;
+// Confere uma vez por sessão quais arquivos já estão na pasta audio/ do site.
+async function checarTrilhasLivres() {
+  if (S.livresOk) return;
+  S.livresOk = {};
+  await Promise.all(
+    TRILHAS_LIVRES.map(async ([, , arq]) => {
+      try {
+        const r = await fetch(livreUrl(arq), { method: "HEAD", cache: "no-store" });
+        S.livresOk[arq] = r.ok && !/text\/html/.test(r.headers.get("content-type") || "");
+      } catch (e) {
+        S.livresOk[arq] = false;
+      }
+    })
+  );
+  if (S.tool === "trilha") renderPanel();
+}
+// Ocasião de uma música livre (só o mestre vê).
+function ocasiaoDe(src) {
+  const x = TRILHAS_LIVRES.find(([, , arq]) => src === livreUrl(arq));
+  return x ? x[0] : "";
+}
+function trilhasLivresHTML() {
+  if (!S.livresOk) {
+    checarTrilhasLivres();
+    return `<div class="sub">Músicas livres (sem anúncio)</div><div class="muted small">Procurando as músicas…</div>`;
+  }
+  const tem = TRILHAS_LIVRES.filter(([, , a]) => S.livresOk[a]);
+  const faltam = TRILHAS_LIVRES.filter(([, , a]) => !S.livresOk[a]);
+  const cats = [...new Set(tem.map(x => x[0]))];
+  return `<div class="sub">Músicas livres (sem anúncio)</div>
+   ${
+     tem.length
+       ? cats
+           .map(
+             c => `<div class="stack" style="gap:4px"><span class="label">${esc(c)}</span>
+       ${tem
+         .filter(x => x[0] === c)
+         .map(
+           ([, n, a]) =>
+             `<div class="tokrow" style="grid-template-columns:minmax(0,1fr) auto"><div style="min-width:0;font-weight:600">${esc(n)}</div><div class="row" style="flex-wrap:nowrap"><button class="btn sm primary" data-mzl="${esc(a)}">Tocar</button><button class="btn sm ghost" data-mzls="${esc(a)}">Salvar</button></div></div>`
+         )
+         .join("")}</div>`
+           )
+           .join("")
+       : `<div class="muted small">Nenhuma música livre no site ainda.</div>`
+   }
+   ${
+     faltam.length
+       ? `<details class="box"><summary class="small"><b>${faltam.length === TRILHAS_LIVRES.length ? "Como colocar as músicas livres" : `Faltam ${faltam.length} músicas`}</b></summary>
+     <p class="muted small">Baixe cada música em incompetech.com (procure pelo nome e toque em Download), salve com o nome da direita e suba na pasta <b>audio</b> do repositório do site no GitHub.</p>
+     <div class="stack small" style="gap:2px">${faltam.map(([c, n, a]) => `<div>${esc(c)} · ${esc(n)} → <code>audio/${esc(a)}</code></div>`).join("")}</div></details>`
+       : ""
+   }
+   <p class="muted small" style="margin:0">Músicas de Kevin MacLeod (incompetech.com), licença Creative Commons BY 4.0.</p>`;
+}
+
 function trilhaHTML() {
   const t = S.trilha || { lista: [], tocando: null };
   const tc = t.tocando;
   const agora = tc
-    ? `<div class="box stack"><span class="label">Tocando agora</span><b style="font-size:16px">${esc(tc.titulo || "Música")}</b>
+    ? `<div class="box stack"><span class="label">Tocando agora${S.isM && ocasiaoDe(tc.src) ? " · " + esc(ocasiaoDe(tc.src)) : ""}</span><b style="font-size:16px">${esc(tc.titulo || "Música")}</b>
      <span class="muted small">${tc.play ? "tocando" : "pausada"}${tc.loop ? " · repetindo" : ""}</span>
      ${
        S.isM
@@ -893,7 +973,7 @@ function trilhaHTML() {
    ${MZ.bloqueado ? `<button class="btn primary block" id="mzUnlock">Ativar o som da mesa</button>` : ""}
    ${
      S.isM
-       ? `<div class="sub">Trilhas da mesa</div>
+       ? `${trilhasLivresHTML()}<div class="sub">Trilhas da mesa</div>
     ${(t.lista || []).length ? `<div class="cards">${t.lista.map((x, i) => `<div class="tokrow" style="grid-template-columns:auto minmax(0,1fr) auto"><span class="amedot" style="--c:${ytId(x.src) ? "#ff4d5e" : "#b47dff"};font-size:13px">${ytId(x.src) ? "YT" : "♪"}</span><div style="min-width:0"><div style="font-weight:600">${esc(x.titulo)}</div><div class="muted small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.src)}</div></div><div class="row" style="flex-wrap:nowrap"><button class="btn sm primary" data-mzt="${i}">Tocar</button><button class="btn sm ghost" data-mzd="${i}" aria-label="Remover">✕</button></div></div>`).join("")}</div>` : `<div class="muted small">Nenhuma trilha salva ainda.</div>`}
     <form class="box stack" id="fMz"><div class="field"><label class="label" for="mzT">Nome</label><input type="text" id="mzT" maxlength="60" placeholder="Ex.: Tensão na floresta" required></div>
      <div class="field"><label class="label" for="mzU">Link</label><input type="url" id="mzU" placeholder="Link do YouTube ou de um arquivo MP3/OGG" required></div>
@@ -932,6 +1012,36 @@ function bindTrilha() {
         const x = t.lista[+b.dataset.mzt];
         destravarSom();
         salvarTrilha({ tocando: { ...x, play: true, pos: 0, at: Date.now(), loop: true, vol: 1 } });
+      })
+  );
+  const livre = a => TRILHAS_LIVRES.find(x => x[2] === a);
+  $$("[data-mzl]").forEach(
+    b =>
+      (b.onclick = () => {
+        const x = livre(b.dataset.mzl);
+        destravarSom();
+        salvarTrilha({
+          tocando: {
+            titulo: x[1],
+            src: livreUrl(x[2]),
+            play: true,
+            pos: 0,
+            at: Date.now(),
+            loop: true,
+            vol: 1
+          }
+        });
+      })
+  );
+  $$("[data-mzls]").forEach(
+    b =>
+      (b.onclick = () => {
+        const x = livre(b.dataset.mzls);
+        if ((t.lista || []).some(y => y.src === livreUrl(x[2]))) {
+          toast("Essa música já está nas trilhas da mesa.");
+          return;
+        }
+        salvarTrilha({ lista: [...(t.lista || []), { titulo: x[1], src: livreUrl(x[2]) }] });
       })
   );
   $$("[data-mzd]").forEach(

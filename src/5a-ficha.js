@@ -979,7 +979,24 @@ function conjurar(n, k = 0) {
 }
 
 /* ---------- ficha: eventos ---------- */
+/* Nome comprido não cabe no campo do celular: diminui a letra até caber (mínimo 15px). */
+function ajustarFonteNome(el) {
+  if (!el) return;
+  el.style.fontSize = "";
+  let fs = parseFloat(getComputedStyle(el).fontSize) || 26;
+  while (el.scrollWidth > el.clientWidth + 1 && fs > 15) {
+    fs -= 1;
+    el.style.fontSize = fs + "px";
+  }
+}
 function bindSheet() {
+  {
+    const nm = $("#s_nome");
+    if (nm) {
+      requestAnimationFrame(() => ajustarFonteNome(nm));
+      nm.addEventListener("input", () => ajustarFonteNome(nm));
+    }
+  }
   $$("[data-back]").forEach(
     b =>
       (b.onclick = () => {
