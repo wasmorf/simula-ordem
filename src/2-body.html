@@ -1,0 +1,45 @@
+<div id="lobby" hidden></div>
+
+<div id="vtt" hidden>
+  <aside class="rail" id="rail" aria-label="Ferramentas"></aside>
+  <section class="board" id="board" aria-label="Mesa virtual">
+    <div class="viewport" id="viewport"></div>
+    <div class="board-empty" id="boardEmpty" hidden></div>
+    <div class="board-top" id="boardTop"></div>
+    <div class="tokbar" id="tokbar" hidden></div>
+    <div class="maptools" id="mapTools" hidden></div>
+    <div class="zoom" id="zoomCtl">
+      <button id="zOut" aria-label="Diminuir zoom">−</button><span id="zVal">100%</span><button id="zIn" aria-label="Aumentar zoom">+</button><button class="fit" id="zFit">Ajustar</button>
+    </div>
+  </section>
+  <aside class="panel" id="panel" hidden>
+    <div class="phead"><h2 id="ptitle"></h2><button class="x" id="pclose" aria-label="Fechar painel">✕</button></div>
+    <div class="pbody" id="pbody"></div>
+  </aside>
+  <nav class="bottomnav" id="bottomnav" aria-label="Ferramentas"></nav>
+</div>
+
+<div id="dicePops" aria-live="polite"></div>
+<div id="audios" hidden></div>
+<div id="modalHost"></div>
+<div id="toastHost"></div>
+<input type="file" id="fileIn" accept="image/*" hidden>
+
+<!-- Firebase (SDK compat, carregado do Google) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===================================================================
+   COLE AQUI A CONFIGURAÇÃO DO SEU PROJETO FIREBASE
+   Console do Firebase → ⚙ Configurações do projeto → Seus apps → Web (</>)
+   =================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCAsgkimG_YHq7JBa9RxeATX-7tkcIMjo0",
+  authDomain: "simula-ordem.firebaseapp.com",
+  projectId: "simula-ordem",
+  storageBucket: "simula-ordem.firebasestorage.app",
+  messagingSenderId: "976097300084",
+  appId: "1:976097300084:web:8e716173440774b0b0cb21"
+};
+</script>

@@ -1,0 +1,201 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Índice "Meus personagens" e "Minhas mesas": só a própria pessoa lê e escreve.
+    match /usuarios/{uid}/{doc=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    function logado() { return request.auth != null; }
+
+    // "Porta" de cada mesa: nome, descrição e tipo de acesso. Todos leem (é o que aparece
+    // antes de entrar); a lista pública só mostra as que têm listada == true.
+    match /portas/{mesaId} {
+      allow read: if logado();
+      allow create, update: if logado()
+        && get(/databases/$(database)/documents/mesas/$(mesaId)).data.mestre == request.auth.uid
+        && request.resource.data.mestre == request.auth.uid;
+      allow delete: if logado()
+        && get(/databases/$(database)/documents/mesas/$(mesaId)).data.mestre == request.auth.uid;
+    }
+
+    match /mesas/{mesaId} {
+      function mesa() { return get(/databases/$(database)/documents/mesas/$(mesaId)).data; }
+      function mestre() { return logado() && mesa().mestre == request.auth.uid; }
+      function membro() { return logado() && exists(/databases/$(database)/documents/mesas/$(mesaId)/membros/$(request.auth.uid)); }
+      function pode() { return mestre() || membro(); }
+      function bloqueado() { return exists(/databases/$(database)/documents/mesas/$(mesaId)/bloqueados/$(request.auth.uid)); }
+      function senhaCerta(s) {
+        return s == get(/databases/$(database)/documents/mesas/$(mesaId)/segredo/senha).data.valor;
+      }
+      function cenaExibida(c) { return mesa().cenaAtiva == c; }
+
+      // A mesa: só quem é da mesa lê; quem cria vira mestre; só o mestre muda ou apaga.
+      allow read: if logado() && (resource.data.mestre == request.auth.uid || membro());
+      allow create: if logado() && request.resource.data.mestre == request.auth.uid
+                    && request.resource.data.nome is string && request.resource.data.nome.size() <= 60;
+      allow update: if mestre() && request.resource.data.mestre == resource.data.mestre;
+      allow delete: if mestre();
+
+      // Quem está na mesa. Entrar sozinho só se a mesa for livre ou com a senha certa,
+      // e nunca se a pessoa estiver bloqueada. Na mesa "só quem eu aprovar", o mestre cria.
+      match /membros/{uid} {
+        allow read: if pode() || (logado() && request.auth.uid == uid);
+        allow create: if mestre() || (logado() && request.auth.uid == uid && !bloqueado()
+                          && (!('acesso' in mesa()) || mesa().acesso == 'livre'
+                              || (mesa().acesso == 'senha' && senhaCerta(request.resource.data.senha))));
+        allow update: if mestre() || (logado() && request.auth.uid == uid);
+        allow delete: if mestre() || (logado() && request.auth.uid == uid);
+      }
+      match /bloqueados/{uid} {
+        allow read: if mestre() || (logado() && request.auth.uid == uid);
+        allow write: if mestre();
+      }
+      // Pedidos para entrar (mesa com aprovação).
+      match /entrada/{uid} {
+        allow read: if mestre() || (logado() && request.auth.uid == uid);
+        allow create, update: if logado() && request.auth.uid == uid && !bloqueado();
+        allow delete: if mestre() || (logado() && request.auth.uid == uid);
+      }
+      // Senha da mesa: ninguém além do mestre lê.
+      match /segredo/{doc} {
+        allow read, write: if mestre();
+      }
+
+      // Fichas: quem é da mesa lê; cada jogador edita a sua; o mestre edita todas.
+      match /fichas/{fichaId} {
+        allow read: if pode();
+        allow create: if mestre() || (membro() && request.resource.data.dono == request.auth.uid);
+        allow update: if mestre() || (membro() && resource.data.dono == request.auth.uid
+                                      && request.resource.data.dono == resource.data.dono);
+        // (o mestre pode trocar o dono: é assim que ele devolve a ficha a quem perdeu o acesso)
+        allow delete: if mestre() || (membro() && resource.data.dono == request.auth.uid);
+      }
+
+      // NPCs do mestre: os jogadores só leem os marcados como visíveis.
+      match /npcs/{n} {
+        allow read: if mestre() || (membro() && resource.data.visivel == true);
+        allow write: if mestre();
+      }
+
+      // Registro de rolagens e chat.
+      match /log/{id} {
+        allow read: if pode();
+        allow create: if pode() && request.resource.data.autor == request.auth.uid;
+        allow delete: if mestre();
+      }
+
+      // Sussurros, rolagens só para o mestre e documentos: só quem mandou e quem recebe leem.
+      match /privado/{id} {
+        allow read: if pode() && (resource.data.autor == request.auth.uid
+                                  || resource.data.para == request.auth.uid
+                                  || resource.data.para == 'todos');
+        allow create: if pode() && request.resource.data.autor == request.auth.uid;
+        // Quem mandou pode editar (e mudar para quem vai). Quem recebeu um documento pode passá-lo
+        // a outra pessoa, mudando só para quem ele vai.
+        allow update: if logado() && request.resource.data.autor == resource.data.autor && (
+                        resource.data.autor == request.auth.uid
+                        || (pode() && resource.data.tipo == 'doc' && resource.data.para == request.auth.uid
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['para', 'paraNome', 'passadoPor', 'ts'])));
+        allow delete: if mestre() || (logado() && resource.data.autor == request.auth.uid);
+      }
+
+      // Biblioteca de documentos do mestre (os originais, com os trechos tarjados).
+      match /docs/{d} {
+        allow read, write: if mestre();
+      }
+
+      // Cenas: o mestre vê todas; os jogadores só a que está sendo exibida.
+      match /cenas/{c} {
+        allow read: if mestre() || (membro() && cenaExibida(c));
+        allow write: if mestre();
+      }
+      match /cenaImg/{c} {
+        allow read: if mestre() || (membro() && cenaExibida(c));
+        allow write: if mestre();
+      }
+      // Posição dos tokens em cada cena: o mestre mexe em todos; cada jogador só no token
+      // que é dele (ou que é da ficha dele). Cada gravação diz em "ult" qual token mudou.
+      match /pos/{c} {
+        function meuToken(k) {
+          let t = get(/databases/$(database)/documents/mesas/$(mesaId)/tokens/$(k)).data;
+          return t.dono == request.auth.uid
+            || (t.get('fichaId', null) is string
+                && get(/databases/$(database)/documents/mesas/$(mesaId)/fichas/$(t.fichaId)).data.dono == request.auth.uid);
+        }
+        allow read: if pode();
+        allow write: if mestre();
+        allow create: if membro() && request.resource.data.ult is string
+                      && request.resource.data.keys().hasOnly(['tokens', 'ult'])
+                      && request.resource.data.tokens.keys().hasOnly([request.resource.data.ult])
+                      && meuToken(request.resource.data.ult);
+        allow update: if membro() && request.resource.data.ult is string
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tokens', 'ult'])
+                      && request.resource.data.get('tokens', {}).diff(resource.data.get('tokens', {})).affectedKeys().hasOnly([request.resource.data.ult])
+                      && meuToken(request.resource.data.ult);
+      }
+
+      // Biblioteca de tokens.
+      match /tokens/{t} {
+        allow read: if pode();
+        allow create: if mestre() || (membro() && request.resource.data.dono == request.auth.uid);
+        allow update, delete: if mestre() || (membro() && resource.data.dono == request.auth.uid);
+      }
+
+      // Homebrew da mesa.
+      match /homebrew/{h} {
+        allow read: if pode();
+        allow create: if mestre() || (membro() && request.resource.data.autor == request.auth.uid);
+        allow update, delete: if mestre() || (membro() && resource.data.autor == request.auth.uid);
+      }
+
+      // Combate e trilha sonora (só o mestre controla).
+      match /estado/{doc} {
+        allow read: if pode();
+        allow write: if mestre();
+      }
+
+      // Artes que o mestre sobe para as criaturas do bestiário (todos da mesa veem nos tokens).
+      match /arteBest/{a} {
+        allow read: if pode();
+        allow write: if mestre();
+      }
+
+      // Mapas do criador de mapas: só o mestre.
+      match /mapas/{m} {
+        allow read, write: if mestre();
+      }
+
+      // Anotações do mestre: ninguém mais lê.
+      match /mestre/{doc} {
+        allow read, write: if mestre();
+      }
+
+      // Névoa de guerra de cada cena: só o mestre muda; jogadores leem só a da cena exibida.
+      match /nevoa/{c} {
+        allow read: if mestre() || (membro() && cenaExibida(c));
+        allow write: if mestre();
+      }
+
+      // Desenhos no mapa e pings: cada um cria os seus; apaga o autor ou o mestre.
+      match /desenhos/{d} {
+        allow read: if pode();
+        allow create: if mestre() || (membro() && request.resource.data.autor == request.auth.uid);
+        allow delete: if mestre() || (membro() && resource.data.autor == request.auth.uid);
+      }
+      match /pings/{pid} {
+        allow read: if pode();
+        allow create: if pode() && request.resource.data.autor == request.auth.uid;
+        allow delete: if mestre() || (logado() && resource.data.autor == request.auth.uid);
+      }
+
+      // Pedidos de "esta ficha é minha": cada pessoa escreve o seu; o mestre lê e apaga.
+      match /pedidos/{uid} {
+        allow read: if pode();
+        allow create, update: if membro() && request.auth.uid == uid;
+        allow delete: if mestre() || (logado() && request.auth.uid == uid);
+      }
+    }
+  }
+}
