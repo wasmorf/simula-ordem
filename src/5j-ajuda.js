@@ -45,6 +45,10 @@ const AJUDA = {
         `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer como pinos no mapa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
       ],
       [
+        "Grifar, anotar e montar o mural",
+        `Com um documento aberto, selecione um trecho e toque em <b>Grifar trecho</b>; embaixo, escreva suas <b>anotações</b> (só você vê). Toque em <b>Pôr no mural</b> para pregar o documento no <b>Mural de pistas</b> (em ${AJ_I("Documentos")}), onde o grupo todo arruma as pistas, prega bilhetes e liga uma à outra com barbante.`
+      ],
+      [
         "Guardar e compartilhar personagens",
         "Na página inicial, em <b>Meus personagens</b>, toque em <b>Baixar</b> para guardar um arquivo do personagem. Mande esse arquivo para um amigo e ele usa <b>Importar personagem</b>."
       ]
@@ -101,7 +105,7 @@ const AJUDA = {
       ],
       [
         "Documentos",
-        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda. <b>Pôr no mapa</b> deixa o documento como um pino na cena.`
+        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda; <b>Cartaz</b>, <b>E-mail</b> e <b>Áudio</b> (grave pelo microfone; o texto vira a transcrição) também existem. Ao lado de <b>Tarjar trecho</b>, escolha o estilo da tarja: tarja preta, rabisco, mancha de sangue, pedaço rasgado, queimado, mensagem apagada, chiado... cada modelo mostra só os que fazem sentido nele. <b>Pôr no mapa</b> deixa o documento como um pino na cena, e <b>Mural</b> prega no Mural de pistas do grupo.`
       ],
       [
         "Trilha sonora",

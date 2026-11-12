@@ -3,6 +3,8 @@
 /* =====================================================================
    DOCUMENTOS — criar, guardar, enviar, revelar trechos
    Trechos entre [[ e ]] ficam tarjados para os jogadores até o mestre revelar.
+   A tarja pode ter um estilo: [[sangue:texto]], [[rabisco:texto]]... Cada modelo
+   aceita os estilos que fazem sentido nele (DOC_TARJAS); o primeiro é o padrão.
    ===================================================================== */
 const DOC_MODELOS = [
   {
@@ -102,6 +104,38 @@ const DOC_MODELOS = [
     img: true
   },
   {
+    id: "cartaz",
+    nome: "Cartaz",
+    desc: "Cartaz colado no poste ou no mural, com faixa no topo, foto e tirinhas de contato para destacar.",
+    campos: [
+      ["topo", "Faixa do topo", "DESAPARECIDO"],
+      ["contato", "Tirinhas de contato (opcional)", ""]
+    ],
+    img: true
+  },
+  {
+    id: "email",
+    nome: "E-mail",
+    desc: "Tela de e-mail. O título vira o assunto.",
+    campos: [
+      ["de", "De", ""],
+      ["para", "Para", ""],
+      ["data", "Data", ""],
+      ["anexo", "Anexo (opcional)", ""]
+    ],
+    img: true
+  },
+  {
+    id: "audio",
+    nome: "Áudio",
+    desc: "Gravação para os jogadores ouvirem: recado na secretária eletrônica, áudio de celular, fita. Grave pelo microfone, suba um arquivo pequeno ou cole um link. O texto vira a transcrição.",
+    campos: [
+      ["origem", "De onde vem", "Secretária eletrônica"],
+      ["hora", "Quando", ""]
+    ],
+    img: false
+  },
+  {
     id: "simples",
     nome: "Documento simples",
     desc: "Folha em branco, para qualquer coisa.",
@@ -126,6 +160,53 @@ const DOC_ELCOR = {
   Medo: "#e8f0ff"
 };
 
+/* ---------- estilos de tarja ---------- */
+const TARJA_ESTILOS = {
+  censura: "Tarja preta",
+  corretivo: "Corretivo branco",
+  rabisco: "Rabiscado à caneta",
+  sangue: "Mancha de sangue",
+  rasgado: "Pedaço rasgado",
+  queimado: "Queimado",
+  borrado: "Molhado / tinta borrada",
+  apagada: "Mensagem apagada",
+  pixel: "Pixelado",
+  corrompido: "Texto corrompido",
+  estatica: "Chiado (inaudível)",
+  simbolos: "Símbolos que se mexem"
+};
+const TJ_OFICIAL = ["censura", "corretivo", "rasgado", "sangue", "queimado", "borrado"];
+const TJ_MAO = ["rabisco", "rasgado", "sangue", "borrado", "queimado"];
+// o primeiro de cada lista é o estilo padrão daquele modelo
+const DOC_TARJAS = {
+  relatorio: TJ_OFICIAL,
+  policial: TJ_OFICIAL,
+  laudo: TJ_OFICIAL,
+  simples: ["censura", "rabisco", "corretivo", "rasgado", "sangue", "queimado", "borrado"],
+  carta: TJ_MAO,
+  diario: TJ_MAO,
+  foto: TJ_MAO,
+  bilhete: ["rasgado", "rabisco", "sangue", "borrado", "queimado"],
+  jornal: ["rasgado", "censura", "borrado", "sangue", "queimado"],
+  cartaz: ["rasgado", "rabisco", "borrado", "sangue", "queimado"],
+  amaldicoado: ["simbolos", "sangue", "queimado"],
+  celular: ["apagada", "pixel", "corrompido"],
+  email: ["corrompido", "censura", "pixel"],
+  audio: ["estatica", "corrompido"]
+};
+function tarjaEstilo(modelo, e) {
+  const L = DOC_TARJAS[modelo] || DOC_TARJAS.simples;
+  return L.includes(e) ? e : L[0];
+}
+// letras para as tarjas "corrompido" e "símbolos" (sempre as mesmas para o mesmo trecho)
+function tarjaLetras(e, n, i) {
+  const A = e === "simbolos" ? "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ" : "▓▒░#%&@$¤§¶╳";
+  const R = maRng(n * 31 + i * 7 + 3);
+  let t = "";
+  for (let k = 0; k < Math.max(3, Math.min(40, n)); k++) t += A[Math.floor(R() * A.length)];
+  return t;
+}
+
 /* ---------- texto com trechos escondidos ---------- */
 function docPartesDe(texto) {
   const out = [];
@@ -134,7 +215,9 @@ function docPartesDe(texto) {
     m;
   while ((m = re.exec(texto || ""))) {
     if (m.index > i) out.push({ t: texto.slice(i, m.index) });
-    out.push({ t: m[1], h: true });
+    const em = m[1].match(/^([a-z]+):([\s\S]*)$/);
+    if (em && TARJA_ESTILOS[em[1]]) out.push({ t: em[2], h: true, e: em[1] });
+    else out.push({ t: m[1], h: true });
     i = re.lastIndex;
   }
   if (i < (texto || "").length) out.push({ t: texto.slice(i) });
@@ -146,7 +229,7 @@ function docPartesEnvio(texto, revelados = []) {
   return docPartesDe(texto).map(p => {
     if (!p.h) return { t: p.t };
     const i = k++;
-    return revelados.includes(i) ? { t: p.t, r: 1 } : { h: 1, n: p.t.length, i };
+    return revelados.includes(i) ? { t: p.t, r: 1 } : { h: 1, n: p.t.length, i, ...(p.e ? { e: p.e } : {}) };
   });
 }
 function docFmt(s) {
@@ -154,30 +237,46 @@ function docFmt(s) {
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
     .replace(/\n/g, "<br>");
 }
-function docTextoHTML(partes, mestre) {
+function docTextoHTML(partes, mestre, modelo) {
   let k = 0;
   return partes
     .map(p => {
       if (p.h && p.t !== undefined && mestre) {
         const i = k++;
-        return `<mark class="dh" title="Trecho escondido nº ${i + 1}">${docFmt(p.t)}</mark>`;
+        const e = tarjaEstilo(modelo, p.e);
+        return `<mark class="dh" title="Trecho escondido nº ${i + 1} · ${esc(TARJA_ESTILOS[e])}">${docFmt(p.t)}<sup class="tjl">${esc(TARJA_ESTILOS[e])}</sup></mark>`;
       }
       if (p.h) {
-        k++;
+        const i = k++;
+        const e = tarjaEstilo(modelo, p.e);
         const n = Math.max(3, Math.min(400, p.n || (p.t || "").length));
-        return `<span class="redact" style="width:${Math.min(30, n * 0.52)}em">&nbsp;</span>${n > 58 ? `<span class="redact" style="width:${Math.min(30, (n - 58) * 0.52)}em">&nbsp;</span>` : ""}`;
+        if (e === "apagada") return `<span class="tj t-apagada">⊘ mensagem apagada</span>`;
+        if (e === "estatica")
+          return `<span class="tj t-estatica" style="min-width:${Math.min(16, n * 0.35)}em">inaudível</span>`;
+        if (e === "corrompido" || e === "simbolos")
+          return `<span class="tj t-${e}">${tarjaLetras(e, n, i)}</span>`;
+        const bar = w =>
+          `<span class="redact t-${e}" style="width:${Math.min(30, w * 0.52)}em">&nbsp;</span>`;
+        return bar(n) + (n > 58 ? bar(n - 58) : "");
       }
       return p.r ? `<span class="revealed">${docFmt(p.t)}</span>` : docFmt(p.t);
     })
     .join("");
 }
 function docLinhas(partes) {
-  // para o celular: devolve linhas de texto (só trechos visíveis)
-  return partes
-    .map(p => (p.h ? "█".repeat(Math.min(24, p.n || (p.t || "").length)) : p.t))
-    .join("")
-    .split("\n")
-    .filter(x => x.trim());
+  // para o celular: separa as partes em linhas (uma mensagem por linha), sem perder as tarjas
+  const out = [[]];
+  partes.forEach(p => {
+    if (p.h) {
+      out[out.length - 1].push(p);
+      return;
+    }
+    (p.t || "").split("\n").forEach((t, j) => {
+      if (j > 0) out.push([]);
+      if (t) out[out.length - 1].push({ ...p, t });
+    });
+  });
+  return out.filter(l => l.some(p => p.h || (p.t || "").trim()));
 }
 
 /* ---------- desenho do papel ---------- */
@@ -186,7 +285,7 @@ function docHtml(d, { mestre = false } = {}) {
   const c = d.campos || {};
   const v = k => esc(c[k] ?? "");
   const partes = d.partes || docPartesDe(d.texto || "");
-  const txt = docTextoHTML(partes, mestre);
+  const txt = docTextoHTML(partes, mestre, M.id);
   const tit = esc(d.titulo || "");
   const R = maRng(maH((d.titulo || "").length, (d.texto || "").length + 7, 3));
   const sangue = d.sangue
@@ -258,13 +357,49 @@ function docHtml(d, { mestre = false } = {}) {
     body = `<div class="ph-top"><span class="ph-av">${esc((c.contato || "?").charAt(0))}</span><b>${v("contato") || "Desconhecido"}</b><span class="ph-st">online</span></div>
     <div class="ph-msgs">${linhas
       .map(l => {
-        const m = l.match(/^([^:]{1,24}):\s*(.*)$/);
-        const quem = m ? m[1].trim() : "";
+        let resto = l;
+        let quem = "";
+        if (l[0] && !l[0].h) {
+          const m = l[0].t.match(/^([^:]{1,24}):\s*([\s\S]*)$/);
+          if (m) {
+            quem = m[1].trim();
+            resto = [{ ...l[0], t: m[2] }, ...l.slice(1)].filter(p => p.h || p.t);
+          }
+        }
         const eu = /^eu$/i.test(quem);
-        const t = m ? m[2] : l;
-        return `<div class="ph-b ${eu ? "eu" : ""}">${!eu && quem && quem !== c.contato ? `<span class="ph-q">${esc(quem)}</span>` : ""}${esc(t).replace(/█+/g, s => `<span class="redact" style="width:${s.length * 0.5}em">&nbsp;</span>`)}</div>`;
+        const so = resto.length === 1 && resto[0].h && resto[0].t === undefined;
+        const apagada = so && tarjaEstilo("celular", resto[0].e) === "apagada";
+        const conteudo = apagada
+          ? `<span class="t-apagada">⊘ Esta mensagem foi apagada</span>`
+          : docTextoHTML(resto, mestre, "celular");
+        return `<div class="ph-b ${eu ? "eu" : ""} ${apagada ? "apag" : ""}">${!eu && quem && quem !== c.contato ? `<span class="ph-q">${esc(quem)}</span>` : ""}${conteudo}</div>`;
       })
       .join("")}</div>`;
+  } else if (M.id === "cartaz") {
+    body = `${c.topo ? `<div class="c-topo">${v("topo")}</div>` : ""}${d.img ? `<div class="c-foto"><img src="${d.img}" alt=""></div>` : ""}${tit ? `<h2>${tit}</h2>` : ""}<div class="d-txt">${txt}</div>
+    ${c.contato ? `<div class="c-tiras">${Array.from({ length: 7 }, () => `<span>${v("contato")}</span>`).join("")}</div>` : ""}`;
+  } else if (M.id === "email") {
+    body = `<div class="e-bar"><i></i><i></i><i></i><span>Caixa de entrada</span></div><h2>${tit || "(sem assunto)"}</h2>
+    <table class="e-cab">${[
+      ["De", "de"],
+      ["Para", "para"],
+      ["Data", "data"]
+    ]
+      .filter(([, k]) => c[k])
+      .map(([n, k]) => `<tr><th>${n}:</th><td>${v(k)}</td></tr>`)
+      .join(
+        ""
+      )}</table><div class="d-txt">${txt}</div>${img}${c.anexo ? `<div class="e-anexo">📎 ${v("anexo")}</div>` : ""}`;
+  } else if (M.id === "audio") {
+    const temTxt = partes.some(p => p.h || (p.t || "").trim());
+    const Rw = maRng((d.titulo || "x").length * 13 + 5);
+    const barras = Array.from(
+      { length: 42 },
+      () => `<i style="height:${Math.round(18 + Rw() * 82)}%"></i>`
+    ).join("");
+    body = `<div class="a-dev"><div class="a-top"><span>● ${v("origem") || "Gravação"}</span><span>${v("hora")}</span></div>${tit ? `<div class="a-tit">${tit}</div>` : ""}<div class="a-wave">${barras}</div>
+    ${d.audio ? `<audio controls preload="metadata" src="${esc(d.audio)}"></audio>` : `<div class="a-vazio">Grave, suba ou cole o link do áudio</div>`}</div>
+    ${temTxt ? `<div class="a-trans"><span class="f-vl">Transcrição</span><div class="d-txt">${txt}</div></div>` : ""}`;
   } else if (M.id === "amaldicoado") {
     const cor = DOC_ELCOR[c.elemento] || DOC_ELCOR.Sangue;
     body = `<div class="sig" style="--el:${cor}"></div>${tit ? `<h2 style="color:${cor}">${tit}</h2>` : ""}<div class="d-txt" style="--el:${cor}">${txt}</div><div class="sig b" style="--el:${cor}"></div>`;
@@ -294,18 +429,20 @@ function docsRecebidos() {
 /* O painel junta três partes: a biblioteca (aqui), os entregues e o "passar" (5r-docs-passar.js)
    e os documentos no mapa (5s-docs-mapa.js). */
 function documentosHTML() {
-  return docsMapaHTML(docsPassarHTML(documentosBaseHTML()));
+  return muralBotaoHTML() + docsMapaHTML(docsPassarHTML(documentosBaseHTML()));
 }
 function bindDocumentos() {
+  bindMural(); // 5u-mural-notas.js
   bindDocumentosBase();
   bindDocsPassar();
   bindDocsMapa();
 }
 function documentosBaseHTML() {
   if (!S.isM) {
+    subscribeNotas(); // 5u-mural-notas.js
     const L = docsRecebidos();
     return `<p class="muted small" style="margin:0">Tudo o que o mestre te entregou fica guardado aqui.</p>
-    ${L.length ? `<div class="cards">${L.map(x => `<button class="fcard doccard" data-dver="${esc(x.id)}"><span class="docico m-${esc((x.doc && x.doc.modelo) || "simples")}"></span><div style="min-width:0"><div class="label">${esc(DOC_MOD[(x.doc && x.doc.modelo) || "simples"].nome)}${x.para === "todos" ? "" : " · só para você"}</div><div class="nm">${esc(x.titulo)}</div><div class="muted small">${new Date(x.ts || 0).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}${((x.doc && x.doc.partes) || []).some(p => p.h) ? " · tem trechos tarjados" : ""}</div></div></button>`).join("")}</div>` : `<div class="empty">Nenhum documento recebido ainda.</div>`}`;
+    ${L.length ? `<div class="cards">${L.map(x => `<button class="fcard doccard" data-dver="${esc(x.id)}"><span class="docico m-${esc((x.doc && x.doc.modelo) || "simples")}"></span><div style="min-width:0"><div class="label">${esc(DOC_MOD[(x.doc && x.doc.modelo) || "simples"].nome)}${x.para === "todos" ? "" : " · só para você"}</div><div class="nm">${esc(x.titulo)}</div><div class="muted small">${new Date(x.ts || 0).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}${((x.doc && x.doc.partes) || []).some(p => p.h) ? " · tem trechos tarjados" : ""}${temNota(x.id) ? " · 📝 anotado" : ""}</div></div></button>`).join("")}</div>` : `<div class="empty">Nenhum documento recebido ainda.</div>`}`;
   }
   subscribeDocs();
   const L = S.docs || [];
@@ -319,7 +456,7 @@ function documentosBaseHTML() {
            const nh = docPartesDe(d.texto).filter(p => p.h).length;
            return `<div class="scene"><div class="th docthumb">${docHtml(d, { mestre: true })}</div><div class="stack" style="gap:4px;min-width:0">
      <div class="st">${esc(DOC_MOD[d.modelo] ? DOC_MOD[d.modelo].nome : "Documento")}${e.length ? ` · entregue ${e.length}×` : " · ainda não entregue"}${nh ? ` · ${(d.revelados || []).length}/${nh} trechos revelados` : ""}</div><div class="nm">${esc(docNome(d))}</div>
-     <div class="row"><button class="btn sm primary" data-denv="${esc(d.id)}">Entregar</button><button class="btn sm" data-ded="${esc(d.id)}">Editar</button><button class="btn sm ghost" data-dren="${esc(d.id)}">Renomear</button>${nh && e.length ? `<button class="btn sm" data-drev="${esc(d.id)}">Revelar trechos</button>` : ""}<button class="btn sm ghost" data-ddup="${esc(d.id)}">Duplicar</button><button class="btn sm ghost" data-ddel="${esc(d.id)}" aria-label="Apagar documento">✕</button></div></div></div>`;
+     <div class="row"><button class="btn sm primary" data-denv="${esc(d.id)}">Entregar</button><button class="btn sm" data-ded="${esc(d.id)}">Editar</button><button class="btn sm ghost" data-dren="${esc(d.id)}">Renomear</button>${nh && e.length ? `<button class="btn sm" data-drev="${esc(d.id)}">Revelar trechos</button>` : ""}<button class="btn sm ghost" data-dmural="${esc(d.id)}">Mural</button><button class="btn sm ghost" data-ddup="${esc(d.id)}">Duplicar</button><button class="btn sm ghost" data-ddel="${esc(d.id)}" aria-label="Apagar documento">✕</button></div></div></div>`;
          }).join("")}</div>`
        : `<div class="empty">Nenhum documento na biblioteca. Toque em <b>Criar documento</b>.</div>`
    }`;
@@ -401,8 +538,10 @@ async function docEntregar(d) {
   if (!r) return;
   await docEnviar(d, r.para);
 }
-async function docEnviar(d, para) {
-  const doc = {
+// A versão do documento que sai da biblioteca (para um jogador, para o mapa ou para o mural):
+// os trechos tarjados não levam o texto.
+function docSnapshot(d) {
+  return {
     modelo: d.modelo,
     campos: d.campos || {},
     idade: d.idade || 0,
@@ -410,9 +549,13 @@ async function docEnviar(d, para) {
     queimado: !!d.queimado,
     partes: docPartesEnvio(d.texto, d.revelados || []),
     ...(d.img ? { img: d.img } : {}),
+    ...(d.audio ? { audio: d.audio } : {}),
     titulo: d.titulo || "",
     nome: docNome(d)
   };
+}
+async function docEnviar(d, para) {
+  const doc = docSnapshot(d);
   const body = {
     autor: S.uid,
     quem: "Mestre",
@@ -450,6 +593,9 @@ async function docRevelar(d) {
       await S.db.merge(P() + "/privado/" + x.id, { doc: { ...x.doc, partes }, rev: (x.rev || 0) + 1 });
     for (const m of (S.mapDocs || []).filter(y => y.docId === d.id))
       await S.db.merge(P() + "/estado/" + m.id, { doc: { ...m.doc, partes }, rev: (m.rev || 0) + 1 });
+    const mural = S.mural || (await S.db.getCol(P() + "/mural"));
+    for (const m of mural.filter(y => y.tipo === "doc" && y.docId === d.id))
+      await S.db.merge(P() + "/mural/" + m.id, { doc: { ...m.doc, partes } });
     toast(novos.length > (d.revelados || []).length ? "Trechos revelados para os jogadores." : "Pronto.");
   } catch (e) {
     fail(e);
@@ -474,6 +620,7 @@ function abrirDoc(e) {
     }
   };
   S.docAberto = e.id;
+  docLeituraExtras(e); // anotações e mural (5u-mural-notas.js)
 }
 
 /* ---------- editor ---------- */
@@ -514,8 +661,14 @@ async function docEditor(d0) {
      <p class="muted small" style="margin:0">${esc(M.desc)}</p>
      <div class="field"><label class="label" for="deT">${M.id === "carta" || M.id === "bilhete" || M.id === "diario" ? "Primeira linha (opcional)" : "Título"}</label><input type="text" id="deT" maxlength="120" value="${esc(d.titulo || "")}" placeholder="${M.id === "jornal" ? "Manchete" : M.id === "carta" ? "Querida Ana," : ""}"></div>
      ${M.campos.map(([k, n, def]) => `<div class="field"><label class="label" for="dc_${k}">${esc(n)}</label><input type="text" id="dc_${k}" data-ck="${k}" maxlength="120" value="${esc(d.campos[k] ?? "")}" placeholder="${esc(def)}"></div>`).join("")}
-     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button></span></div>
+     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><select id="deTj" aria-label="Estilo da tarja" title="Estilo da tarja">${(DOC_TARJAS[M.id] || DOC_TARJAS.simples).map(e => `<option value="${e}">${esc(TARJA_ESTILOS[e])}</option>`).join("")}</select><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button></span></div>
       <textarea id="deTx" rows="12" maxlength="6000" placeholder="${M.id === "celular" ? "Ana: você viu aquilo?\nEu: vi. não conta pra ninguém\nAna: [[eles estão no porão]]" : "Escreva aqui. Use [[ e ]] em volta do que deve chegar tarjado."}">${esc(d.texto || "")}</textarea></div>
+     ${
+       M.id === "audio"
+         ? `<div class="row">${S.gravando ? `<button type="button" class="btn sm danger" id="deRecStop">■ Parar a gravação</button>` : `<button type="button" class="btn sm primary" id="deRec">● Gravar pelo microfone</button>`}<button type="button" class="btn sm" id="deAudF">Subir arquivo</button><button type="button" class="btn sm" id="deAudL">Colar link</button>${d.audio ? `<button type="button" class="btn sm ghost" id="deAudX">Tirar áudio</button>` : ""}</div>
+     <p class="muted small" style="margin:0">Gravação de até 90 segundos. Arquivo de até 500 KB (um MP3 curto); para um áudio maior, suba no GitHub e cole o link.</p>`
+         : ""
+     }
      ${M.img || d.img ? `<div class="row"><button type="button" class="btn sm" id="deImg">${d.img ? (d.modelo === "foto" ? "Trocar a foto" : "Trocar imagem") : d.modelo === "foto" ? "Subir a foto" : "Pôr uma imagem"}</button>${d.img ? `<button type="button" class="btn sm ghost" id="deImgX">Tirar imagem</button>` : ""}</div>` : ""}
      <div class="sub" style="margin:0">Aparência</div>
      <div class="row" style="flex-wrap:nowrap"><label class="label" for="deI" style="white-space:nowrap;margin:0">Papel</label><select id="deI">${["Novo", "Usado", "Velho e manchado"].map((n, i) => `<option value="${i}" ${(+d.idade || 0) === i ? "selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -559,7 +712,98 @@ async function docEditor(d0) {
       draw();
       tx.focus();
     };
-    $("#deHide").onclick = () => wrap("[[", "]]");
+    $("#deHide").onclick = () => {
+      const e = $("#deTj").value;
+      wrap(e === (DOC_TARJAS[M.id] || DOC_TARJAS.simples)[0] ? "[[" : "[[" + e + ":", "]]");
+    };
+    const aud = url => {
+      d.audio = url;
+      build();
+      draw();
+    };
+    const rec = $("#deRec");
+    if (rec)
+      rec.onclick = async () => {
+        try {
+          const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const tipo = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"].find(
+            t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)
+          );
+          const mr = new MediaRecorder(st, {
+            ...(tipo ? { mimeType: tipo } : {}),
+            audioBitsPerSecond: 24000
+          });
+          const pedacos = [];
+          mr.ondataavailable = ev => ev.data.size && pedacos.push(ev.data);
+          mr.onstop = () => {
+            st.getTracks().forEach(t => t.stop());
+            S.gravando = null;
+            const fr = new FileReader();
+            fr.onload = () => {
+              if (fr.result.length > 700000) {
+                toast("A gravação ficou grande demais. Grave um trecho mais curto.");
+                build();
+                return;
+              }
+              aud(fr.result);
+            };
+            fr.readAsDataURL(new Blob(pedacos, { type: mr.mimeType || tipo || "audio/webm" }));
+          };
+          mr.start();
+          S.gravando = { mr, fim: setTimeout(() => mr.state === "recording" && mr.stop(), 90000) };
+          build();
+        } catch (e) {
+          toast("Não consegui usar o microfone. Libere o acesso ao microfone no navegador.");
+        }
+      };
+    const recStop = $("#deRecStop");
+    if (recStop)
+      recStop.onclick = () => {
+        if (!S.gravando) return;
+        clearTimeout(S.gravando.fim);
+        S.gravando.mr.stop();
+      };
+    const audF = $("#deAudF");
+    if (audF)
+      audF.onclick = () => {
+        const inp = document.createElement("input");
+        inp.type = "file";
+        inp.accept = "audio/*";
+        inp.onchange = () => {
+          const f = inp.files && inp.files[0];
+          if (!f) return;
+          if (f.size > 500000) {
+            toast("Arquivo grande (máximo 500 KB). Grave pelo microfone ou suba no GitHub e cole o link.");
+            return;
+          }
+          const fr = new FileReader();
+          fr.onload = () => aud(fr.result);
+          fr.readAsDataURL(f);
+        };
+        inp.click();
+      };
+    const audL = $("#deAudL");
+    if (audL)
+      audL.onclick = async () => {
+        const r = await formBox(
+          "Link do áudio",
+          `<div class="field"><label class="label" for="daL">Link direto de um MP3 ou OGG</label><input type="url" id="daL" name="url" placeholder="https://..." required></div>`,
+          "Usar"
+        );
+        if (!r) return;
+        if (!/^https:\/\//.test(r.url.trim())) {
+          toast("Use um link que comece com https://");
+          return;
+        }
+        aud(r.url.trim());
+      };
+    const audX = $("#deAudX");
+    if (audX)
+      audX.onclick = () => {
+        delete d.audio;
+        build();
+        draw();
+      };
     $("#deBold").onclick = () => wrap("**", "**");
     const im = $("#deImg");
     if (im)
@@ -600,6 +844,13 @@ async function docEditor(d0) {
   build();
   draw();
   const fechar = () => {
+    if (S.gravando) {
+      clearTimeout(S.gravando.fim);
+      S.gravando.mr.onstop = null;
+      S.gravando.mr.stop();
+      S.gravando.mr.stream.getTracks().forEach(t => t.stop());
+      S.gravando = null;
+    }
     const el = $("#docEd");
     if (el) el.remove();
     document.body.classList.remove("me-open");

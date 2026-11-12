@@ -101,6 +101,17 @@ service cloud.firestore {
         allow delete: if mestre() || (logado() && resource.data.autor == request.auth.uid);
       }
 
+      // Mural de pistas: todos da mesa leem e pregam documentos, bilhetes e barbantes.
+      // Qualquer um arruma (muda só a posição); o texto só muda quem pregou ou o mestre.
+      // Barbante (tipo "fio") qualquer um corta.
+      match /mural/{m} {
+        allow read: if pode();
+        allow create: if pode() && request.resource.data.autor == request.auth.uid;
+        allow update: if mestre() || (pode() && (resource.data.autor == request.auth.uid
+                         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['x', 'y'])));
+        allow delete: if mestre() || (pode() && (resource.data.autor == request.auth.uid || resource.data.tipo == 'fio'));
+      }
+
       // Biblioteca de documentos do mestre (os originais, com os trechos tarjados).
       match /docs/{d} {
         allow read, write: if mestre();

@@ -3706,6 +3706,542 @@
         opacity: 0.45;
       }
 
+      /* ---------- estilos de tarja ---------- */
+      .docp mark.dh .tjl {
+        font-family: "Barlow", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #b0202c;
+        margin-left: 3px;
+        text-transform: uppercase;
+      }
+      .redact.t-corretivo {
+        background: #f7f4ec;
+        height: 1.3em;
+        vertical-align: -0.25em;
+        border-radius: 3px 1px 4px 2px;
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.1),
+          inset 0 -2px 0 rgba(0, 0, 0, 0.07);
+      }
+      .redact.t-rabisco {
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='20' viewBox='0 0 30 20'%3E%3Cpath d='M0 15 L6 3 L9 17 L14 2 L17 18 L22 3 L25 16 L30 4 M0 6 L5 18 L10 4 L13 16 L19 2 L23 17 L28 5 L30 14' fill='none' stroke='%231f2a5c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' opacity='.9'/%3E%3C/svg%3E")
+          repeat-x center / 26px 100%;
+        height: 1.35em;
+        vertical-align: -0.28em;
+      }
+      .redact.t-sangue {
+        background:
+          radial-gradient(circle at 25% 40%, #8e0d18 0 30%, transparent 31%),
+          radial-gradient(circle at 75% 60%, #7a0a12 0 34%, transparent 35%), #6f0911;
+        height: 1.55em;
+        vertical-align: -0.38em;
+        border-radius: 46% 54% 40% 60% / 62% 38% 64% 36%;
+        box-shadow: 0 0 4px rgba(90, 0, 10, 0.55);
+        position: relative;
+      }
+      .redact.t-sangue::after {
+        content: "";
+        position: absolute;
+        left: 60%;
+        top: 85%;
+        width: 5px;
+        height: 11px;
+        border-radius: 0 0 50% 50%;
+        background: #6f0911;
+      }
+      .redact.t-rasgado {
+        background: #1d1814;
+        height: 1.7em;
+        vertical-align: -0.38em;
+        margin: 0;
+        clip-path: polygon(
+          0 18%,
+          6% 2%,
+          12% 16%,
+          19% 0,
+          26% 14%,
+          33% 3%,
+          41% 17%,
+          48% 1%,
+          56% 15%,
+          63% 2%,
+          71% 18%,
+          78% 4%,
+          86% 16%,
+          93% 1%,
+          100% 14%,
+          100% 86%,
+          94% 100%,
+          87% 84%,
+          80% 98%,
+          72% 83%,
+          65% 99%,
+          57% 85%,
+          49% 100%,
+          42% 82%,
+          34% 97%,
+          27% 84%,
+          19% 99%,
+          12% 83%,
+          5% 97%,
+          0 82%
+        );
+      }
+      .redact.t-queimado {
+        background: radial-gradient(
+          ellipse at center,
+          #0d0805 30%,
+          #2c160b 52%,
+          #7a3a14 70%,
+          rgba(160, 90, 30, 0.6) 80%,
+          transparent 88%
+        );
+        height: 1.7em;
+        vertical-align: -0.42em;
+        border-radius: 40% 60% 45% 55% / 55% 45% 60% 40%;
+      }
+      .redact.t-borrado {
+        background: linear-gradient(
+          90deg,
+          rgba(30, 40, 80, 0.15),
+          rgba(30, 40, 80, 0.55),
+          rgba(30, 40, 80, 0.2)
+        );
+        filter: blur(2.5px);
+        height: 1.4em;
+        vertical-align: -0.3em;
+        border-radius: 40%;
+      }
+      .redact.t-pixel {
+        background: repeating-conic-gradient(#8b8f96 0 25%, #c3c6cc 0 50%) 0 0 / 9px 9px;
+        height: 1.2em;
+        border-radius: 3px;
+      }
+      .tj.t-apagada,
+      .t-apagada {
+        font-style: italic;
+        color: #8a8f98;
+        font-size: 0.92em;
+      }
+      .ph-b.apag {
+        background: transparent;
+        border: 1px solid #3a3d45;
+      }
+      .tj.t-estatica {
+        display: inline-block;
+        text-align: center;
+        padding: 0 0.5em;
+        background: repeating-linear-gradient(
+          90deg,
+          #4a4d55 0 2px,
+          #9aa0aa 2px 3px,
+          #2c2e33 3px 5px,
+          #6a6e78 5px 6px
+        );
+        color: #fff;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78em;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border-radius: 3px;
+        animation: tjChiado 0.25s steps(3) infinite;
+      }
+      @keyframes tjChiado {
+        to {
+          background-position: 9px 0;
+        }
+      }
+      .tj.t-corrompido {
+        font-family: ui-monospace, monospace;
+        color: #a0182a;
+        background: rgba(160, 24, 42, 0.08);
+        letter-spacing: 0.05em;
+        word-break: break-all;
+      }
+      .tj.t-simbolos {
+        color: var(--el, #d3283b);
+        letter-spacing: 0.12em;
+        text-shadow: 0 0 8px var(--el, #d3283b);
+        animation: tjSimb 2.4s ease-in-out infinite;
+      }
+      @keyframes tjSimb {
+        50% {
+          opacity: 0.55;
+          letter-spacing: 0.2em;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .tj.t-estatica,
+        .tj.t-simbolos {
+          animation: none;
+        }
+      }
+
+      /* ---------- cartaz, e-mail e áudio ---------- */
+      .docp.m-cartaz {
+        max-width: 480px;
+        background: #f3efe6;
+        color: #1e1e22;
+        font-family: "Barlow", sans-serif;
+        text-align: center;
+        padding: 0 0 0;
+        overflow: hidden;
+      }
+      .m-cartaz .c-topo {
+        background: #b0202c;
+        color: #fff;
+        font-weight: 800;
+        font-size: 30px;
+        letter-spacing: 0.08em;
+        padding: 10px 12px;
+        text-transform: uppercase;
+      }
+      .m-cartaz .c-foto img {
+        display: block;
+        width: 72%;
+        margin: 16px auto 4px;
+        border: 6px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        filter: grayscale(0.25) contrast(1.05);
+      }
+      .m-cartaz h2 {
+        font-size: 26px;
+        font-weight: 800;
+        margin: 10px 16px 6px;
+        text-transform: uppercase;
+      }
+      .m-cartaz .d-txt {
+        padding: 0 22px 16px;
+        font-size: 17px;
+      }
+      .m-cartaz .c-tiras {
+        display: flex;
+        border-top: 2px dashed #9a958a;
+      }
+      .m-cartaz .c-tiras span {
+        flex: 1;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        font-size: 11px;
+        padding: 8px 2px;
+        border-left: 1px dashed #9a958a;
+        white-space: nowrap;
+        overflow: hidden;
+        max-height: 120px;
+      }
+      .docp.m-email {
+        max-width: 620px;
+        background: #fbfbfd;
+        color: #22242a;
+        font-family: "Barlow", sans-serif;
+        font-size: 16px;
+        padding: 0 0 18px;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .m-email .e-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #e9eaef;
+        padding: 9px 12px;
+        font-size: 12px;
+        color: #6a6e78;
+      }
+      .m-email .e-bar i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #c9ccd4;
+      }
+      .m-email .e-bar span {
+        margin-left: 8px;
+      }
+      .m-email h2 {
+        margin: 14px 18px 8px;
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .m-email .e-cab {
+        margin: 0 18px 12px;
+        font-size: 13px;
+        color: #555a66;
+        border-bottom: 1px solid #e3e4ea;
+        padding-bottom: 8px;
+        width: calc(100% - 36px);
+      }
+      .m-email .e-cab th {
+        text-align: left;
+        font-weight: 600;
+        width: 52px;
+        padding: 1px 0;
+      }
+      .m-email .d-txt,
+      .m-email .dimg {
+        margin: 0 18px;
+      }
+      .m-email .e-anexo {
+        margin: 14px 18px 0;
+        display: inline-block;
+        padding: 6px 12px;
+        border: 1px solid #d6d8e0;
+        border-radius: 6px;
+        font-size: 13px;
+        background: #f2f3f7;
+      }
+      .docp.m-audio {
+        max-width: 460px;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        color: #e8e6ee;
+        font-family: "Barlow", sans-serif;
+      }
+      .m-audio .a-dev {
+        background: linear-gradient(160deg, #26232c, #141218);
+        border: 1px solid #3a3642;
+        border-radius: 16px;
+        padding: 14px 16px 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .m-audio .a-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #a9a3b8;
+        letter-spacing: 0.05em;
+      }
+      .m-audio .a-top span:first-child {
+        color: #ff6a6a;
+      }
+      .m-audio .a-tit {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+      .m-audio .a-wave {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 54px;
+        margin: 12px 0;
+      }
+      .m-audio .a-wave i {
+        flex: 1;
+        background: #8b5cf6;
+        border-radius: 2px;
+        opacity: 0.85;
+      }
+      .m-audio audio {
+        width: 100%;
+      }
+      .m-audio .a-vazio {
+        text-align: center;
+        font-size: 13px;
+        color: #8a8496;
+        padding: 8px;
+        border: 1px dashed #4a4554;
+        border-radius: 8px;
+      }
+      .m-audio .a-trans {
+        margin-top: 12px;
+        background: #f3f1ec;
+        color: #2a2a30;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-family: "Special Elite", ui-monospace, monospace;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .m-audio .f-vl {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8a8478;
+        margin-bottom: 4px;
+      }
+      .docico.m-cartaz {
+        background: #f3efe6;
+        border-top: 9px solid #b0202c;
+      }
+      .docico.m-email {
+        background: #fbfbfd;
+        border-top: 7px solid #c9ccd4;
+        border-radius: 3px;
+      }
+      .docico.m-audio {
+        background: #1b1820;
+        border-radius: 8px;
+        border: 2px solid #3a3642;
+      }
+      .docico.m-audio::after {
+        content: "";
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: 50%;
+        height: 14px;
+        transform: translateY(-50%);
+        background: repeating-linear-gradient(90deg, #8b5cf6 0 2px, transparent 2px 4px);
+      }
+
+      /* ---------- anotações do jogador ---------- */
+      .doc-notas {
+        margin-top: 14px;
+        max-width: 640px;
+        gap: 6px;
+      }
+      .doc-notas textarea {
+        width: 100%;
+      }
+      .docp mark.grifo {
+        background: rgba(120, 225, 110, 0.55);
+        color: inherit;
+        border-radius: 2px;
+        cursor: pointer;
+        box-shadow: 0 0 0 1px rgba(40, 140, 40, 0.35);
+      }
+
+      /* ---------- mural de pistas ---------- */
+      .muralEd .mu-dica {
+        padding: 6px 14px;
+        border-bottom: 1px solid #241f2c;
+      }
+      .mu-vp {
+        flex: 1;
+        overflow: auto;
+        background: #1a1410;
+        touch-action: pan-x pan-y;
+      }
+      .mu-scale {
+        position: relative;
+        margin: 0 auto;
+      }
+      .mu-board {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2400px;
+        height: 1500px;
+        transform-origin: 0 0;
+        background:
+          radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.05) 0 2px, transparent 3px) 0 0 / 23px 19px,
+          radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.18) 0 2px, transparent 3px) 0 0 / 17px 21px,
+          linear-gradient(135deg, #8a6440, #6f4d2e 50%, #7d5836);
+        box-shadow:
+          inset 0 0 0 18px #3a2616,
+          inset 0 0 0 22px #2a1a0e,
+          inset 0 0 120px rgba(0, 0, 0, 0.5);
+      }
+      .mu-fios {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+      .mu-fios .mu-f {
+        fill: none;
+        stroke: #b3121f;
+        stroke-width: 3.5;
+        filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.45));
+      }
+      .mu-fios .mu-fh {
+        fill: none;
+        stroke: transparent;
+        stroke-width: 22;
+        pointer-events: stroke;
+        cursor: pointer;
+      }
+      .mu-it {
+        position: absolute;
+        z-index: 2;
+        transform: rotate(var(--r, 0deg));
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+      }
+      .mu-it.sel {
+        outline: 4px solid #ffd54a;
+        outline-offset: 4px;
+      }
+      .mu-pin {
+        position: absolute;
+        left: 50%;
+        top: -6px;
+        width: 18px;
+        height: 18px;
+        margin-left: -9px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #ff6b6b, #b3121f 60%, #6a0610);
+        box-shadow: 0 3px 4px rgba(0, 0, 0, 0.5);
+        z-index: 4;
+      }
+      .mu-doc {
+        width: 170px;
+        background: #ece6da;
+        padding: 10px 10px 8px;
+      }
+      .mu-th {
+        position: relative;
+        width: 150px;
+        height: 170px;
+        overflow: hidden;
+        background: #cfc6b6;
+      }
+      .mu-th .docp {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 640px;
+        max-width: none;
+        transform: scale(0.234);
+        transform-origin: 0 0;
+        box-shadow: none;
+        pointer-events: none;
+      }
+      .mu-nm {
+        font-family: "Special Elite", ui-monospace, monospace;
+        font-size: 13px;
+        color: #2a2420;
+        margin-top: 6px;
+        line-height: 1.2;
+      }
+      .mu-por {
+        font-size: 10px;
+        color: #6a6056;
+        margin-top: 3px;
+      }
+      .mu-nota {
+        width: 150px;
+        min-height: 120px;
+        padding: 16px 12px 8px;
+        font-family: "Caveat", "Comic Sans MS", cursive;
+        font-size: 20px;
+        line-height: 1.15;
+        color: #2a2420;
+        background: #f6e27a;
+      }
+      .mu-nota.c1 {
+        background: #f4b6c2;
+      }
+      .mu-nota.c2 {
+        background: #a9d4ef;
+      }
+      .mu-nota.c3 {
+        background: #b9e3a6;
+      }
+      .mu-tx {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .mu-nota .mu-por {
+        font-family: "Barlow", sans-serif;
+      }
+
       /* ---------- portas que abrem e passagens entre cenas ---------- */
       .portas .porta {
         position: absolute;
@@ -8465,7 +9001,17 @@ function leaveMesa(show) {
   });
   S.unsub = [];
   limparCenaSubs();
-  ["acUnsub", "memUnsub", "privUnsub", "trilhaUnsub", "npcUnsub", "docsUnsub", "arteUnsub"].forEach(k => {
+  [
+    "acUnsub",
+    "memUnsub",
+    "privUnsub",
+    "trilhaUnsub",
+    "npcUnsub",
+    "docsUnsub",
+    "arteUnsub",
+    "notasUnsub",
+    "muralUnsub"
+  ].forEach(k => {
     if (S[k]) {
       try {
         S[k]();
@@ -8482,6 +9028,8 @@ function leaveMesa(show) {
   S.privB = [];
   S.trilha = null;
   S.docs = [];
+  S.notas = {};
+  S.mural = null;
   S.loaded.entrada = false;
   if (typeof pararLocal === "function") pararLocal();
   if (S.cenasUnsub) {
@@ -23928,6 +24476,8 @@ const MA_MODELOS = [
 /* =====================================================================
    DOCUMENTOS — criar, guardar, enviar, revelar trechos
    Trechos entre [[ e ]] ficam tarjados para os jogadores até o mestre revelar.
+   A tarja pode ter um estilo: [[sangue:texto]], [[rabisco:texto]]... Cada modelo
+   aceita os estilos que fazem sentido nele (DOC_TARJAS); o primeiro é o padrão.
    ===================================================================== */
 const DOC_MODELOS = [
   {
@@ -24027,6 +24577,38 @@ const DOC_MODELOS = [
     img: true
   },
   {
+    id: "cartaz",
+    nome: "Cartaz",
+    desc: "Cartaz colado no poste ou no mural, com faixa no topo, foto e tirinhas de contato para destacar.",
+    campos: [
+      ["topo", "Faixa do topo", "DESAPARECIDO"],
+      ["contato", "Tirinhas de contato (opcional)", ""]
+    ],
+    img: true
+  },
+  {
+    id: "email",
+    nome: "E-mail",
+    desc: "Tela de e-mail. O título vira o assunto.",
+    campos: [
+      ["de", "De", ""],
+      ["para", "Para", ""],
+      ["data", "Data", ""],
+      ["anexo", "Anexo (opcional)", ""]
+    ],
+    img: true
+  },
+  {
+    id: "audio",
+    nome: "Áudio",
+    desc: "Gravação para os jogadores ouvirem: recado na secretária eletrônica, áudio de celular, fita. Grave pelo microfone, suba um arquivo pequeno ou cole um link. O texto vira a transcrição.",
+    campos: [
+      ["origem", "De onde vem", "Secretária eletrônica"],
+      ["hora", "Quando", ""]
+    ],
+    img: false
+  },
+  {
     id: "simples",
     nome: "Documento simples",
     desc: "Folha em branco, para qualquer coisa.",
@@ -24051,6 +24633,53 @@ const DOC_ELCOR = {
   Medo: "#e8f0ff"
 };
 
+/* ---------- estilos de tarja ---------- */
+const TARJA_ESTILOS = {
+  censura: "Tarja preta",
+  corretivo: "Corretivo branco",
+  rabisco: "Rabiscado à caneta",
+  sangue: "Mancha de sangue",
+  rasgado: "Pedaço rasgado",
+  queimado: "Queimado",
+  borrado: "Molhado / tinta borrada",
+  apagada: "Mensagem apagada",
+  pixel: "Pixelado",
+  corrompido: "Texto corrompido",
+  estatica: "Chiado (inaudível)",
+  simbolos: "Símbolos que se mexem"
+};
+const TJ_OFICIAL = ["censura", "corretivo", "rasgado", "sangue", "queimado", "borrado"];
+const TJ_MAO = ["rabisco", "rasgado", "sangue", "borrado", "queimado"];
+// o primeiro de cada lista é o estilo padrão daquele modelo
+const DOC_TARJAS = {
+  relatorio: TJ_OFICIAL,
+  policial: TJ_OFICIAL,
+  laudo: TJ_OFICIAL,
+  simples: ["censura", "rabisco", "corretivo", "rasgado", "sangue", "queimado", "borrado"],
+  carta: TJ_MAO,
+  diario: TJ_MAO,
+  foto: TJ_MAO,
+  bilhete: ["rasgado", "rabisco", "sangue", "borrado", "queimado"],
+  jornal: ["rasgado", "censura", "borrado", "sangue", "queimado"],
+  cartaz: ["rasgado", "rabisco", "borrado", "sangue", "queimado"],
+  amaldicoado: ["simbolos", "sangue", "queimado"],
+  celular: ["apagada", "pixel", "corrompido"],
+  email: ["corrompido", "censura", "pixel"],
+  audio: ["estatica", "corrompido"]
+};
+function tarjaEstilo(modelo, e) {
+  const L = DOC_TARJAS[modelo] || DOC_TARJAS.simples;
+  return L.includes(e) ? e : L[0];
+}
+// letras para as tarjas "corrompido" e "símbolos" (sempre as mesmas para o mesmo trecho)
+function tarjaLetras(e, n, i) {
+  const A = e === "simbolos" ? "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ" : "▓▒░#%&@$¤§¶╳";
+  const R = maRng(n * 31 + i * 7 + 3);
+  let t = "";
+  for (let k = 0; k < Math.max(3, Math.min(40, n)); k++) t += A[Math.floor(R() * A.length)];
+  return t;
+}
+
 /* ---------- texto com trechos escondidos ---------- */
 function docPartesDe(texto) {
   const out = [];
@@ -24059,7 +24688,9 @@ function docPartesDe(texto) {
     m;
   while ((m = re.exec(texto || ""))) {
     if (m.index > i) out.push({ t: texto.slice(i, m.index) });
-    out.push({ t: m[1], h: true });
+    const em = m[1].match(/^([a-z]+):([\s\S]*)$/);
+    if (em && TARJA_ESTILOS[em[1]]) out.push({ t: em[2], h: true, e: em[1] });
+    else out.push({ t: m[1], h: true });
     i = re.lastIndex;
   }
   if (i < (texto || "").length) out.push({ t: texto.slice(i) });
@@ -24071,7 +24702,7 @@ function docPartesEnvio(texto, revelados = []) {
   return docPartesDe(texto).map(p => {
     if (!p.h) return { t: p.t };
     const i = k++;
-    return revelados.includes(i) ? { t: p.t, r: 1 } : { h: 1, n: p.t.length, i };
+    return revelados.includes(i) ? { t: p.t, r: 1 } : { h: 1, n: p.t.length, i, ...(p.e ? { e: p.e } : {}) };
   });
 }
 function docFmt(s) {
@@ -24079,30 +24710,46 @@ function docFmt(s) {
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
     .replace(/\n/g, "<br>");
 }
-function docTextoHTML(partes, mestre) {
+function docTextoHTML(partes, mestre, modelo) {
   let k = 0;
   return partes
     .map(p => {
       if (p.h && p.t !== undefined && mestre) {
         const i = k++;
-        return `<mark class="dh" title="Trecho escondido nº ${i + 1}">${docFmt(p.t)}</mark>`;
+        const e = tarjaEstilo(modelo, p.e);
+        return `<mark class="dh" title="Trecho escondido nº ${i + 1} · ${esc(TARJA_ESTILOS[e])}">${docFmt(p.t)}<sup class="tjl">${esc(TARJA_ESTILOS[e])}</sup></mark>`;
       }
       if (p.h) {
-        k++;
+        const i = k++;
+        const e = tarjaEstilo(modelo, p.e);
         const n = Math.max(3, Math.min(400, p.n || (p.t || "").length));
-        return `<span class="redact" style="width:${Math.min(30, n * 0.52)}em">&nbsp;</span>${n > 58 ? `<span class="redact" style="width:${Math.min(30, (n - 58) * 0.52)}em">&nbsp;</span>` : ""}`;
+        if (e === "apagada") return `<span class="tj t-apagada">⊘ mensagem apagada</span>`;
+        if (e === "estatica")
+          return `<span class="tj t-estatica" style="min-width:${Math.min(16, n * 0.35)}em">inaudível</span>`;
+        if (e === "corrompido" || e === "simbolos")
+          return `<span class="tj t-${e}">${tarjaLetras(e, n, i)}</span>`;
+        const bar = w =>
+          `<span class="redact t-${e}" style="width:${Math.min(30, w * 0.52)}em">&nbsp;</span>`;
+        return bar(n) + (n > 58 ? bar(n - 58) : "");
       }
       return p.r ? `<span class="revealed">${docFmt(p.t)}</span>` : docFmt(p.t);
     })
     .join("");
 }
 function docLinhas(partes) {
-  // para o celular: devolve linhas de texto (só trechos visíveis)
-  return partes
-    .map(p => (p.h ? "█".repeat(Math.min(24, p.n || (p.t || "").length)) : p.t))
-    .join("")
-    .split("\n")
-    .filter(x => x.trim());
+  // para o celular: separa as partes em linhas (uma mensagem por linha), sem perder as tarjas
+  const out = [[]];
+  partes.forEach(p => {
+    if (p.h) {
+      out[out.length - 1].push(p);
+      return;
+    }
+    (p.t || "").split("\n").forEach((t, j) => {
+      if (j > 0) out.push([]);
+      if (t) out[out.length - 1].push({ ...p, t });
+    });
+  });
+  return out.filter(l => l.some(p => p.h || (p.t || "").trim()));
 }
 
 /* ---------- desenho do papel ---------- */
@@ -24111,7 +24758,7 @@ function docHtml(d, { mestre = false } = {}) {
   const c = d.campos || {};
   const v = k => esc(c[k] ?? "");
   const partes = d.partes || docPartesDe(d.texto || "");
-  const txt = docTextoHTML(partes, mestre);
+  const txt = docTextoHTML(partes, mestre, M.id);
   const tit = esc(d.titulo || "");
   const R = maRng(maH((d.titulo || "").length, (d.texto || "").length + 7, 3));
   const sangue = d.sangue
@@ -24183,13 +24830,49 @@ function docHtml(d, { mestre = false } = {}) {
     body = `<div class="ph-top"><span class="ph-av">${esc((c.contato || "?").charAt(0))}</span><b>${v("contato") || "Desconhecido"}</b><span class="ph-st">online</span></div>
     <div class="ph-msgs">${linhas
       .map(l => {
-        const m = l.match(/^([^:]{1,24}):\s*(.*)$/);
-        const quem = m ? m[1].trim() : "";
+        let resto = l;
+        let quem = "";
+        if (l[0] && !l[0].h) {
+          const m = l[0].t.match(/^([^:]{1,24}):\s*([\s\S]*)$/);
+          if (m) {
+            quem = m[1].trim();
+            resto = [{ ...l[0], t: m[2] }, ...l.slice(1)].filter(p => p.h || p.t);
+          }
+        }
         const eu = /^eu$/i.test(quem);
-        const t = m ? m[2] : l;
-        return `<div class="ph-b ${eu ? "eu" : ""}">${!eu && quem && quem !== c.contato ? `<span class="ph-q">${esc(quem)}</span>` : ""}${esc(t).replace(/█+/g, s => `<span class="redact" style="width:${s.length * 0.5}em">&nbsp;</span>`)}</div>`;
+        const so = resto.length === 1 && resto[0].h && resto[0].t === undefined;
+        const apagada = so && tarjaEstilo("celular", resto[0].e) === "apagada";
+        const conteudo = apagada
+          ? `<span class="t-apagada">⊘ Esta mensagem foi apagada</span>`
+          : docTextoHTML(resto, mestre, "celular");
+        return `<div class="ph-b ${eu ? "eu" : ""} ${apagada ? "apag" : ""}">${!eu && quem && quem !== c.contato ? `<span class="ph-q">${esc(quem)}</span>` : ""}${conteudo}</div>`;
       })
       .join("")}</div>`;
+  } else if (M.id === "cartaz") {
+    body = `${c.topo ? `<div class="c-topo">${v("topo")}</div>` : ""}${d.img ? `<div class="c-foto"><img src="${d.img}" alt=""></div>` : ""}${tit ? `<h2>${tit}</h2>` : ""}<div class="d-txt">${txt}</div>
+    ${c.contato ? `<div class="c-tiras">${Array.from({ length: 7 }, () => `<span>${v("contato")}</span>`).join("")}</div>` : ""}`;
+  } else if (M.id === "email") {
+    body = `<div class="e-bar"><i></i><i></i><i></i><span>Caixa de entrada</span></div><h2>${tit || "(sem assunto)"}</h2>
+    <table class="e-cab">${[
+      ["De", "de"],
+      ["Para", "para"],
+      ["Data", "data"]
+    ]
+      .filter(([, k]) => c[k])
+      .map(([n, k]) => `<tr><th>${n}:</th><td>${v(k)}</td></tr>`)
+      .join(
+        ""
+      )}</table><div class="d-txt">${txt}</div>${img}${c.anexo ? `<div class="e-anexo">📎 ${v("anexo")}</div>` : ""}`;
+  } else if (M.id === "audio") {
+    const temTxt = partes.some(p => p.h || (p.t || "").trim());
+    const Rw = maRng((d.titulo || "x").length * 13 + 5);
+    const barras = Array.from(
+      { length: 42 },
+      () => `<i style="height:${Math.round(18 + Rw() * 82)}%"></i>`
+    ).join("");
+    body = `<div class="a-dev"><div class="a-top"><span>● ${v("origem") || "Gravação"}</span><span>${v("hora")}</span></div>${tit ? `<div class="a-tit">${tit}</div>` : ""}<div class="a-wave">${barras}</div>
+    ${d.audio ? `<audio controls preload="metadata" src="${esc(d.audio)}"></audio>` : `<div class="a-vazio">Grave, suba ou cole o link do áudio</div>`}</div>
+    ${temTxt ? `<div class="a-trans"><span class="f-vl">Transcrição</span><div class="d-txt">${txt}</div></div>` : ""}`;
   } else if (M.id === "amaldicoado") {
     const cor = DOC_ELCOR[c.elemento] || DOC_ELCOR.Sangue;
     body = `<div class="sig" style="--el:${cor}"></div>${tit ? `<h2 style="color:${cor}">${tit}</h2>` : ""}<div class="d-txt" style="--el:${cor}">${txt}</div><div class="sig b" style="--el:${cor}"></div>`;
@@ -24219,18 +24902,20 @@ function docsRecebidos() {
 /* O painel junta três partes: a biblioteca (aqui), os entregues e o "passar" (5r-docs-passar.js)
    e os documentos no mapa (5s-docs-mapa.js). */
 function documentosHTML() {
-  return docsMapaHTML(docsPassarHTML(documentosBaseHTML()));
+  return muralBotaoHTML() + docsMapaHTML(docsPassarHTML(documentosBaseHTML()));
 }
 function bindDocumentos() {
+  bindMural(); // 5u-mural-notas.js
   bindDocumentosBase();
   bindDocsPassar();
   bindDocsMapa();
 }
 function documentosBaseHTML() {
   if (!S.isM) {
+    subscribeNotas(); // 5u-mural-notas.js
     const L = docsRecebidos();
     return `<p class="muted small" style="margin:0">Tudo o que o mestre te entregou fica guardado aqui.</p>
-    ${L.length ? `<div class="cards">${L.map(x => `<button class="fcard doccard" data-dver="${esc(x.id)}"><span class="docico m-${esc((x.doc && x.doc.modelo) || "simples")}"></span><div style="min-width:0"><div class="label">${esc(DOC_MOD[(x.doc && x.doc.modelo) || "simples"].nome)}${x.para === "todos" ? "" : " · só para você"}</div><div class="nm">${esc(x.titulo)}</div><div class="muted small">${new Date(x.ts || 0).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}${((x.doc && x.doc.partes) || []).some(p => p.h) ? " · tem trechos tarjados" : ""}</div></div></button>`).join("")}</div>` : `<div class="empty">Nenhum documento recebido ainda.</div>`}`;
+    ${L.length ? `<div class="cards">${L.map(x => `<button class="fcard doccard" data-dver="${esc(x.id)}"><span class="docico m-${esc((x.doc && x.doc.modelo) || "simples")}"></span><div style="min-width:0"><div class="label">${esc(DOC_MOD[(x.doc && x.doc.modelo) || "simples"].nome)}${x.para === "todos" ? "" : " · só para você"}</div><div class="nm">${esc(x.titulo)}</div><div class="muted small">${new Date(x.ts || 0).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}${((x.doc && x.doc.partes) || []).some(p => p.h) ? " · tem trechos tarjados" : ""}${temNota(x.id) ? " · 📝 anotado" : ""}</div></div></button>`).join("")}</div>` : `<div class="empty">Nenhum documento recebido ainda.</div>`}`;
   }
   subscribeDocs();
   const L = S.docs || [];
@@ -24244,7 +24929,7 @@ function documentosBaseHTML() {
            const nh = docPartesDe(d.texto).filter(p => p.h).length;
            return `<div class="scene"><div class="th docthumb">${docHtml(d, { mestre: true })}</div><div class="stack" style="gap:4px;min-width:0">
      <div class="st">${esc(DOC_MOD[d.modelo] ? DOC_MOD[d.modelo].nome : "Documento")}${e.length ? ` · entregue ${e.length}×` : " · ainda não entregue"}${nh ? ` · ${(d.revelados || []).length}/${nh} trechos revelados` : ""}</div><div class="nm">${esc(docNome(d))}</div>
-     <div class="row"><button class="btn sm primary" data-denv="${esc(d.id)}">Entregar</button><button class="btn sm" data-ded="${esc(d.id)}">Editar</button><button class="btn sm ghost" data-dren="${esc(d.id)}">Renomear</button>${nh && e.length ? `<button class="btn sm" data-drev="${esc(d.id)}">Revelar trechos</button>` : ""}<button class="btn sm ghost" data-ddup="${esc(d.id)}">Duplicar</button><button class="btn sm ghost" data-ddel="${esc(d.id)}" aria-label="Apagar documento">✕</button></div></div></div>`;
+     <div class="row"><button class="btn sm primary" data-denv="${esc(d.id)}">Entregar</button><button class="btn sm" data-ded="${esc(d.id)}">Editar</button><button class="btn sm ghost" data-dren="${esc(d.id)}">Renomear</button>${nh && e.length ? `<button class="btn sm" data-drev="${esc(d.id)}">Revelar trechos</button>` : ""}<button class="btn sm ghost" data-dmural="${esc(d.id)}">Mural</button><button class="btn sm ghost" data-ddup="${esc(d.id)}">Duplicar</button><button class="btn sm ghost" data-ddel="${esc(d.id)}" aria-label="Apagar documento">✕</button></div></div></div>`;
          }).join("")}</div>`
        : `<div class="empty">Nenhum documento na biblioteca. Toque em <b>Criar documento</b>.</div>`
    }`;
@@ -24326,8 +25011,10 @@ async function docEntregar(d) {
   if (!r) return;
   await docEnviar(d, r.para);
 }
-async function docEnviar(d, para) {
-  const doc = {
+// A versão do documento que sai da biblioteca (para um jogador, para o mapa ou para o mural):
+// os trechos tarjados não levam o texto.
+function docSnapshot(d) {
+  return {
     modelo: d.modelo,
     campos: d.campos || {},
     idade: d.idade || 0,
@@ -24335,9 +25022,13 @@ async function docEnviar(d, para) {
     queimado: !!d.queimado,
     partes: docPartesEnvio(d.texto, d.revelados || []),
     ...(d.img ? { img: d.img } : {}),
+    ...(d.audio ? { audio: d.audio } : {}),
     titulo: d.titulo || "",
     nome: docNome(d)
   };
+}
+async function docEnviar(d, para) {
+  const doc = docSnapshot(d);
   const body = {
     autor: S.uid,
     quem: "Mestre",
@@ -24375,6 +25066,9 @@ async function docRevelar(d) {
       await S.db.merge(P() + "/privado/" + x.id, { doc: { ...x.doc, partes }, rev: (x.rev || 0) + 1 });
     for (const m of (S.mapDocs || []).filter(y => y.docId === d.id))
       await S.db.merge(P() + "/estado/" + m.id, { doc: { ...m.doc, partes }, rev: (m.rev || 0) + 1 });
+    const mural = S.mural || (await S.db.getCol(P() + "/mural"));
+    for (const m of mural.filter(y => y.tipo === "doc" && y.docId === d.id))
+      await S.db.merge(P() + "/mural/" + m.id, { doc: { ...m.doc, partes } });
     toast(novos.length > (d.revelados || []).length ? "Trechos revelados para os jogadores." : "Pronto.");
   } catch (e) {
     fail(e);
@@ -24399,6 +25093,7 @@ function abrirDoc(e) {
     }
   };
   S.docAberto = e.id;
+  docLeituraExtras(e); // anotações e mural (5u-mural-notas.js)
 }
 
 /* ---------- editor ---------- */
@@ -24439,8 +25134,14 @@ async function docEditor(d0) {
      <p class="muted small" style="margin:0">${esc(M.desc)}</p>
      <div class="field"><label class="label" for="deT">${M.id === "carta" || M.id === "bilhete" || M.id === "diario" ? "Primeira linha (opcional)" : "Título"}</label><input type="text" id="deT" maxlength="120" value="${esc(d.titulo || "")}" placeholder="${M.id === "jornal" ? "Manchete" : M.id === "carta" ? "Querida Ana," : ""}"></div>
      ${M.campos.map(([k, n, def]) => `<div class="field"><label class="label" for="dc_${k}">${esc(n)}</label><input type="text" id="dc_${k}" data-ck="${k}" maxlength="120" value="${esc(d.campos[k] ?? "")}" placeholder="${esc(def)}"></div>`).join("")}
-     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button></span></div>
+     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><select id="deTj" aria-label="Estilo da tarja" title="Estilo da tarja">${(DOC_TARJAS[M.id] || DOC_TARJAS.simples).map(e => `<option value="${e}">${esc(TARJA_ESTILOS[e])}</option>`).join("")}</select><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button></span></div>
       <textarea id="deTx" rows="12" maxlength="6000" placeholder="${M.id === "celular" ? "Ana: você viu aquilo?\nEu: vi. não conta pra ninguém\nAna: [[eles estão no porão]]" : "Escreva aqui. Use [[ e ]] em volta do que deve chegar tarjado."}">${esc(d.texto || "")}</textarea></div>
+     ${
+       M.id === "audio"
+         ? `<div class="row">${S.gravando ? `<button type="button" class="btn sm danger" id="deRecStop">■ Parar a gravação</button>` : `<button type="button" class="btn sm primary" id="deRec">● Gravar pelo microfone</button>`}<button type="button" class="btn sm" id="deAudF">Subir arquivo</button><button type="button" class="btn sm" id="deAudL">Colar link</button>${d.audio ? `<button type="button" class="btn sm ghost" id="deAudX">Tirar áudio</button>` : ""}</div>
+     <p class="muted small" style="margin:0">Gravação de até 90 segundos. Arquivo de até 500 KB (um MP3 curto); para um áudio maior, suba no GitHub e cole o link.</p>`
+         : ""
+     }
      ${M.img || d.img ? `<div class="row"><button type="button" class="btn sm" id="deImg">${d.img ? (d.modelo === "foto" ? "Trocar a foto" : "Trocar imagem") : d.modelo === "foto" ? "Subir a foto" : "Pôr uma imagem"}</button>${d.img ? `<button type="button" class="btn sm ghost" id="deImgX">Tirar imagem</button>` : ""}</div>` : ""}
      <div class="sub" style="margin:0">Aparência</div>
      <div class="row" style="flex-wrap:nowrap"><label class="label" for="deI" style="white-space:nowrap;margin:0">Papel</label><select id="deI">${["Novo", "Usado", "Velho e manchado"].map((n, i) => `<option value="${i}" ${(+d.idade || 0) === i ? "selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -24484,7 +25185,98 @@ async function docEditor(d0) {
       draw();
       tx.focus();
     };
-    $("#deHide").onclick = () => wrap("[[", "]]");
+    $("#deHide").onclick = () => {
+      const e = $("#deTj").value;
+      wrap(e === (DOC_TARJAS[M.id] || DOC_TARJAS.simples)[0] ? "[[" : "[[" + e + ":", "]]");
+    };
+    const aud = url => {
+      d.audio = url;
+      build();
+      draw();
+    };
+    const rec = $("#deRec");
+    if (rec)
+      rec.onclick = async () => {
+        try {
+          const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const tipo = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"].find(
+            t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)
+          );
+          const mr = new MediaRecorder(st, {
+            ...(tipo ? { mimeType: tipo } : {}),
+            audioBitsPerSecond: 24000
+          });
+          const pedacos = [];
+          mr.ondataavailable = ev => ev.data.size && pedacos.push(ev.data);
+          mr.onstop = () => {
+            st.getTracks().forEach(t => t.stop());
+            S.gravando = null;
+            const fr = new FileReader();
+            fr.onload = () => {
+              if (fr.result.length > 700000) {
+                toast("A gravação ficou grande demais. Grave um trecho mais curto.");
+                build();
+                return;
+              }
+              aud(fr.result);
+            };
+            fr.readAsDataURL(new Blob(pedacos, { type: mr.mimeType || tipo || "audio/webm" }));
+          };
+          mr.start();
+          S.gravando = { mr, fim: setTimeout(() => mr.state === "recording" && mr.stop(), 90000) };
+          build();
+        } catch (e) {
+          toast("Não consegui usar o microfone. Libere o acesso ao microfone no navegador.");
+        }
+      };
+    const recStop = $("#deRecStop");
+    if (recStop)
+      recStop.onclick = () => {
+        if (!S.gravando) return;
+        clearTimeout(S.gravando.fim);
+        S.gravando.mr.stop();
+      };
+    const audF = $("#deAudF");
+    if (audF)
+      audF.onclick = () => {
+        const inp = document.createElement("input");
+        inp.type = "file";
+        inp.accept = "audio/*";
+        inp.onchange = () => {
+          const f = inp.files && inp.files[0];
+          if (!f) return;
+          if (f.size > 500000) {
+            toast("Arquivo grande (máximo 500 KB). Grave pelo microfone ou suba no GitHub e cole o link.");
+            return;
+          }
+          const fr = new FileReader();
+          fr.onload = () => aud(fr.result);
+          fr.readAsDataURL(f);
+        };
+        inp.click();
+      };
+    const audL = $("#deAudL");
+    if (audL)
+      audL.onclick = async () => {
+        const r = await formBox(
+          "Link do áudio",
+          `<div class="field"><label class="label" for="daL">Link direto de um MP3 ou OGG</label><input type="url" id="daL" name="url" placeholder="https://..." required></div>`,
+          "Usar"
+        );
+        if (!r) return;
+        if (!/^https:\/\//.test(r.url.trim())) {
+          toast("Use um link que comece com https://");
+          return;
+        }
+        aud(r.url.trim());
+      };
+    const audX = $("#deAudX");
+    if (audX)
+      audX.onclick = () => {
+        delete d.audio;
+        build();
+        draw();
+      };
     $("#deBold").onclick = () => wrap("**", "**");
     const im = $("#deImg");
     if (im)
@@ -24525,6 +25317,13 @@ async function docEditor(d0) {
   build();
   draw();
   const fechar = () => {
+    if (S.gravando) {
+      clearTimeout(S.gravando.fim);
+      S.gravando.mr.onstop = null;
+      S.gravando.mr.stop();
+      S.gravando.mr.stream.getTracks().forEach(t => t.stop());
+      S.gravando = null;
+    }
     const el = $("#docEd");
     if (el) el.remove();
     document.body.classList.remove("me-open");
@@ -24633,6 +25432,10 @@ const AJUDA = {
         `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer como pinos no mapa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
       ],
       [
+        "Grifar, anotar e montar o mural",
+        `Com um documento aberto, selecione um trecho e toque em <b>Grifar trecho</b>; embaixo, escreva suas <b>anotações</b> (só você vê). Toque em <b>Pôr no mural</b> para pregar o documento no <b>Mural de pistas</b> (em ${AJ_I("Documentos")}), onde o grupo todo arruma as pistas, prega bilhetes e liga uma à outra com barbante.`
+      ],
+      [
         "Guardar e compartilhar personagens",
         "Na página inicial, em <b>Meus personagens</b>, toque em <b>Baixar</b> para guardar um arquivo do personagem. Mande esse arquivo para um amigo e ele usa <b>Importar personagem</b>."
       ]
@@ -24689,7 +25492,7 @@ const AJUDA = {
       ],
       [
         "Documentos",
-        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda. <b>Pôr no mapa</b> deixa o documento como um pino na cena.`
+        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda; <b>Cartaz</b>, <b>E-mail</b> e <b>Áudio</b> (grave pelo microfone; o texto vira a transcrição) também existem. Ao lado de <b>Tarjar trecho</b>, escolha o estilo da tarja: tarja preta, rabisco, mancha de sangue, pedaço rasgado, queimado, mensagem apagada, chiado... cada modelo mostra só os que fazem sentido nele. <b>Pôr no mapa</b> deixa o documento como um pino na cena, e <b>Mural</b> prega no Mural de pistas do grupo.`
       ],
       [
         "Trilha sonora",
@@ -27018,7 +27821,7 @@ async function tirarRepetidosMesa() {
 }
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="12/11 15h3200";
+const VERSAO_SITE="12/11 16h4204";
 
 /* ---------- toque duplo: a mesma ação não roda duas vezes seguidas ---------- */
 function umaVez(fn, ms = 1200) {
@@ -28061,17 +28864,7 @@ async function porNoMapa(d) {
   const r = board.getBoundingClientRect();
   const x = Math.round((r.width / 2 - V.x) / V.z),
     y = Math.round((r.height / 2 - V.y) / V.z);
-  const doc = {
-    modelo: d.modelo,
-    campos: d.campos || {},
-    idade: d.idade || 0,
-    sangue: !!d.sangue,
-    queimado: !!d.queimado,
-    partes: docPartesEnvio(d.texto, d.revelados || []),
-    ...(d.img ? { img: d.img } : {}),
-    titulo: d.titulo || "",
-    nome: docNome(d)
-  };
+  const doc = docSnapshot(d);
   try {
     await S.db.set(P() + "/estado/md" + rid(8), {
       tipo: "mapdoc",
@@ -28701,6 +29494,446 @@ async function passagensModal(sid) {
   } catch (e) {
     fail(e);
   }
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   ANOTAÇÕES E MURAL DE PISTAS
+   Anotações: cada jogador grifa trechos e escreve observações nos documentos
+   que recebeu. Ficam só para ele, em usuarios/<uid>/notasDoc/<mesa>__<id>.
+   Mural: quadro da mesa onde todos pregam documentos e bilhetes e ligam uns
+   aos outros com barbante. Fica em mesas/<código>/mural/<id>, com tipo
+   "doc", "nota" ou "fio" (o barbante, de a até b).
+   ===================================================================== */
+const MU_W = 2400,
+  MU_H = 1500;
+const MU_LARG = { doc: 170, nota: 150 };
+
+/* ---------- anotações do jogador ---------- */
+function notaPath(privId) {
+  return "usuarios/" + S.uid + "/notasDoc/" + S.mesaId + "__" + privId;
+}
+function subscribeNotas() {
+  if (S.isM || S.notasUnsub || !S.uid || !S.mesaId) return;
+  S.notasUnsub = S.db.listenCol(
+    "usuarios/" + S.uid + "/notasDoc",
+    { where: ["mesa", S.mesaId] },
+    l => {
+      S.notas = Object.fromEntries(l.map(n => [n.privId, n]));
+      if (S.tool === "documentos" && !isEditing()) renderPanel();
+    },
+    () => {}
+  );
+}
+function temNota(privId) {
+  const n = (S.notas || {})[privId];
+  return !!(n && ((n.texto || "").trim() || (n.grifos || []).length));
+}
+async function salvarNota(privId, n) {
+  S.notas = { ...(S.notas || {}), [privId]: n };
+  try {
+    await S.db.set(notaPath(privId), { ...n, mesa: S.mesaId, privId, ts: Date.now() });
+  } catch (e) {
+    fail(e);
+  }
+}
+// Pinta os grifos no documento aberto. Devolve quantos achou.
+function aplicarGrifos(root, grifos) {
+  let achou = 0;
+  (grifos || []).forEach((g, gi) => {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: n =>
+        n.parentElement.closest(".redact,.tj,mark.grifo,audio")
+          ? NodeFilter.FILTER_REJECT
+          : NodeFilter.FILTER_ACCEPT
+    });
+    let n;
+    while ((n = w.nextNode())) {
+      const i = n.data.indexOf(g);
+      if (i < 0) continue;
+      const fim = n.splitText(i);
+      fim.splitText(g.length);
+      const m = document.createElement("mark");
+      m.className = "grifo";
+      m.dataset.g = gi;
+      m.textContent = g;
+      fim.replaceWith(m);
+      achou++;
+      break;
+    }
+  });
+  return achou;
+}
+// Guarda o último trecho escolhido dentro do documento aberto (no celular o toque no botão apaga a seleção).
+document.addEventListener("selectionchange", () => {
+  const sel = window.getSelection();
+  const box = $(".docview .docp");
+  if (!sel || sel.isCollapsed || !box) return;
+  if (box.contains(sel.anchorNode) && box.contains(sel.focusNode))
+    S.selDoc = sel.toString().replace(/\s+/g, " ").trim();
+});
+
+/* Ações embaixo do documento aberto: anotações (quem recebeu) e mural. Chamado no fim de abrirDoc. */
+function docLeituraExtras(e) {
+  const view = $(".docview");
+  if (!view) return;
+  const recebido = !S.isM && e.tipo === "doc" && e.autor !== S.uid;
+  if (e.mural) {
+    if (e.mural.autor === S.uid || S.isM)
+      view.insertAdjacentHTML(
+        "beforeend",
+        `<div class="row" style="margin-top:12px"><button class="btn sm ghost" id="muTirarDoc">Tirar do mural</button></div>`
+      );
+    const t = $("#muTirarDoc");
+    if (t)
+      t.onclick = async () => {
+        $("#modalHost").innerHTML = "";
+        S.docAberto = null;
+        await tirarDoMural(e.mural);
+      };
+    return;
+  }
+  if (!recebido) return;
+  const n = (S.notas || {})[e.id] || { grifos: [], texto: "" };
+  view.insertAdjacentHTML(
+    "beforeend",
+    `<div class="doc-notas stack">
+      <div class="row"><button class="btn sm" id="dnGrifar">Grifar trecho</button><button class="btn sm" id="dnMural">Pôr no mural</button>${(n.grifos || []).length ? `<span class="muted small">Toque num grifo para tirar.</span>` : ""}</div>
+      <label class="label" for="dnTx">Minhas anotações (só você vê)</label>
+      <textarea id="dnTx" rows="3" maxlength="2000" placeholder="O que você percebeu neste documento?">${esc(n.texto || "")}</textarea>
+    </div>`
+  );
+  const box = $(".docview .docp");
+  const pintar = () => {
+    aplicarGrifos(box, n.grifos);
+    $$("mark.grifo", box).forEach(
+      m =>
+        (m.onclick = async () => {
+          if (!(await confirmBox("Tirar este grifo?", m.textContent, "Tirar"))) return;
+          n.grifos = n.grifos.filter((g, i) => i !== +m.dataset.g);
+          await salvarNota(e.id, n);
+          abrirDoc(e);
+        })
+    );
+  };
+  pintar();
+  S.selDoc = "";
+  $("#dnGrifar").onclick = async () => {
+    const g = (S.selDoc || "").slice(0, 300);
+    if (!g) {
+      toast("Selecione um trecho do documento (arraste o dedo ou o mouse por cima) e toque em Grifar.");
+      return;
+    }
+    if ((n.grifos || []).includes(g)) return;
+    const teste = box.cloneNode(true);
+    if (!aplicarGrifos(teste, [g])) {
+      toast("Grife um trecho de uma linha só, sem passar por cima de tarjas.");
+      return;
+    }
+    n.grifos = [...(n.grifos || []), g];
+    await salvarNota(e.id, n);
+    abrirDoc(e);
+  };
+  let tm = 0;
+  $("#dnTx").oninput = ev => {
+    n.texto = ev.target.value;
+    clearTimeout(tm);
+    tm = setTimeout(() => salvarNota(e.id, n), 700);
+  };
+  $("#dnMural").onclick = async () => {
+    if (
+      e.para !== "todos" &&
+      !(await confirmBox(
+        "Pôr no mural?",
+        "Todos da mesa vão poder ler este documento no mural, com as mesmas tarjas que você vê.",
+        "Pôr no mural"
+      ))
+    )
+      return;
+    await porNoMural({ titulo: e.titulo, doc: e.doc, docId: e.docId || null, privId: e.id });
+  };
+}
+
+/* ---------- mural de pistas ---------- */
+function subscribeMural() {
+  if (S.muralUnsub || !S.mesaId) return;
+  S.muralUnsub = S.db.listenCol(
+    P() + "/mural",
+    {},
+    l => {
+      S.mural = l;
+      if ($("#muralEd")) {
+        if (S.muDrag) S.muPend = true;
+        else renderMural();
+      }
+      if (S.tool === "documentos" && !isEditing()) renderPanel();
+    },
+    () => {}
+  );
+}
+function muralBotaoHTML() {
+  subscribeMural();
+  const n = (S.mural || []).filter(x => x.tipo !== "fio").length;
+  return `<button class="btn block" id="muralAbrir">📌 Mural de pistas${n ? ` (${n})` : ""}</button>`;
+}
+function bindMural() {
+  const b = $("#muralAbrir");
+  if (b) b.onclick = abrirMural;
+  $$("[data-dmural]").forEach(
+    x =>
+      (x.onclick = () => {
+        const d = (S.docs || []).find(y => y.id === x.dataset.dmural);
+        if (d) porNoMural({ titulo: docNome(d), doc: docSnapshot(d), docId: d.id });
+      })
+  );
+}
+async function porNoMural(it) {
+  const L = S.mural || (await S.db.getCol(P() + "/mural"));
+  if (
+    L.some(
+      x =>
+        x.tipo === "doc" &&
+        ((it.privId && x.privId === it.privId) || (S.isM && it.docId && x.docId === it.docId && !x.privId))
+    )
+  ) {
+    toast("Esse documento já está no mural.");
+    return;
+  }
+  const R = maRng(Date.now() % 9973);
+  try {
+    await S.db.add(P() + "/mural", {
+      tipo: "doc",
+      titulo: String(it.titulo || "Documento").slice(0, 120),
+      doc: it.doc,
+      docId: it.docId || null,
+      privId: it.privId || null,
+      autor: S.uid,
+      autorNome: S.isM ? "Mestre" : nomeMembro(S.uid),
+      x: Math.round(700 + R() * 900),
+      y: Math.round(380 + R() * 600),
+      ts: Date.now()
+    });
+    toast("Está no mural de pistas.");
+  } catch (e) {
+    fail(e);
+  }
+}
+porNoMural = umaVez(porNoMural);
+async function tirarDoMural(it) {
+  try {
+    const fios = (S.mural || []).filter(f => f.tipo === "fio" && (f.a === it.id || f.b === it.id));
+    for (const f of fios) await S.db.del(P() + "/mural/" + f.id);
+    await S.db.del(P() + "/mural/" + it.id);
+    toast("Saiu do mural.");
+  } catch (e) {
+    fail(e);
+  }
+}
+async function notaMural(it) {
+  const meu = !it || it.autor === S.uid || S.isM;
+  if (!meu) return;
+  const cores = ["Amarelo", "Rosa", "Azul", "Verde"];
+  const r = await formBox(
+    it ? "Bilhete" : "Novo bilhete",
+    `<div class="field"><label class="label" for="muTx">O que vai escrito</label><textarea id="muTx" name="texto" rows="4" maxlength="200" required placeholder="Ex.: A Bia sabia do sangue?">${esc((it && it.texto) || "")}</textarea></div>
+     <div class="field"><label class="label" for="muCor">Cor</label><select id="muCor" name="cor">${cores.map((c, i) => `<option value="${i}" ${((it && it.cor) || 0) === i ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+     ${it ? `<label class="check"><input type="checkbox" name="tirar"> Tirar do mural</label>` : ""}`,
+    it ? "Salvar" : "Pregar no mural"
+  );
+  if (!r) return;
+  try {
+    if (it && r.tirar) return tirarDoMural(it);
+    const texto = (r.texto || "").trim();
+    if (!texto) return;
+    if (it) await S.db.merge(P() + "/mural/" + it.id, { texto, cor: +r.cor || 0 });
+    else {
+      const vp = $("#muVp");
+      const z = S.muZ || 0.5;
+      await S.db.add(P() + "/mural", {
+        tipo: "nota",
+        texto,
+        cor: +r.cor || 0,
+        autor: S.uid,
+        autorNome: S.isM ? "Mestre" : nomeMembro(S.uid),
+        x: Math.round(Math.min(MU_W - 160, (vp ? vp.scrollLeft + vp.clientWidth / 2 : 1200 * z) / z - 75)),
+        y: Math.round(Math.min(MU_H - 140, (vp ? vp.scrollTop + vp.clientHeight / 2 : 750 * z) / z - 60)),
+        ts: Date.now()
+      });
+    }
+  } catch (e) {
+    fail(e);
+  }
+}
+function abrirMural() {
+  if ($("#muralEd")) return;
+  subscribeMural();
+  S.muLigar = false;
+  S.muSel = null;
+  S.muZ = S.muZ || (innerWidth < 700 ? 0.38 : 0.55);
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `<div class="docEd muralEd" id="muralEd"><div class="me-top"><button class="btn sm ghost" id="muX">✕ Fechar</button><b style="font-family:var(--f-display);font-size:18px">Mural de pistas</b><span class="me-gap"></span>
+      <button class="btn sm" id="muLig">🧵 Ligar com barbante</button><button class="btn sm" id="muNota">+ Bilhete</button>
+      <span class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn sm" id="muMenos" aria-label="Diminuir">−</button><button class="btn sm" id="muMais" aria-label="Aumentar">+</button></span></div>
+      <div class="mu-dica muted small" id="muDica"></div>
+      <div class="mu-vp" id="muVp"><div class="mu-scale" id="muScale"><div class="mu-board" id="muBoard"></div></div></div></div>`
+  );
+  document.body.classList.add("me-open");
+  $("#muX").onclick = () => {
+    $("#muralEd").remove();
+    document.body.classList.remove("me-open");
+  };
+  $("#muLig").onclick = () => {
+    S.muLigar = !S.muLigar;
+    S.muSel = null;
+    renderMural();
+  };
+  $("#muNota").onclick = () => notaMural(null);
+  const zoom = f => {
+    const vp = $("#muVp");
+    const cx = (vp.scrollLeft + vp.clientWidth / 2) / S.muZ,
+      cy = (vp.scrollTop + vp.clientHeight / 2) / S.muZ;
+    S.muZ = Math.max(0.25, Math.min(1.2, +(S.muZ * f).toFixed(3)));
+    renderMural();
+    vp.scrollLeft = cx * S.muZ - vp.clientWidth / 2;
+    vp.scrollTop = cy * S.muZ - vp.clientHeight / 2;
+  };
+  $("#muMenos").onclick = () => zoom(1 / 1.25);
+  $("#muMais").onclick = () => zoom(1.25);
+  renderMural();
+  const vp = $("#muVp");
+  vp.scrollLeft = (MU_W * S.muZ - vp.clientWidth) / 2;
+  vp.scrollTop = (MU_H * S.muZ - vp.clientHeight) / 2;
+}
+function muCentro(it) {
+  return { x: it.x + (MU_LARG[it.tipo] || 160) / 2, y: it.y + 8 };
+}
+function fiosSVG() {
+  const L = S.mural || [];
+  const por = Object.fromEntries(L.map(x => [x.id, x]));
+  const fios = L.filter(f => f.tipo === "fio" && por[f.a] && por[f.b]);
+  return `<svg class="mu-fios" width="${MU_W}" height="${MU_H}" viewBox="0 0 ${MU_W} ${MU_H}">${fios
+    .map(f => {
+      const a = muCentro(por[f.a]),
+        b = muCentro(por[f.b]);
+      const d = Math.hypot(b.x - a.x, b.y - a.y);
+      const path = `M${a.x} ${a.y} Q${(a.x + b.x) / 2} ${Math.max(a.y, b.y) + Math.min(140, d * 0.18)} ${b.x} ${b.y}`;
+      return `<path d="${path}" class="mu-f"/><path d="${path}" class="mu-fh" data-fio="${esc(f.id)}"><title>Cortar o barbante</title></path>`;
+    })
+    .join("")}</svg>`;
+}
+function renderMural() {
+  const bd = $("#muBoard");
+  if (!bd) return;
+  const z = S.muZ;
+  $("#muScale").style.cssText = `width:${MU_W * z}px;height:${MU_H * z}px`;
+  bd.style.transform = `scale(${z})`;
+  $("#muLig").classList.toggle("primary", !!S.muLigar);
+  $("#muDica").textContent = S.muLigar
+    ? S.muSel
+      ? "Agora toque na pista que você quer ligar a essa."
+      : "Toque em duas pistas para ligar uma à outra. Toque num barbante para cortar."
+    : "Arraste as pistas para organizar. Toque numa pista para ler.";
+  const L = (S.mural || []).filter(x => x.tipo !== "fio");
+  bd.innerHTML =
+    fiosSVG() +
+    L.map(it => {
+      const R = maRng(maH((it.id || "x").length, (it.id || "x").charCodeAt(1) || 7, 5));
+      const rot = ((R() - 0.5) * 6).toFixed(1);
+      const cls = `mu-it mu-${it.tipo} ${S.muSel === it.id ? "sel" : ""} ${it.tipo === "nota" ? "c" + (it.cor || 0) : ""}`;
+      const corpo =
+        it.tipo === "doc"
+          ? `<div class="mu-th">${docHtml(it.doc || {})}</div><div class="mu-nm">${esc(it.titulo)}</div>`
+          : `<div class="mu-tx">${esc(it.texto)}</div>`;
+      return `<div class="${cls}" data-mu="${esc(it.id)}" style="left:${it.x}px;top:${it.y}px;--r:${rot}deg"><i class="mu-pin"></i>${corpo}<div class="mu-por">${esc(it.autorNome || "")}</div></div>`;
+    }).join("");
+  bindMuralBoard();
+}
+function bindMuralBoard() {
+  const L = S.mural || [];
+  $$("#muBoard [data-mu]").forEach(el => {
+    const it = L.find(x => x.id === el.dataset.mu);
+    if (!it) return;
+    el.onpointerdown = e => {
+      e.preventDefault();
+      const st = { x: e.clientX, y: e.clientY, ix: it.x, iy: it.y };
+      let moved = false;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      el.onpointermove = ev => {
+        const dx = (ev.clientX - st.x) / S.muZ,
+          dy = (ev.clientY - st.y) / S.muZ;
+        if (!moved && Math.hypot(dx, dy) * S.muZ < 5) return;
+        moved = true;
+        S.muDrag = true;
+        it.x = Math.round(Math.max(0, Math.min(MU_W - 170, st.ix + dx)));
+        it.y = Math.round(Math.max(0, Math.min(MU_H - 200, st.iy + dy)));
+        el.style.left = it.x + "px";
+        el.style.top = it.y + "px";
+        const svg = $("#muBoard .mu-fios");
+        if (svg) svg.outerHTML = fiosSVG();
+      };
+      el.onpointerup = el.onpointercancel = async () => {
+        el.onpointermove = el.onpointerup = el.onpointercancel = null;
+        S.muDrag = false;
+        if (moved) {
+          try {
+            await S.db.merge(P() + "/mural/" + it.id, { x: it.x, y: it.y });
+          } catch (er) {
+            fail(er);
+          }
+          if (S.muPend) {
+            S.muPend = false;
+            renderMural();
+          } else bindMuralBoard();
+          return;
+        }
+        clicarNoMural(it);
+      };
+    };
+  });
+  $$("#muBoard [data-fio]").forEach(
+    p =>
+      (p.onclick = async () => {
+        if (!(await confirmBox("Cortar este barbante?", "As duas pistas continuam no mural.", "Cortar")))
+          return;
+        try {
+          await S.db.del(P() + "/mural/" + p.dataset.fio);
+        } catch (e) {
+          fail(e);
+        }
+      })
+  );
+}
+async function clicarNoMural(it) {
+  if (S.muLigar) {
+    if (!S.muSel || S.muSel === it.id) {
+      S.muSel = S.muSel === it.id ? null : it.id;
+      renderMural();
+      return;
+    }
+    const a = S.muSel,
+      b = it.id;
+    S.muSel = null;
+    renderMural();
+    if (
+      (S.mural || []).some(f => f.tipo === "fio" && ((f.a === a && f.b === b) || (f.a === b && f.b === a)))
+    ) {
+      toast("Essas duas já estão ligadas.");
+      return;
+    }
+    try {
+      await S.db.add(P() + "/mural", { tipo: "fio", a, b, autor: S.uid, ts: Date.now() });
+    } catch (e) {
+      fail(e);
+    }
+    return;
+  }
+  if (it.tipo === "doc")
+    abrirDoc({ id: it.id, titulo: it.titulo, doc: it.doc, quem: it.autorNome, para: "todos", mural: it });
+  else if (it.autor === S.uid || S.isM) notaMural(it);
 }
 </script>
 <script>boot();</script>

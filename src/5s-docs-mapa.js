@@ -66,17 +66,7 @@ async function porNoMapa(d) {
   const r = board.getBoundingClientRect();
   const x = Math.round((r.width / 2 - V.x) / V.z),
     y = Math.round((r.height / 2 - V.y) / V.z);
-  const doc = {
-    modelo: d.modelo,
-    campos: d.campos || {},
-    idade: d.idade || 0,
-    sangue: !!d.sangue,
-    queimado: !!d.queimado,
-    partes: docPartesEnvio(d.texto, d.revelados || []),
-    ...(d.img ? { img: d.img } : {}),
-    titulo: d.titulo || "",
-    nome: docNome(d)
-  };
+  const doc = docSnapshot(d);
   try {
     await S.db.set(P() + "/estado/md" + rid(8), {
       tipo: "mapdoc",

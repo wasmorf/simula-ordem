@@ -63,7 +63,7 @@ python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 | `5f-mapa-objetos.js` | Os objetos e decorações do criador de mapas (inclui Aeroporto e bunker, Biblioteca, Cemitério e igreja, Comércio, Transporte, Escola, Rural, Porto e praia, Prédio, Hospital e laboratório, Delegacia, Mansão e hotel) |
 | `5g-mapa-editor.js` | O criador de mapas (ferramentas, salvar, usar como cena) |
 | `5h-mapa-modelos.js` | Mapas prontos (base sob a biblioteca, bunker do aeroporto, cemitério, paróquia, mercado, metrô, escola, fazenda, porto, prédio de apartamentos, hospital, delegacia, mansão, motel, Outro Lado, rua, casa, clareira...) |
-| `5i-documentos.js` | Documentos com tarjas: modelos, editor, entregar, revelar |
+| `5i-documentos.js` | Documentos com tarjas: modelos (inclui cartaz, e-mail e áudio), estilos de tarja por modelo (`DOC_TARJAS`), editor, entregar, revelar |
 | `5j-ajuda.js` | Tela "Como usar o site" |
 | `5k-npcs.js` | NPCs do mestre com ficha rápida e modelos prontos |
 | `5l-criaturas.js` | Criaturas do bestiário, artes do bestiário, pôr grupos na cena |
@@ -75,6 +75,7 @@ python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 | `5r-docs-passar.js` | Documentos entregues: passar para outro jogador, mudar de dono, recolher |
 | `5s-docs-mapa.js` | Documentos no mapa, foto de NPC no token, copiar cena ou mapa para outra mesa |
 | `5t-portas-andares.js` | Portas que abrem, fecham e trancam na cena (e revelam o local do outro lado) e passagens entre cenas (andares ligados) |
+| `5u-mural-notas.js` | Anotações e grifos do jogador nos documentos e o Mural de pistas (documentos, bilhetes e barbante) |
 | `7-end.html` | Fecha a página e chama `boot()` |
 
 Cada `.js` é um ou mais blocos `<script>` independentes. Tudo fica no escopo global: uma função de um arquivo
@@ -136,4 +137,5 @@ Tudo de uma mesa fica em `mesas/<código>/...`. As regras completas estão em `f
 | `.../privado` | Sussurros, rolagens secretas e documentos entregues | Só quem mandou e quem recebeu |
 | `.../estado` | Combate, trilha sonora e documentos no mapa | Todos leem; o mestre escreve |
 | `.../mapas` | Mapas do criador | Só o mestre |
-| `usuarios/<uid>/...` | Minhas mesas, Meus personagens | Só a própria pessoa |
+| `.../mural` | Mural de pistas: documentos, bilhetes e barbantes (`tipo`: doc, nota, fio) | Todos leem e pregam; qualquer um arruma; o texto só muda quem pregou ou o mestre |
+| `usuarios/<uid>/...` | Minhas mesas, Meus personagens, anotações nos documentos (`notasDoc`) | Só a própria pessoa |

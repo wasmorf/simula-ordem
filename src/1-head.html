@@ -3706,6 +3706,542 @@
         opacity: 0.45;
       }
 
+      /* ---------- estilos de tarja ---------- */
+      .docp mark.dh .tjl {
+        font-family: "Barlow", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #b0202c;
+        margin-left: 3px;
+        text-transform: uppercase;
+      }
+      .redact.t-corretivo {
+        background: #f7f4ec;
+        height: 1.3em;
+        vertical-align: -0.25em;
+        border-radius: 3px 1px 4px 2px;
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.1),
+          inset 0 -2px 0 rgba(0, 0, 0, 0.07);
+      }
+      .redact.t-rabisco {
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='20' viewBox='0 0 30 20'%3E%3Cpath d='M0 15 L6 3 L9 17 L14 2 L17 18 L22 3 L25 16 L30 4 M0 6 L5 18 L10 4 L13 16 L19 2 L23 17 L28 5 L30 14' fill='none' stroke='%231f2a5c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' opacity='.9'/%3E%3C/svg%3E")
+          repeat-x center / 26px 100%;
+        height: 1.35em;
+        vertical-align: -0.28em;
+      }
+      .redact.t-sangue {
+        background:
+          radial-gradient(circle at 25% 40%, #8e0d18 0 30%, transparent 31%),
+          radial-gradient(circle at 75% 60%, #7a0a12 0 34%, transparent 35%), #6f0911;
+        height: 1.55em;
+        vertical-align: -0.38em;
+        border-radius: 46% 54% 40% 60% / 62% 38% 64% 36%;
+        box-shadow: 0 0 4px rgba(90, 0, 10, 0.55);
+        position: relative;
+      }
+      .redact.t-sangue::after {
+        content: "";
+        position: absolute;
+        left: 60%;
+        top: 85%;
+        width: 5px;
+        height: 11px;
+        border-radius: 0 0 50% 50%;
+        background: #6f0911;
+      }
+      .redact.t-rasgado {
+        background: #1d1814;
+        height: 1.7em;
+        vertical-align: -0.38em;
+        margin: 0;
+        clip-path: polygon(
+          0 18%,
+          6% 2%,
+          12% 16%,
+          19% 0,
+          26% 14%,
+          33% 3%,
+          41% 17%,
+          48% 1%,
+          56% 15%,
+          63% 2%,
+          71% 18%,
+          78% 4%,
+          86% 16%,
+          93% 1%,
+          100% 14%,
+          100% 86%,
+          94% 100%,
+          87% 84%,
+          80% 98%,
+          72% 83%,
+          65% 99%,
+          57% 85%,
+          49% 100%,
+          42% 82%,
+          34% 97%,
+          27% 84%,
+          19% 99%,
+          12% 83%,
+          5% 97%,
+          0 82%
+        );
+      }
+      .redact.t-queimado {
+        background: radial-gradient(
+          ellipse at center,
+          #0d0805 30%,
+          #2c160b 52%,
+          #7a3a14 70%,
+          rgba(160, 90, 30, 0.6) 80%,
+          transparent 88%
+        );
+        height: 1.7em;
+        vertical-align: -0.42em;
+        border-radius: 40% 60% 45% 55% / 55% 45% 60% 40%;
+      }
+      .redact.t-borrado {
+        background: linear-gradient(
+          90deg,
+          rgba(30, 40, 80, 0.15),
+          rgba(30, 40, 80, 0.55),
+          rgba(30, 40, 80, 0.2)
+        );
+        filter: blur(2.5px);
+        height: 1.4em;
+        vertical-align: -0.3em;
+        border-radius: 40%;
+      }
+      .redact.t-pixel {
+        background: repeating-conic-gradient(#8b8f96 0 25%, #c3c6cc 0 50%) 0 0 / 9px 9px;
+        height: 1.2em;
+        border-radius: 3px;
+      }
+      .tj.t-apagada,
+      .t-apagada {
+        font-style: italic;
+        color: #8a8f98;
+        font-size: 0.92em;
+      }
+      .ph-b.apag {
+        background: transparent;
+        border: 1px solid #3a3d45;
+      }
+      .tj.t-estatica {
+        display: inline-block;
+        text-align: center;
+        padding: 0 0.5em;
+        background: repeating-linear-gradient(
+          90deg,
+          #4a4d55 0 2px,
+          #9aa0aa 2px 3px,
+          #2c2e33 3px 5px,
+          #6a6e78 5px 6px
+        );
+        color: #fff;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78em;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border-radius: 3px;
+        animation: tjChiado 0.25s steps(3) infinite;
+      }
+      @keyframes tjChiado {
+        to {
+          background-position: 9px 0;
+        }
+      }
+      .tj.t-corrompido {
+        font-family: ui-monospace, monospace;
+        color: #a0182a;
+        background: rgba(160, 24, 42, 0.08);
+        letter-spacing: 0.05em;
+        word-break: break-all;
+      }
+      .tj.t-simbolos {
+        color: var(--el, #d3283b);
+        letter-spacing: 0.12em;
+        text-shadow: 0 0 8px var(--el, #d3283b);
+        animation: tjSimb 2.4s ease-in-out infinite;
+      }
+      @keyframes tjSimb {
+        50% {
+          opacity: 0.55;
+          letter-spacing: 0.2em;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .tj.t-estatica,
+        .tj.t-simbolos {
+          animation: none;
+        }
+      }
+
+      /* ---------- cartaz, e-mail e áudio ---------- */
+      .docp.m-cartaz {
+        max-width: 480px;
+        background: #f3efe6;
+        color: #1e1e22;
+        font-family: "Barlow", sans-serif;
+        text-align: center;
+        padding: 0 0 0;
+        overflow: hidden;
+      }
+      .m-cartaz .c-topo {
+        background: #b0202c;
+        color: #fff;
+        font-weight: 800;
+        font-size: 30px;
+        letter-spacing: 0.08em;
+        padding: 10px 12px;
+        text-transform: uppercase;
+      }
+      .m-cartaz .c-foto img {
+        display: block;
+        width: 72%;
+        margin: 16px auto 4px;
+        border: 6px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        filter: grayscale(0.25) contrast(1.05);
+      }
+      .m-cartaz h2 {
+        font-size: 26px;
+        font-weight: 800;
+        margin: 10px 16px 6px;
+        text-transform: uppercase;
+      }
+      .m-cartaz .d-txt {
+        padding: 0 22px 16px;
+        font-size: 17px;
+      }
+      .m-cartaz .c-tiras {
+        display: flex;
+        border-top: 2px dashed #9a958a;
+      }
+      .m-cartaz .c-tiras span {
+        flex: 1;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        font-size: 11px;
+        padding: 8px 2px;
+        border-left: 1px dashed #9a958a;
+        white-space: nowrap;
+        overflow: hidden;
+        max-height: 120px;
+      }
+      .docp.m-email {
+        max-width: 620px;
+        background: #fbfbfd;
+        color: #22242a;
+        font-family: "Barlow", sans-serif;
+        font-size: 16px;
+        padding: 0 0 18px;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .m-email .e-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #e9eaef;
+        padding: 9px 12px;
+        font-size: 12px;
+        color: #6a6e78;
+      }
+      .m-email .e-bar i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #c9ccd4;
+      }
+      .m-email .e-bar span {
+        margin-left: 8px;
+      }
+      .m-email h2 {
+        margin: 14px 18px 8px;
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .m-email .e-cab {
+        margin: 0 18px 12px;
+        font-size: 13px;
+        color: #555a66;
+        border-bottom: 1px solid #e3e4ea;
+        padding-bottom: 8px;
+        width: calc(100% - 36px);
+      }
+      .m-email .e-cab th {
+        text-align: left;
+        font-weight: 600;
+        width: 52px;
+        padding: 1px 0;
+      }
+      .m-email .d-txt,
+      .m-email .dimg {
+        margin: 0 18px;
+      }
+      .m-email .e-anexo {
+        margin: 14px 18px 0;
+        display: inline-block;
+        padding: 6px 12px;
+        border: 1px solid #d6d8e0;
+        border-radius: 6px;
+        font-size: 13px;
+        background: #f2f3f7;
+      }
+      .docp.m-audio {
+        max-width: 460px;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        color: #e8e6ee;
+        font-family: "Barlow", sans-serif;
+      }
+      .m-audio .a-dev {
+        background: linear-gradient(160deg, #26232c, #141218);
+        border: 1px solid #3a3642;
+        border-radius: 16px;
+        padding: 14px 16px 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .m-audio .a-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #a9a3b8;
+        letter-spacing: 0.05em;
+      }
+      .m-audio .a-top span:first-child {
+        color: #ff6a6a;
+      }
+      .m-audio .a-tit {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+      .m-audio .a-wave {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 54px;
+        margin: 12px 0;
+      }
+      .m-audio .a-wave i {
+        flex: 1;
+        background: #8b5cf6;
+        border-radius: 2px;
+        opacity: 0.85;
+      }
+      .m-audio audio {
+        width: 100%;
+      }
+      .m-audio .a-vazio {
+        text-align: center;
+        font-size: 13px;
+        color: #8a8496;
+        padding: 8px;
+        border: 1px dashed #4a4554;
+        border-radius: 8px;
+      }
+      .m-audio .a-trans {
+        margin-top: 12px;
+        background: #f3f1ec;
+        color: #2a2a30;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-family: "Special Elite", ui-monospace, monospace;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .m-audio .f-vl {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8a8478;
+        margin-bottom: 4px;
+      }
+      .docico.m-cartaz {
+        background: #f3efe6;
+        border-top: 9px solid #b0202c;
+      }
+      .docico.m-email {
+        background: #fbfbfd;
+        border-top: 7px solid #c9ccd4;
+        border-radius: 3px;
+      }
+      .docico.m-audio {
+        background: #1b1820;
+        border-radius: 8px;
+        border: 2px solid #3a3642;
+      }
+      .docico.m-audio::after {
+        content: "";
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: 50%;
+        height: 14px;
+        transform: translateY(-50%);
+        background: repeating-linear-gradient(90deg, #8b5cf6 0 2px, transparent 2px 4px);
+      }
+
+      /* ---------- anotações do jogador ---------- */
+      .doc-notas {
+        margin-top: 14px;
+        max-width: 640px;
+        gap: 6px;
+      }
+      .doc-notas textarea {
+        width: 100%;
+      }
+      .docp mark.grifo {
+        background: rgba(120, 225, 110, 0.55);
+        color: inherit;
+        border-radius: 2px;
+        cursor: pointer;
+        box-shadow: 0 0 0 1px rgba(40, 140, 40, 0.35);
+      }
+
+      /* ---------- mural de pistas ---------- */
+      .muralEd .mu-dica {
+        padding: 6px 14px;
+        border-bottom: 1px solid #241f2c;
+      }
+      .mu-vp {
+        flex: 1;
+        overflow: auto;
+        background: #1a1410;
+        touch-action: pan-x pan-y;
+      }
+      .mu-scale {
+        position: relative;
+        margin: 0 auto;
+      }
+      .mu-board {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2400px;
+        height: 1500px;
+        transform-origin: 0 0;
+        background:
+          radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.05) 0 2px, transparent 3px) 0 0 / 23px 19px,
+          radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.18) 0 2px, transparent 3px) 0 0 / 17px 21px,
+          linear-gradient(135deg, #8a6440, #6f4d2e 50%, #7d5836);
+        box-shadow:
+          inset 0 0 0 18px #3a2616,
+          inset 0 0 0 22px #2a1a0e,
+          inset 0 0 120px rgba(0, 0, 0, 0.5);
+      }
+      .mu-fios {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+      }
+      .mu-fios .mu-f {
+        fill: none;
+        stroke: #b3121f;
+        stroke-width: 3.5;
+        filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.45));
+      }
+      .mu-fios .mu-fh {
+        fill: none;
+        stroke: transparent;
+        stroke-width: 22;
+        pointer-events: stroke;
+        cursor: pointer;
+      }
+      .mu-it {
+        position: absolute;
+        z-index: 2;
+        transform: rotate(var(--r, 0deg));
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+      }
+      .mu-it.sel {
+        outline: 4px solid #ffd54a;
+        outline-offset: 4px;
+      }
+      .mu-pin {
+        position: absolute;
+        left: 50%;
+        top: -6px;
+        width: 18px;
+        height: 18px;
+        margin-left: -9px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #ff6b6b, #b3121f 60%, #6a0610);
+        box-shadow: 0 3px 4px rgba(0, 0, 0, 0.5);
+        z-index: 4;
+      }
+      .mu-doc {
+        width: 170px;
+        background: #ece6da;
+        padding: 10px 10px 8px;
+      }
+      .mu-th {
+        position: relative;
+        width: 150px;
+        height: 170px;
+        overflow: hidden;
+        background: #cfc6b6;
+      }
+      .mu-th .docp {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 640px;
+        max-width: none;
+        transform: scale(0.234);
+        transform-origin: 0 0;
+        box-shadow: none;
+        pointer-events: none;
+      }
+      .mu-nm {
+        font-family: "Special Elite", ui-monospace, monospace;
+        font-size: 13px;
+        color: #2a2420;
+        margin-top: 6px;
+        line-height: 1.2;
+      }
+      .mu-por {
+        font-size: 10px;
+        color: #6a6056;
+        margin-top: 3px;
+      }
+      .mu-nota {
+        width: 150px;
+        min-height: 120px;
+        padding: 16px 12px 8px;
+        font-family: "Caveat", "Comic Sans MS", cursive;
+        font-size: 20px;
+        line-height: 1.15;
+        color: #2a2420;
+        background: #f6e27a;
+      }
+      .mu-nota.c1 {
+        background: #f4b6c2;
+      }
+      .mu-nota.c2 {
+        background: #a9d4ef;
+      }
+      .mu-nota.c3 {
+        background: #b9e3a6;
+      }
+      .mu-tx {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .mu-nota .mu-por {
+        font-family: "Barlow", sans-serif;
+      }
+
       /* ---------- portas que abrem e passagens entre cenas ---------- */
       .portas .porta {
         position: absolute;

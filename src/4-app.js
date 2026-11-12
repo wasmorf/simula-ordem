@@ -844,7 +844,17 @@ function leaveMesa(show) {
   });
   S.unsub = [];
   limparCenaSubs();
-  ["acUnsub", "memUnsub", "privUnsub", "trilhaUnsub", "npcUnsub", "docsUnsub", "arteUnsub"].forEach(k => {
+  [
+    "acUnsub",
+    "memUnsub",
+    "privUnsub",
+    "trilhaUnsub",
+    "npcUnsub",
+    "docsUnsub",
+    "arteUnsub",
+    "notasUnsub",
+    "muralUnsub"
+  ].forEach(k => {
     if (S[k]) {
       try {
         S[k]();
@@ -861,6 +871,8 @@ function leaveMesa(show) {
   S.privB = [];
   S.trilha = null;
   S.docs = [];
+  S.notas = {};
+  S.mural = null;
   S.loaded.entrada = false;
   if (typeof pararLocal === "function") pararLocal();
   if (S.cenasUnsub) {
