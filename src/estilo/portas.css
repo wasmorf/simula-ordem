@@ -1,0 +1,137 @@
+/* Portas e passagens entre cenas. */
+/* ---------- portas que abrem e passagens entre cenas ---------- */
+.portas .porta {
+  position: absolute;
+  pointer-events: none;
+}
+.portas.mestre .porta {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.portas.mestre .porta:hover {
+  outline: 2px solid var(--purple-hi, #b47dff);
+  outline-offset: 2px;
+}
+.porta .folha {
+  position: absolute;
+  inset: 0;
+  background: var(--fc, #6a4630);
+  border: 1px solid rgba(0, 0, 0, 0.75);
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s;
+}
+.porta.h .folha {
+  transform-origin: 0 50%;
+}
+.porta.v .folha {
+  transform-origin: 50% 0;
+}
+.porta.dupla.h .f1 {
+  right: 50%;
+}
+.porta.dupla.h .f2 {
+  left: 50%;
+  transform-origin: 100% 50%;
+}
+.porta.dupla.v .f1 {
+  bottom: 50%;
+}
+.porta.dupla.v .f2 {
+  top: 50%;
+  transform-origin: 50% 100%;
+}
+.porta.h.aberta .folha {
+  transform: rotate(-80deg);
+}
+.porta.h.dupla.aberta .f2 {
+  transform: rotate(80deg);
+}
+.porta.v.aberta .folha {
+  transform: rotate(80deg);
+}
+.porta.v.dupla.aberta .f2 {
+  transform: rotate(-80deg);
+}
+.porta.t-porta {
+  --fc: #6a4630;
+}
+.porta.t-portad {
+  --fc: #5a3c26;
+}
+.porta.t-portam {
+  --fc: #5a6068;
+}
+.porta.t-portaf {
+  --fc: #2e3034;
+}
+.porta.t-portao .folha {
+  background: repeating-linear-gradient(90deg, #2a2c30 0 3px, transparent 3px 8px);
+  border-color: #2a2c30;
+}
+.porta.v.t-portao .folha {
+  background: repeating-linear-gradient(0deg, #2a2c30 0 3px, transparent 3px 8px);
+}
+.porta.t-portao.aberta .folha {
+  transform: none;
+  opacity: 0.15;
+}
+.porta.t-secreta .folha {
+  background: var(--cor, #151518);
+  border-color: transparent;
+  box-shadow: none;
+}
+.portas.mestre .porta.t-secreta .folha {
+  outline: 2px dashed rgba(180, 125, 255, 0.85);
+}
+.porta.t-secreta.aberta .folha {
+  transform: none;
+  opacity: 0;
+}
+.portas.mestre .porta.t-secreta.aberta {
+  outline: 2px dotted rgba(180, 125, 255, 0.6);
+}
+.portas .porta.trancada {
+  pointer-events: auto;
+  cursor: help;
+}
+.porta .cadeado {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(var(--mk, 1));
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a1410;
+  border: 2px solid #d9a441;
+  color: #f0c25a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+.passagens .passagem {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--mk, 1));
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 7px;
+  border-radius: 999px;
+  border: 2px solid var(--purple, #8b5cf6);
+  background: rgba(14, 10, 20, 0.88);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+.passagens .passagem:hover {
+  background: rgba(60, 30, 100, 0.92);
+}

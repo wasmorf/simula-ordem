@@ -1,0 +1,136 @@
+/* Rolagens, registro e popup de dado. */
+/* ---------- rolagens ---------- */
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.entry {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--panel2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+}
+.entry .wh {
+  font-size: 12px;
+  color: var(--muted);
+}
+.entry .wh b {
+  color: var(--purple-hi);
+  font-weight: 600;
+}
+.entry .wt {
+  font-weight: 600;
+}
+.entry .tot {
+  grid-row: 1 / span 3;
+  grid-column: 2;
+  font-family: var(--f-mono);
+  font-size: 24px;
+  font-weight: 700;
+  align-self: center;
+  text-align: right;
+  min-width: 40px;
+}
+.entry .det {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-word;
+}
+.entry.crit {
+  border-color: var(--purple);
+}
+.entry.crit .tot {
+  color: var(--purple-hi);
+}
+.entry.fail .tot {
+  color: var(--red-hi);
+}
+.entry.chat {
+  grid-template-columns: 1fr;
+}
+.entry.chat .wt {
+  font-weight: 400;
+}
+.entry.secret {
+  border-style: dashed;
+}
+.dicebar {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.dicebar button {
+  font-family: var(--f-mono);
+  font-size: 13px;
+}
+
+/* popup de dado (para todos) */
+#dicePops {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  left: calc(var(--rail) + 12px + env(safe-area-inset-left, 0px));
+  z-index: 40;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+  width: min(320px, calc(100vw - 24px));
+}
+.dpop {
+  pointer-events: auto;
+  background: rgba(20, 16, 25, 0.97);
+  border: 1px solid var(--purple);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.dpop.crit {
+  border-color: var(--purple-hi);
+  box-shadow:
+    0 0 0 1px var(--purple-hi),
+    0 10px 30px rgba(139, 63, 240, 0.35);
+}
+.dpop.fail {
+  border-color: var(--red);
+}
+.dpop .t {
+  font-weight: 700;
+  font-size: 14px;
+}
+.dpop .s {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dpop .n {
+  font-family: var(--f-mono);
+  font-size: 28px;
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dpop {
+    animation: pop 0.3s ease-out;
+  }
+  @keyframes pop {
+    from {
+      transform: translateX(16px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}

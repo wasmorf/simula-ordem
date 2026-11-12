@@ -1,0 +1,94 @@
+/* Listas e cards do painel. */
+/* ---------- listas do painel ---------- */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scene {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel2);
+  padding: 8px;
+  align-items: center;
+}
+.scene.live {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 1px var(--purple) inset;
+}
+.scene .th {
+  width: 96px;
+  height: 64px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: var(--bg);
+  display: block;
+}
+.scene .st {
+  font-size: 11px;
+  color: var(--muted);
+}
+.scene.live .st {
+  color: var(--purple-hi);
+}
+.scene .nm {
+  font-family: var(--f-display);
+  font-size: 18px;
+  line-height: 1.1;
+}
+.tokrow {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel2);
+  padding: 6px 8px;
+}
+.tokrow img,
+.avatar {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--bg);
+  display: block;
+}
+.avatar.ph {
+  display: grid;
+  place-items: center;
+  font-family: var(--f-display);
+  font-size: 22px;
+  color: var(--purple-hi);
+}
+.sub {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.tabs2 {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.tabs2 button {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.tabs2 button[aria-pressed="true"] {
+  border-color: var(--purple);
+  color: var(--purple-hi);
+  background: var(--purple-soft);
+}

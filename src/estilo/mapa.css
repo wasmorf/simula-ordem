@@ -1,0 +1,380 @@
+/* Mapa: camadas, ferramentas, tokens, NPCs e vez no combate. */
+/* ---------- mapa: camadas, ferramentas, tokens redondos ---------- */
+.viewport .layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  max-width: none;
+}
+#ovL {
+  overflow: visible;
+}
+#ovL .rt {
+  fill: #fff;
+  font: 600 14px var(--f-mono);
+}
+#ovL text {
+  fill: #fff;
+  font: 700 18px var(--f-body);
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 4px;
+}
+.ping .pr {
+  stroke-width: 4;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pingR 1.2s ease-out 2;
+}
+.ping .pr.d2 {
+  animation-delay: 0.4s;
+}
+@keyframes pingR {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ping .pr {
+    animation: none;
+  }
+}
+.board[data-mode]:not([data-mode="mover"]) #toks {
+  pointer-events: none;
+}
+.board[data-mode="regua"],
+.board[data-mode="ping"],
+.board[data-mode="revelar"],
+.board[data-mode="esconder"] {
+  cursor: crosshair;
+}
+.board[data-mode="desenho"] {
+  cursor: crosshair;
+}
+.board[data-mode="borracha"] {
+  cursor: cell;
+}
+.maptools {
+  position: absolute;
+  left: 12px;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(20, 16, 25, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px;
+  max-height: calc(100% - 140px);
+  overflow-y: auto;
+}
+.maptools .mt {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.maptools .mt svg {
+  width: 21px;
+  height: 21px;
+}
+.maptools .mt:hover {
+  color: var(--fg);
+  background: var(--panel2);
+}
+.maptools .mt[aria-pressed="true"] {
+  color: #fff;
+  background: var(--purple-soft);
+  border-color: var(--purple);
+}
+.mtsep {
+  width: 24px;
+  height: 1px;
+  background: var(--line);
+  margin: 2px 0;
+}
+.mtc {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--panel);
+  background: var(--c);
+  box-shadow: 0 0 0 1px var(--line);
+  padding: 0;
+}
+.mtc[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px #fff;
+}
+.mtb {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 6px;
+  width: 86px;
+  line-height: 1.15;
+}
+.swatches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.swatches label {
+  position: relative;
+}
+.swatches input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+}
+.swatches span {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.swatches input:checked + span {
+  box-shadow: 0 0 0 2px #fff;
+}
+.swatches input:focus-visible + span {
+  outline: 2px solid var(--purple-hi);
+  outline-offset: 2px;
+}
+.swatches.sm {
+  gap: 6px;
+}
+.tokr {
+  border-radius: 50%;
+  border-style: solid;
+  border-color: var(--c);
+  background: #120e18;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.tokr img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  filter: none !important;
+}
+.tokr.q {
+  border-radius: 16%;
+  background: #1e1d22;
+}
+.tok.vez .tokr {
+  box-shadow:
+    0 0 0 3px var(--red-hi),
+    0 0 18px var(--red);
+  animation: vezq 1.3s ease-in-out infinite;
+}
+@keyframes vezq {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--red),
+      0 0 6px var(--red);
+  }
+}
+.tokr b {
+  font-family: var(--f-display);
+  font-weight: 400;
+  color: var(--c);
+}
+.tok.sel .tokr {
+  box-shadow:
+    0 0 0 3px var(--purple-hi),
+    0 0 16px var(--purple);
+}
+.tok.dim {
+  opacity: 0.45;
+}
+.amedot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--c);
+  display: grid;
+  place-items: center;
+  font-family: var(--f-display);
+  font-size: 20px;
+  color: var(--c);
+  background: #120e18;
+  flex: none;
+}
+.tokrow > img[style*="border-radius"] {
+  object-fit: cover;
+}
+.crop {
+  position: relative;
+  width: 280px;
+  height: auto;
+  aspect-ratio: 1;
+  max-width: 100%;
+  align-self: center;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  touch-action: none;
+}
+.crop canvas {
+  display: block;
+  cursor: grab;
+  width: 100%;
+  height: 100%;
+}
+.crop.round::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  .maptools {
+    top: calc(52px + env(safe-area-inset-top, 0px));
+    left: 8px;
+  }
+  .maptools .mt {
+    width: 34px;
+    height: 34px;
+  }
+}
+@media (max-width: 760px) {
+  .toast {
+    bottom: calc(var(--navh) + 120px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-width: 760px) {
+  #dicePops {
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    bottom: calc(var(--navh) + 70px + env(safe-area-inset-bottom, 0px));
+  }
+}
+.logo-img {
+  display: block;
+  flex: none;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(139, 63, 240, 0.35));
+}
+.brand .logo-img {
+  width: 56px;
+  height: 56px;
+}
+.tool.logo .logo-img {
+  width: 40px;
+  height: 40px;
+}
+.foot {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 70ch;
+  line-height: 1.5;
+}
+.pchar {
+  gap: 10px;
+}
+.pchar .btn {
+  align-self: flex-start;
+}
+.pc-open {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  flex: 1;
+}
+.pc-open b {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 19px;
+}
+/* extras: privado, NPC, vez no mapa, badge */
+.tool .badge {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 2px var(--panel);
+}
+.entry.priv {
+  border-left: 2px solid var(--purple);
+  background: var(--purple-soft);
+}
+.fcard.npchid {
+  opacity: 0.62;
+  border-style: dashed;
+}
+.lnk {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.tok.vez {
+  z-index: 5;
+}
+.tok.vez img {
+  filter: drop-shadow(0 0 3px var(--red-hi)) drop-shadow(0 0 9px var(--red)) drop-shadow(0 0 16px var(--red));
+  animation: vezp 1.3s ease-in-out infinite;
+}
+.tok.vez .tn {
+  opacity: 1;
+  border-color: var(--red);
+  color: var(--red-hi);
+}
+@keyframes vezp {
+  50% {
+    filter: drop-shadow(0 0 2px var(--red-hi)) drop-shadow(0 0 4px var(--red));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tok.vez img {
+    animation: none;
+  }
+}
+.modal.docm img {
+  max-width: 100%;
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+}
+.modal.docm .doctx {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}

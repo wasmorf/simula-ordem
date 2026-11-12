@@ -1,0 +1,408 @@
+/* Mesa virtual: trilho, tabuleiro, painel lateral e barra de baixo no celular. */
+/* ---------- mesa virtual ---------- */
+#vtt {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr) auto;
+  background: var(--board);
+}
+.rail {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.rail .logo {
+  margin-bottom: 10px;
+}
+.tool {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: none;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  position: relative;
+}
+.tool:hover {
+  color: var(--fg);
+  background: var(--panel2);
+}
+.tool[aria-pressed="true"] {
+  color: #fff;
+  background: var(--purple-soft);
+  border-color: var(--purple);
+}
+.tool svg {
+  width: 24px;
+  height: 24px;
+}
+.tool .tip {
+  position: absolute;
+  left: 56px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 30;
+}
+.tool:hover .tip {
+  opacity: 1;
+}
+.rail .sep {
+  width: 30px;
+  height: 1px;
+  background: var(--line);
+  margin: 6px 0;
+}
+.rail .grow {
+  flex: 1;
+}
+
+.board {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  background: radial-gradient(circle at 50% 50%, #120e18 0, #08070b 70%);
+}
+.viewport {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.viewport > img.map {
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.grid-ov {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(180, 125, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180, 125, 255, 0.18) 1px, transparent 1px);
+}
+.tok {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+.tok img {
+  display: block;
+  max-width: none;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+}
+.tok .tn {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(10, 8, 14, 0.85);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 6px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tok:hover .tn,
+.tok.sel .tn {
+  opacity: 1;
+}
+.tok.sel img {
+  filter: drop-shadow(0 0 3px var(--purple-hi)) drop-shadow(0 0 10px var(--purple));
+}
+.tok.locked {
+  cursor: default;
+}
+.tok .hp {
+  width: 56px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.tok .hp i {
+  display: block;
+  height: 100%;
+  background: var(--red);
+}
+.board-top {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+  z-index: 4;
+}
+.board-top > * {
+  pointer-events: auto;
+}
+.chip {
+  background: rgba(20, 16, 25, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--purple-hi);
+}
+.chip.hidden-scene .dot {
+  background: var(--warn);
+}
+.zoom {
+  position: absolute;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 4;
+}
+.zoom button {
+  width: 40px;
+  height: 38px;
+  border: 0;
+  background: var(--purple);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+}
+.zoom span {
+  min-width: 64px;
+  text-align: center;
+  font-family: var(--f-mono);
+  font-size: 14px;
+}
+.zoom .fit {
+  background: var(--panel2);
+  color: var(--fg);
+  font-size: 12px;
+  width: auto;
+  padding: 0 10px;
+  font-family: var(--f-body);
+  font-weight: 600;
+}
+.board-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+}
+.board-empty .in {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.board-empty svg {
+  opacity: 0.5;
+}
+.tokbar {
+  position: absolute;
+  right: 12px;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  z-index: 4;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 230px;
+}
+
+.panel {
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+.panel.wide {
+  width: min(860px, 62vw);
+}
+.phead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.phead h2 {
+  font-size: 20px;
+  flex: 1;
+  min-width: 0;
+}
+.pbody {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden; /* arrastar no celular não desloca o painel para os lados */
+  overscroll-behavior: contain;
+  padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+/* nada dentro do painel é espremido: se não couber, o painel rola */
+.pbody > * {
+  flex-shrink: 0;
+}
+.x {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.x:hover {
+  color: var(--fg);
+}
+
+.bottomnav {
+  display: none;
+}
+@media (max-width: 760px) {
+  #vtt {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) calc(var(--navh) + env(safe-area-inset-bottom, 0px));
+  }
+  .rail {
+    display: none;
+  }
+  .panel,
+  .panel.wide {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: calc(var(--navh) + env(safe-area-inset-bottom, 0px));
+    /* sem isso o height: 100% de fora vence o "bottom" e o fim do painel fica escondido atrás da barra */
+    height: auto;
+    width: auto;
+    z-index: 20;
+    border-left: 0;
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .bottomnav {
+    display: flex;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    /* rola só para os lados: arrastar para cima/baixo não pode deslocar os ícones */
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+    touch-action: pan-x;
+    scrollbar-width: none;
+    z-index: 21;
+  }
+  .bottomnav::-webkit-scrollbar {
+    display: none;
+  }
+  /* sombra na borda direita avisa que dá para arrastar e ver mais ferramentas */
+  .bottomnav::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    flex: 0 0 40px;
+    margin-left: -40px;
+    background: linear-gradient(to right, transparent, var(--panel) 85%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .bottomnav.mais::after {
+    opacity: 1;
+  }
+  .bottomnav button {
+    flex: 1 0 64px;
+    background: none;
+    border: 0;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    height: var(--navh);
+  }
+  .bottomnav button[aria-pressed="true"] {
+    color: #fff;
+    box-shadow: inset 0 2px 0 var(--purple);
+  }
+  .bottomnav svg {
+    width: 24px;
+    height: 24px;
+  }
+  .zoom {
+    bottom: 12px;
+  }
+  .tokbar {
+    bottom: 62px;
+  }
+}

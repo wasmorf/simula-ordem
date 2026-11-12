@@ -1,0 +1,86 @@
+# ORDEM DOS ARQUIVOS DO SITE
+# O build.sh junta tudo num index.html só, nesta ordem.
+# - .css entra dentro de <style> no <head>
+# - .js entra cada um no seu <script>, depois do corpo da página
+# Linhas com # são comentários. Arquivo novo: crie em src/ e ponha o caminho aqui.
+# A ordem dos .js importa pouco (as funções só rodam depois que tudo carregou),
+# mas constantes usadas logo ao carregar precisam vir antes de quem as usa.
+
+# ---------- Visual (CSS) — a ordem importa: o que vem depois vence ----------
+estilo/base.css
+estilo/lobby.css
+estilo/mesa.css
+estilo/listas.css
+estilo/ficha.css
+estilo/rolagens.css
+estilo/combate-escudo.css
+estilo/janelas.css
+estilo/ficha-detalhes.css
+estilo/mapa.css
+estilo/criador-mapas.css
+estilo/documentos.css
+estilo/toque-celular.css
+estilo/tarjas.css
+estilo/cartaz-email-audio.css
+estilo/notas-mural.css
+estilo/portas.css
+
+# ---------- Código (JS) — a pasta diz o assunto ----------
+js/nucleo/firebase-config.js
+js/regras/livro.js
+js/nucleo/dados.js
+js/nucleo/banco.js
+js/nucleo/imagens.js
+js/nucleo/utilitarios.js
+js/nucleo/erros.js
+js/nucleo/icones.js
+js/regras/suplementos.js
+js/nucleo/estado.js
+js/mesa/lobby.js
+js/mesa/mesa.js
+js/mesa/navegacao.js
+js/mapa/cenas.js
+js/jogo/popup-dados.js
+js/nucleo/recorte-imagem.js
+js/mapa/tokens.js
+js/mapa/tabuleiro.js
+js/ficha/catalogos.js
+js/ficha/sigilos.js
+js/ficha/ficha.js
+js/ficha/ficha-html.js
+js/ficha/ficha-rolagens.js
+js/ficha/ficha-eventos.js
+js/jogo/rolagens.js
+js/jogo/combate.js
+js/mestre/escudo.js
+js/mestre/homebrew.js
+js/regras/aba-regras.js
+js/regras/condicoes.js
+js/mestre/acesso.js
+js/mesa/backup.js
+js/jogo/privado.js
+js/ficha/npcs-sincronia.js
+js/jogo/combate-no-mapa.js
+js/jogo/trilha-sonora.js
+js/mapa/arte.js
+js/mapa/objetos.js
+js/mapa/editor.js
+js/mapa/modelos.js
+js/documentos/documentos.js
+js/mesa/ajuda.js
+js/ficha/npcs.js
+js/ficha/criaturas.js
+js/ficha/galeria-artes.js
+js/mesa/personagens.js
+js/mestre/gestao.js
+js/mapa/locais.js
+js/mesa/capa.js
+js/regras/sobrevivente.js
+js/nucleo/versao.js
+js/documentos/passar.js
+js/documentos/no-mapa.js
+js/mapa/tokens-extras.js
+js/mestre/copiar-cena.js
+js/mapa/portas.js
+js/documentos/mural-notas.js
+js/iniciar.js

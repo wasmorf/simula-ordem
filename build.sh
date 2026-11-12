@@ -1,3 +1,29 @@
-cat src/1-head.html src/2-body.html src/3-core.js src/3c-suplementos.js src/4-app.js src/4b-mapa.js src/5a-ficha.js src/5c-resto.js src/5d-extra.js src/5e-mapa-arte.js src/5f-mapa-objetos.js src/5g-mapa-editor.js src/5h-mapa-modelos.js src/5i-documentos.js src/5j-ajuda.js src/5k-npcs.js src/5l-criaturas.js src/5m-solo.js src/5n-gestao.js src/5o-locais.js src/5p-capa.js src/5q-sobrevivente.js src/5r-docs-passar.js src/5s-docs-mapa.js src/5t-portas-andares.js src/5u-mural-notas.js src/7-end.html > index.html
+#!/bin/sh
+# Monta o index.html juntando as partes de src/ na ordem de src/ordem.txt.
+# Uso: sh build.sh
+set -e
+cd "$(dirname "$0")"
+arquivos() { grep -v '^\s*#' src/ordem.txt | grep "\.$1\$"; }
+for f in $(grep -v '^\s*#' src/ordem.txt | grep .); do
+  [ -f "src/$f" ] || { echo "Falta o arquivo src/$f (listado em src/ordem.txt)"; exit 1; }
+done
+{
+  cat src/pagina/cabecalho.html
+  echo "    <style>"
+  for f in $(arquivos css); do cat "src/$f"; done
+  echo "    </style>"
+  echo "  </head>"
+  echo "  <body>"
+  cat src/pagina/corpo.html
+  for f in $(arquivos js); do
+    echo "<script>"
+    cat "src/$f"
+    echo "</script>"
+  done
+  echo "  </body>"
+  echo "</html>"
+} > index.html
 # carimba a versão (o site avisa "nova versão" quando ela muda)
-V=$(TZ=America/Sao_Paulo date +"%d/%m %Hh%M%S"); sed -i "s#const VERSAO_SITE=\"[^\"]*\";#const VERSAO_SITE=\"$V\";#" index.html
+V=$(TZ=America/Sao_Paulo date +"%d/%m %Hh%M%S")
+sed -i "s#const VERSAO_SITE=\"[^\"]*\";#const VERSAO_SITE=\"$V\";#" index.html
+echo "index.html montado ($(grep -v '^\s*#' src/ordem.txt | grep -c .) arquivos, versão $V)"

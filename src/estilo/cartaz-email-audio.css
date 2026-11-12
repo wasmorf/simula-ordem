@@ -1,0 +1,209 @@
+/* Modelos de documento: cartaz, e-mail e áudio. */
+/* ---------- cartaz, e-mail e áudio ---------- */
+.docp.m-cartaz {
+  max-width: 480px;
+  background: #f3efe6;
+  color: #1e1e22;
+  font-family: "Barlow", sans-serif;
+  text-align: center;
+  padding: 0 0 0;
+  overflow: hidden;
+}
+.m-cartaz .c-topo {
+  background: #b0202c;
+  color: #fff;
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: 0.08em;
+  padding: 10px 12px;
+  text-transform: uppercase;
+}
+.m-cartaz .c-foto img {
+  display: block;
+  width: 72%;
+  margin: 16px auto 4px;
+  border: 6px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  filter: grayscale(0.25) contrast(1.05);
+}
+.m-cartaz h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 10px 16px 6px;
+  text-transform: uppercase;
+}
+.m-cartaz .d-txt {
+  padding: 0 22px 16px;
+  font-size: 17px;
+}
+.m-cartaz .c-tiras {
+  display: flex;
+  border-top: 2px dashed #9a958a;
+}
+.m-cartaz .c-tiras span {
+  flex: 1;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  padding: 8px 2px;
+  border-left: 1px dashed #9a958a;
+  white-space: nowrap;
+  overflow: hidden;
+  max-height: 120px;
+}
+.docp.m-email {
+  max-width: 620px;
+  background: #fbfbfd;
+  color: #22242a;
+  font-family: "Barlow", sans-serif;
+  font-size: 16px;
+  padding: 0 0 18px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.m-email .e-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #e9eaef;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: #6a6e78;
+}
+.m-email .e-bar i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c9ccd4;
+}
+.m-email .e-bar span {
+  margin-left: 8px;
+}
+.m-email h2 {
+  margin: 14px 18px 8px;
+  font-size: 21px;
+  font-weight: 700;
+}
+.m-email .e-cab {
+  margin: 0 18px 12px;
+  font-size: 13px;
+  color: #555a66;
+  border-bottom: 1px solid #e3e4ea;
+  padding-bottom: 8px;
+  width: calc(100% - 36px);
+}
+.m-email .e-cab th {
+  text-align: left;
+  font-weight: 600;
+  width: 52px;
+  padding: 1px 0;
+}
+.m-email .d-txt,
+.m-email .dimg {
+  margin: 0 18px;
+}
+.m-email .e-anexo {
+  margin: 14px 18px 0;
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid #d6d8e0;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #f2f3f7;
+}
+.docp.m-audio {
+  max-width: 460px;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  color: #e8e6ee;
+  font-family: "Barlow", sans-serif;
+}
+.m-audio .a-dev {
+  background: linear-gradient(160deg, #26232c, #141218);
+  border: 1px solid #3a3642;
+  border-radius: 16px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.m-audio .a-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #a9a3b8;
+  letter-spacing: 0.05em;
+}
+.m-audio .a-top span:first-child {
+  color: #ff6a6a;
+}
+.m-audio .a-tit {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+.m-audio .a-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 54px;
+  margin: 12px 0;
+}
+.m-audio .a-wave i {
+  flex: 1;
+  background: #8b5cf6;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+.m-audio audio {
+  width: 100%;
+}
+.m-audio .a-vazio {
+  text-align: center;
+  font-size: 13px;
+  color: #8a8496;
+  padding: 8px;
+  border: 1px dashed #4a4554;
+  border-radius: 8px;
+}
+.m-audio .a-trans {
+  margin-top: 12px;
+  background: #f3f1ec;
+  color: #2a2a30;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: "Special Elite", ui-monospace, monospace;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.m-audio .f-vl {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a8478;
+  margin-bottom: 4px;
+}
+.docico.m-cartaz {
+  background: #f3efe6;
+  border-top: 9px solid #b0202c;
+}
+.docico.m-email {
+  background: #fbfbfd;
+  border-top: 7px solid #c9ccd4;
+  border-radius: 3px;
+}
+.docico.m-audio {
+  background: #1b1820;
+  border-radius: 8px;
+  border: 2px solid #3a3642;
+}
+.docico.m-audio::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(90deg, #8b5cf6 0 2px, transparent 2px 4px);
+}

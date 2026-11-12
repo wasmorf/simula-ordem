@@ -1,0 +1,278 @@
+/* Cores, fontes, botões, campos e caixas usados no site todo. */
+/* Simula Ordem — sigilo roxo, sangue vermelho. Layout: trilho de ferramentas à esquerda, tabuleiro no centro, painel à direita; no celular, barra de baixo e painéis em tela cheia. */
+:root {
+  --bg: #0b090f;
+  --board: #08070b;
+  --panel: #141019;
+  --panel2: #1c1724;
+  --line: #2e2540;
+  --fg: #ede7f3;
+  --muted: #9b91aa;
+  --purple: #8b3ff0;
+  --purple-hi: #b47dff;
+  --purple-soft: #24163a;
+  --red: #d3283b;
+  --red-hi: #ff4d5e;
+  --red-soft: #3a1019;
+  --ok: #5fae70;
+  --warn: #e0a03c;
+  --sangue: #e0303f;
+  --morte: #8f8b94;
+  --energia: #a35ce0;
+  --conhecimento: #d6ad45;
+  --f-display: "IM Fell English SC", "Times New Roman", serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --rail: 64px;
+  --navh: 64px;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  /* sem o "elástico" do celular ao puxar além do fim da página (e sem recarregar sem querer) */
+  overscroll-behavior: none;
+}
+body {
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+}
+[hidden] {
+  display: none !important;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 2px solid var(--purple-hi);
+  outline-offset: 2px;
+}
+img {
+  max-width: 100%;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--f-display);
+  font-weight: 400;
+  margin: 0;
+  text-wrap: balance;
+}
+h2 {
+  font-size: 24px;
+}
+h3 {
+  font-size: 18px;
+  color: var(--purple-hi);
+}
+.label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 13px;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.between {
+  justify-content: space-between;
+}
+.btn {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.btn:hover {
+  border-color: var(--purple);
+}
+.btn.primary {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: #9a52ff;
+}
+.btn.danger {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: #ffd9dd;
+}
+.btn.ghost {
+  background: none;
+}
+.btn.sm {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.btn.block {
+  width: 100%;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Menu suspenso "Opções ▾" / "Mais ▾" (menuHTML em nucleo/utilitarios.js) */
+.menu {
+  position: relative;
+  display: inline-block;
+}
+.menu > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+.menu > summary::-webkit-details-marker {
+  display: none;
+}
+.menu[open] > summary {
+  border-color: var(--purple);
+  background: var(--purple-soft);
+}
+.menu-lista {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 30;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+.menu-lista button {
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+}
+.menu-lista button:hover,
+.menu-lista button:focus-visible {
+  background: var(--purple-soft);
+}
+.menu-lista button.perigo {
+  color: var(--red-hi);
+}
+.menu-lista button.perigo:hover {
+  background: var(--red-soft);
+}
+input[type="text"],
+input[type="url"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 9px;
+  min-width: 0;
+  width: 100%;
+}
+input[type="range"],
+input[type="checkbox"] {
+  accent-color: var(--purple);
+}
+input[type="number"] {
+  font-family: var(--f-mono);
+}
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+.empty {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag.on {
+  border-color: var(--purple);
+  color: var(--purple-hi);
+}
+.tag.red {
+  border-color: var(--red);
+  color: var(--red-hi);
+}
+.scroll-x {
+  overflow-x: auto;
+}
+.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+}

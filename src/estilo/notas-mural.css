@@ -1,0 +1,154 @@
+/* Anotações do jogador e mural de pistas. */
+/* ---------- anotações do jogador ---------- */
+.doc-notas {
+  margin-top: 14px;
+  max-width: 640px;
+  gap: 6px;
+}
+.doc-notas textarea {
+  width: 100%;
+}
+.docp mark.grifo {
+  background: rgba(120, 225, 110, 0.55);
+  color: inherit;
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(40, 140, 40, 0.35);
+}
+
+/* ---------- mural de pistas ---------- */
+.muralEd .mu-dica {
+  padding: 6px 14px;
+  border-bottom: 1px solid #241f2c;
+}
+.mu-vp {
+  flex: 1;
+  overflow: auto;
+  background: #1a1410;
+  touch-action: pan-x pan-y;
+}
+.mu-scale {
+  position: relative;
+  margin: 0 auto;
+}
+.mu-board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2400px;
+  height: 1500px;
+  transform-origin: 0 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.05) 0 2px, transparent 3px) 0 0 / 23px 19px,
+    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.18) 0 2px, transparent 3px) 0 0 / 17px 21px,
+    linear-gradient(135deg, #8a6440, #6f4d2e 50%, #7d5836);
+  box-shadow:
+    inset 0 0 0 18px #3a2616,
+    inset 0 0 0 22px #2a1a0e,
+    inset 0 0 120px rgba(0, 0, 0, 0.5);
+}
+.mu-fios {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.mu-fios .mu-f {
+  fill: none;
+  stroke: #b3121f;
+  stroke-width: 3.5;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.45));
+}
+.mu-fios .mu-fh {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 22;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.mu-it {
+  position: absolute;
+  z-index: 2;
+  transform: rotate(var(--r, 0deg));
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+.mu-it.sel {
+  outline: 4px solid #ffd54a;
+  outline-offset: 4px;
+}
+.mu-pin {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff6b6b, #b3121f 60%, #6a0610);
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.5);
+  z-index: 4;
+}
+.mu-doc {
+  width: 170px;
+  background: #ece6da;
+  padding: 10px 10px 8px;
+}
+.mu-th {
+  position: relative;
+  width: 150px;
+  height: 170px;
+  overflow: hidden;
+  background: #cfc6b6;
+}
+.mu-th .docp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 640px;
+  max-width: none;
+  transform: scale(0.234);
+  transform-origin: 0 0;
+  box-shadow: none;
+  pointer-events: none;
+}
+.mu-nm {
+  font-family: "Special Elite", ui-monospace, monospace;
+  font-size: 13px;
+  color: #2a2420;
+  margin-top: 6px;
+  line-height: 1.2;
+}
+.mu-por {
+  font-size: 10px;
+  color: #6a6056;
+  margin-top: 3px;
+}
+.mu-nota {
+  width: 150px;
+  min-height: 120px;
+  padding: 16px 12px 8px;
+  font-family: "Caveat", "Comic Sans MS", cursive;
+  font-size: 20px;
+  line-height: 1.15;
+  color: #2a2420;
+  background: #f6e27a;
+}
+.mu-nota.c1 {
+  background: #f4b6c2;
+}
+.mu-nota.c2 {
+  background: #a9d4ef;
+}
+.mu-nota.c3 {
+  background: #b9e3a6;
+}
+.mu-tx {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.mu-nota .mu-por {
+  font-family: "Barlow", sans-serif;
+}

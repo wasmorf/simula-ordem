@@ -1,0 +1,149 @@
+/* Combate, escudo do mestre e homebrew. */
+/* ---------- combate / escudo ---------- */
+.cb {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+.cb.now {
+  border-color: var(--red);
+  box-shadow: inset 3px 0 0 var(--red);
+}
+.cb .iv {
+  font-family: var(--f-mono);
+  font-size: 19px;
+  font-weight: 700;
+  text-align: center;
+}
+.cb .cn {
+  font-weight: 600;
+}
+.cb .cs {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--f-mono);
+}
+.cb .act {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.cb.down {
+  opacity: 0.5;
+}
+.cb.npc .cn {
+  color: var(--red-hi);
+}
+.shield {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+.scard {
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scard .top {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.scard .nm {
+  font-family: var(--f-display);
+  font-size: 18px;
+  line-height: 1.1;
+}
+.mini {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+.mini div {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 3px 0;
+}
+.mini b {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 15px;
+}
+.mini span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.sbar {
+  display: grid;
+  grid-template-columns: 30px 1fr 30px;
+  gap: 4px;
+  align-items: center;
+}
+.sbar button {
+  padding: 2px 0;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 4px;
+  font-family: var(--f-mono);
+  font-size: 12px;
+}
+.sbar .t {
+  position: relative;
+  height: 20px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sbar .t i {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+.sbar .t span {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  line-height: 18px;
+}
+.sbar.pv i {
+  background: var(--red);
+}
+.sbar.san i {
+  background: var(--purple);
+}
+.sbar.pe i {
+  background: #a06a1c;
+}
+.dtref td {
+  font-family: var(--f-mono);
+}
+
+/* ---------- homebrew ---------- */
+.hb {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--el, var(--purple));
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--panel2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hb .hn {
+  font-weight: 700;
+}

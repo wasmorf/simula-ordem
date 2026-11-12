@@ -1,0 +1,168 @@
+/* Estilos de tarja dos documentos. */
+/* ---------- estilos de tarja ---------- */
+.docp mark.dh .tjl {
+  font-family: "Barlow", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #b0202c;
+  margin-left: 3px;
+  text-transform: uppercase;
+}
+.redact.t-corretivo {
+  background: #f7f4ec;
+  height: 1.3em;
+  vertical-align: -0.25em;
+  border-radius: 3px 1px 4px 2px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.07);
+}
+.redact.t-rabisco {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='20' viewBox='0 0 30 20'%3E%3Cpath d='M0 15 L6 3 L9 17 L14 2 L17 18 L22 3 L25 16 L30 4 M0 6 L5 18 L10 4 L13 16 L19 2 L23 17 L28 5 L30 14' fill='none' stroke='%231f2a5c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' opacity='.9'/%3E%3C/svg%3E")
+    repeat-x center / 26px 100%;
+  height: 1.35em;
+  vertical-align: -0.28em;
+}
+.redact.t-sangue {
+  background:
+    radial-gradient(circle at 25% 40%, #8e0d18 0 30%, transparent 31%),
+    radial-gradient(circle at 75% 60%, #7a0a12 0 34%, transparent 35%), #6f0911;
+  height: 1.55em;
+  vertical-align: -0.38em;
+  border-radius: 46% 54% 40% 60% / 62% 38% 64% 36%;
+  box-shadow: 0 0 4px rgba(90, 0, 10, 0.55);
+  position: relative;
+}
+.redact.t-sangue::after {
+  content: "";
+  position: absolute;
+  left: 60%;
+  top: 85%;
+  width: 5px;
+  height: 11px;
+  border-radius: 0 0 50% 50%;
+  background: #6f0911;
+}
+.redact.t-rasgado {
+  background: #1d1814;
+  height: 1.7em;
+  vertical-align: -0.38em;
+  margin: 0;
+  clip-path: polygon(
+    0 18%,
+    6% 2%,
+    12% 16%,
+    19% 0,
+    26% 14%,
+    33% 3%,
+    41% 17%,
+    48% 1%,
+    56% 15%,
+    63% 2%,
+    71% 18%,
+    78% 4%,
+    86% 16%,
+    93% 1%,
+    100% 14%,
+    100% 86%,
+    94% 100%,
+    87% 84%,
+    80% 98%,
+    72% 83%,
+    65% 99%,
+    57% 85%,
+    49% 100%,
+    42% 82%,
+    34% 97%,
+    27% 84%,
+    19% 99%,
+    12% 83%,
+    5% 97%,
+    0 82%
+  );
+}
+.redact.t-queimado {
+  background: radial-gradient(
+    ellipse at center,
+    #0d0805 30%,
+    #2c160b 52%,
+    #7a3a14 70%,
+    rgba(160, 90, 30, 0.6) 80%,
+    transparent 88%
+  );
+  height: 1.7em;
+  vertical-align: -0.42em;
+  border-radius: 40% 60% 45% 55% / 55% 45% 60% 40%;
+}
+.redact.t-borrado {
+  background: linear-gradient(90deg, rgba(30, 40, 80, 0.15), rgba(30, 40, 80, 0.55), rgba(30, 40, 80, 0.2));
+  filter: blur(2.5px);
+  height: 1.4em;
+  vertical-align: -0.3em;
+  border-radius: 40%;
+}
+.redact.t-pixel {
+  background: repeating-conic-gradient(#8b8f96 0 25%, #c3c6cc 0 50%) 0 0 / 9px 9px;
+  height: 1.2em;
+  border-radius: 3px;
+}
+.tj.t-apagada,
+.t-apagada {
+  font-style: italic;
+  color: #8a8f98;
+  font-size: 0.92em;
+}
+.ph-b.apag {
+  background: transparent;
+  border: 1px solid #3a3d45;
+}
+.tj.t-estatica {
+  display: inline-block;
+  text-align: center;
+  padding: 0 0.5em;
+  background: repeating-linear-gradient(
+    90deg,
+    #4a4d55 0 2px,
+    #9aa0aa 2px 3px,
+    #2c2e33 3px 5px,
+    #6a6e78 5px 6px
+  );
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  animation: tjChiado 0.25s steps(3) infinite;
+}
+@keyframes tjChiado {
+  to {
+    background-position: 9px 0;
+  }
+}
+.tj.t-corrompido {
+  font-family: ui-monospace, monospace;
+  color: #a0182a;
+  background: rgba(160, 24, 42, 0.08);
+  letter-spacing: 0.05em;
+  word-break: break-all;
+}
+.tj.t-simbolos {
+  color: var(--el, #d3283b);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 8px var(--el, #d3283b);
+  animation: tjSimb 2.4s ease-in-out infinite;
+}
+@keyframes tjSimb {
+  50% {
+    opacity: 0.55;
+    letter-spacing: 0.2em;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tj.t-estatica,
+  .tj.t-simbolos {
+    animation: none;
+  }
+}

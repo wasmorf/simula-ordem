@@ -12,15 +12,15 @@ Jambô Editora.
 
 ## Como funciona o projeto
 
-O site inteiro é **um único arquivo**, o `index.html`. Para não editar um arquivo de 20 mil linhas, o código
-fica dividido na pasta `src/` e o `build.sh` junta tudo:
+O site inteiro é **um único arquivo**, o `index.html`. Para ninguém precisar editar um arquivo de 30 mil
+linhas, o código fica em pedaços na pasta `src/`, separados por assunto, e o `build.sh` junta tudo:
 
 ```sh
-sh build.sh        # gera index.html a partir de src/
+sh build.sh        # gera index.html a partir de src/ (na ordem de src/ordem.txt)
 ```
 
-O `build.sh` também carimba a data e hora em `VERSAO_SITE`. É por ela que o site avisa os jogadores
-"Saiu uma versão nova do site" quando você sobe uma atualização.
+O `build.sh` também carimba a data e hora em `VERSAO_SITE` (`js/nucleo/versao.js`). É por ela que o site
+avisa os jogadores "Saiu uma versão nova do site" quando você sobe uma atualização.
 
 Para publicar: rode o `build.sh`, suba o `index.html` no GitHub e, se as regras mudaram, cole o
 `firestore.rules` no Firebase (Firestore → Regras → Publicar).
@@ -34,90 +34,199 @@ sem regras de segurança, e o selo **MODO DE TESTE** aparece na tela. Servidor l
 python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 ```
 
+Os testes automáticos ficam em `testes/` (veja `testes/LEIA.md`).
+
+### Quando algo der errado
+
+- No site, **Como usar → Algo deu errado?** mostra os últimos erros daquela visita, com a versão, o aparelho
+  e a mesa. O jogador copia e manda; você já sabe por onde começar.
+- Para achar onde mexer: a tabela abaixo diz o que tem em cada arquivo, e todo arquivo começa com uma linha
+  explicando o assunto dele.
+- Uma função nunca é trocada por outra escondida em outro arquivo. Quando uma parte especial (NPC de ficha
+  rápida, classe Sobrevivente, personagem fora de mesa, locais escondidos...) muda o comportamento de uma
+  função, a própria função chama a parte especial pelo nome, com um comentário dizendo o arquivo. Exemplo,
+  em `js/ficha/ficha-eventos.js`:
+
+```js
+function bindSheet() {
+  const id = S.openFicha;
+  const f = S.fichas[id];
+  if (f && f.rapido) bindNpcRapido(id, f); // ficha rápida de NPC (ficha/npcs)
+  else bindFichaCompleta();
+  ...
+  bindEstagio(f, id); // classe Sobrevivente (regras/sobrevivente)
+}
+```
+
+### Organização do código
+
+- Cada `.js` e cada `.css` é um arquivo normal (sem `<script>` nem `<style>`): o editor colore direito e o
+  Prettier formata direto. O `build.sh` põe cada `.js` no seu `<script>` e todo o CSS num `<style>`.
+- Tudo fica no escopo global: uma função de um arquivo pode chamar a de outro, desde que só rode depois que a
+  página carregou (o `boot()` em `js/iniciar.js` é sempre o último).
+- `"use strict"` em todo arquivo.
+- Formatação: Prettier com `.prettierrc` (110 colunas). Para formatar tudo:
+  `prettier --write "src/**/*.{js,css}"`.
+- Ações que gravam no banco e não podem rodar duas vezes num toque duplo começam com
+  `if (toqueDuplo("nome")) return;` (`js/nucleo/utilitarios.js`).
+- Menus "Opções ▾" e "Mais ▾" usam `menuHTML(id, rótulo, botões)`, também em `utilitarios.js`.
+
 ## Pastas
 
 | Pasta / arquivo | O que tem |
 | --- | --- |
 | `src/` | O código, em pedaços (lista abaixo) |
+| `src/ordem.txt` | A ordem em que os pedaços entram no `index.html` |
 | `build.sh` | Junta `src/` em `index.html` e carimba a versão |
 | `index.html` | O site pronto: é o arquivo que vai para o GitHub |
 | `firestore.rules` | Quem pode ler e escrever o quê no Firebase |
+| `testes/` | Testes automáticos (abrem o site num navegador e conferem cada recurso) |
 | `data/` | Material de origem usado para montar a lista de rituais (o site não carrega) |
 | `assets/` | Logos em PNG e WebP (para redes sociais e divulgação; o site usa o logo em SVG) |
-| `audio/` | Músicas livres (MP3) da Trilha sonora, sem anúncio. Os nomes dos arquivos estão em `TRILHAS_LIVRES` (`5d-extra.js`). Músicas de Kevin MacLeod (incompetech.com), licença CC BY 4.0 |
+| `audio/` | Músicas livres (MP3) da Trilha sonora, sem anúncio. Os nomes dos arquivos estão em `TRILHAS_LIVRES` (`js/jogo/trilha-sonora.js`). Músicas de Kevin MacLeod (incompetech.com), licença CC BY 4.0 |
 
-## Os arquivos de `src/`, na ordem em que entram no site
+## O que tem em `src/`
+
+`pagina/cabecalho.html` é o `<head>` (título, ícone, fontes) e `pagina/corpo.html` é o esqueleto da página
+(barra lateral, tabuleiro, painel e os scripts do Firebase).
+
+### `estilo/` (o visual)
+
+A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
+
+| Arquivo | O que tem |
+| --- | --- |
+| `base.css` | Cores, fontes, botões, campos e caixas usados no site todo |
+| `lobby.css` | Tela inicial |
+| `mesa.css` | Mesa virtual: trilho, tabuleiro, painel lateral e barra de baixo no celular |
+| `listas.css` | Listas e cards do painel |
+| `ficha.css` | Ficha do agente |
+| `rolagens.css` | Rolagens, registro e popup de dado |
+| `combate-escudo.css` | Combate, escudo do mestre e homebrew |
+| `janelas.css` | Janelas (modal), avisos (toast) e chamadas |
+| `ficha-detalhes.css` | Ficha: barras de vida, cards de arma e ritual |
+| `mapa.css` | Mapa: camadas, ferramentas, tokens, NPCs e vez no combate |
+| `criador-mapas.css` | Criador de mapas |
+| `documentos.css` | Documentos: papéis de cada modelo, biblioteca, editor; ajuda, NPCs e galeria |
+| `toque-celular.css` | Ajustes de toque e de celular, capa, aviso de versão nova e documentos no mapa |
+| `tarjas.css` | Estilos de tarja dos documentos |
+| `cartaz-email-audio.css` | Modelos de documento: cartaz, e-mail e áudio |
+| `notas-mural.css` | Anotações do jogador e mural de pistas |
+| `portas.css` | Portas e passagens entre cenas |
+
+### `js/` (o código), por pasta
+
+#### `js/nucleo/` — O motor do site: banco, dados, estado, utilitários, erros, versão
 
 | Arquivo | O que faz |
 | --- | --- |
-| `1-head.html` | Cabeçalho da página e todo o CSS (cores, layout, ficha, mapa, documentos) |
-| `2-body.html` | Esqueleto da página: barra lateral, tabuleiro e painel |
-| `3-core.js` | Regras do livro (classes, origens, perícias, armas, rituais, ameaças), rolagem de dados e a camada do banco (Firebase ou o banco de teste) |
-| `3c-suplementos.js` | Conteúdo dos suplementos (Sobrevivendo ao Horror e Arquivos Secretos) e a etiqueta de fonte de cada item |
-| `4-app.js` | Estado do app, entrar e sair de mesa, tela inicial, painel lateral, cenas |
-| `4b-mapa.js` | Tabuleiro: zoom, arrastar, tokens, névoa, réguas, desenhos e pings |
-| `5a-ficha.js` | A ficha do agente inteira (abas, cálculos, inventário, rituais, ataques) |
-| `5c-resto.js` | Rolagens, combate, escudo do mestre, regras e homebrew |
-| `5d-extra.js` | Condições, membros da mesa, backup da mesa e de fichas, trilha sonora (com as músicas livres da pasta `audio/`), NPCs |
-| `5e-mapa-arte.js` | Desenho dos pisos, paredes e portas do criador de mapas (inclui pisos e paredes dos elementos: Sangue, Morte, Conhecimento, Energia) |
-| `5f-mapa-objetos.js` | Os objetos e decorações do criador de mapas (inclui Aeroporto e bunker, Biblioteca, Cemitério e igreja, Comércio, Transporte, Escola, Rural, Porto e praia, Prédio, Hospital e laboratório, Delegacia, Mansão e hotel) |
-| `5g-mapa-editor.js` | O criador de mapas (ferramentas, salvar, usar como cena) |
-| `5h-mapa-modelos.js` | Mapas prontos (base sob a biblioteca, bunker do aeroporto, cemitério, paróquia, mercado, metrô, escola, fazenda, porto, prédio de apartamentos, hospital, delegacia, mansão, motel, Outro Lado, rua, casa, clareira...) |
-| `5i-documentos.js` | Documentos com tarjas: modelos (inclui cartaz, e-mail e áudio), estilos de tarja por modelo (`DOC_TARJAS`), editor, entregar, revelar |
-| `5j-ajuda.js` | Tela "Como usar o site" |
-| `5k-npcs.js` | NPCs do mestre com ficha rápida e modelos prontos |
-| `5l-criaturas.js` | Criaturas do bestiário, artes do bestiário, pôr grupos na cena |
-| `5m-solo.js` | "Meus personagens": personagens fora de mesa, importar e baixar |
-| `5n-gestao.js` | Retirar da mesa, virar NPC ou agente, dar a um jogador, apagar mesa, limpar repetidos |
-| `5o-locais.js` | Locais escondidos no mapa (pintar no criador e revelar na mesa) |
-| `5p-capa.js` | Capa da mesa e dica de nome na barra lateral |
-| `5q-sobrevivente.js` | Classe Sobrevivente, aba de suplementos nas regras e aviso de versão nova |
-| `5r-docs-passar.js` | Documentos entregues: passar para outro jogador, mudar de dono, recolher |
-| `5s-docs-mapa.js` | Documentos no mapa, foto de NPC no token, copiar cena ou mapa para outra mesa |
-| `5t-portas-andares.js` | Portas que abrem, fecham e trancam na cena (e revelam o local do outro lado) e passagens entre cenas (andares ligados) |
-| `5u-mural-notas.js` | Anotações e grifos do jogador nos documentos e o Mural de pistas (documentos, bilhetes e barbante) |
-| `7-end.html` | Fecha a página e chama `boot()` |
+| `firebase-config.js` | Configuração do projeto Firebase (banco de dados e login) |
+| `dados.js` | Rolagem de dados (1d20, 2d6+3, testes de atributo) |
+| `banco.js` | Banco de dados: Firebase de verdade ou banco de teste no navegador (#teste) |
+| `imagens.js` | Imagens: carregar e comprimir no navegador antes de salvar |
+| `utilitarios.js` | Funções pequenas usadas no site todo: $, esc, toast, caixas de confirmação, menus |
+| `erros.js` | Erros: o site guarda os últimos erros desta visita. Em Como usar → "Algo deu errado?" |
+| `icones.js` | Ícones SVG da interface |
+| `estado.js` | Estado do site (objeto S) e início: login, modo de teste, abrir a mesa do link |
+| `recorte-imagem.js` | Recortar imagem (foto da ficha e tokens) |
+| `versao.js` | Versão do site e aviso de versão nova |
 
-Cada `.js` é um ou mais blocos `<script>` independentes. Tudo fica no escopo global: uma função de um arquivo
-pode ser chamada por outro, desde que seja usada só depois que a página terminou de carregar.
+#### `js/regras/` — Regras do livro e suplementos (só nomes e números), condições, Sobrevivente
 
-## Como os módulos se conectam
-
-Os recursos mais novos chamam uns aos outros **pelo nome, de forma explícita**. Exemplos:
-
-- `documentosHTML()` (em `5i`) monta o painel juntando `documentosBaseHTML()`, `docsPassarHTML()` (`5r`) e
-  `docsMapaHTML()` (`5s`).
-- `escudoHTML()` (em `5c`) chama `escudoCapaHTML()` (`5p`) e `escudoApagarHTML()` (`5n`).
-- `renderBoard()` (em `4b`) desenha as portas e passagens com `renderPortas()` e `renderPassagens()` (`5t`), segura o redesenho enquanto um token é arrastado e agenda `agendarSyncFotoNpc()` (`5s`).
-
-Alguns módulos ainda **estendem** uma função de outro arquivo, guardando a original e trocando por uma versão
-que faz algo a mais:
-
-```js
-{
-  const _bs = bindSheet;      // guarda a original
-  bindSheet = function () {
-    _bs();                    // roda a original
-    /* ...e faz algo a mais */
-  };
-}
-```
-
-Funciona porque as funções são globais. Se uma função parece fazer mais do que o código dela mostra, procure
-por `= nomeDaFuncao;` na pasta `src/`. Estas são as extensões que ainda existem:
-
-| Função original | Estendida em |
+| Arquivo | O que faz |
 | --- | --- |
-| `sheetHTML`, `bindSheet` (ficha) | `5k-npcs`, `5m-solo`, `5n-gestao`, `5q-sobrevivente` |
-| `derivados` (PV, PE, SAN, Defesa) | `5k-npcs` (ficha rápida), `5q-sobrevivente` (estágios) |
-| `bindAgentes` | `5m-solo`, `5n-gestao` |
-| `fichaPath`, `logEntry`, `renderPanel` | `5m-solo` (personagem sem mesa) |
-| `npcSecaoHTML`, `npcCard`, `bindNpcSecao` | `5l-criaturas` |
-| `bindCombate`, `tokUrl` | `5l-criaturas` (e `tokUrl` também em `5s`) |
-| Funções do criador de mapas (`meDrawNow`, `meBind`, `meSetTool`...) | `5o-locais` |
-| `hiddenAt`, `renderFog`, `renderNomes`, `renderMapTools` | `5o-locais` (e `renderNomes` também em `5s`) |
-| `showLobby` | `5p-capa` |
-| `regrasHTML` | `5q-sobrevivente` |
+| `livro.js` | Regras do Livro de Regras: atributos, perícias, classes, origens, armas, rituais, ameaças (só nomes e números) |
+| `suplementos.js` | Suplementos: Sobrevivendo ao Horror e Arquivos Secretos (só nomes e números) |
+| `aba-regras.js` | Painel Regras: resumo das regras do livro em abas |
+| `condicoes.js` | Condições nas rolagens (a mais severa vale) e o aviso de Morrendo |
+| `sobrevivente.js` | Classe Sobrevivente (SaH): estágios no lugar do NEX e aba Suplementos |
+
+#### `js/mesa/` — Tela inicial, entrar na mesa, barra de ferramentas, ajuda, backup, Meus personagens
+
+| Arquivo | O que faz |
+| --- | --- |
+| `lobby.js` | Tela inicial: criar mesa, entrar com código, Meus personagens, mesas públicas |
+| `mesa.js` | Entrar e sair de uma mesa: senha, aprovação, assinaturas do banco |
+| `navegacao.js` | Barra de ferramentas (trilho e barra de baixo) e o painel lateral |
+| `backup.js` | Backup: baixar e restaurar fichas e mesas inteiras (.json) |
+| `ajuda.js` | Como usar o site (painel e janela de ajuda) |
+| `personagens.js` | Meus personagens: fichas fora de mesa, levar e trazer de mesas |
+| `capa.js` | Capa da mesa (lobby e tela de entrada) |
+
+#### `js/ficha/` — Ficha do agente, NPCs e criaturas
+
+| Arquivo | O que faz |
+| --- | --- |
+| `catalogos.js` | Catálogos da ficha (rituais, armas, itens) somando o homebrew da mesa |
+| `sigilos.js` | Sigilos dos elementos (desenhos SVG usados na ficha) |
+| `ficha.js` | Ficha: números calculados (PV, PE, SAN, Defesa...), salvar e lista de Agentes |
+| `ficha-html.js` | Ficha: o que aparece em cada aba (Principal, Perícias, Combate...) |
+| `ficha-rolagens.js` | Ficha: testes de perícia, ataques e rituais |
+| `ficha-eventos.js` | Ficha: o que cada botão e campo faz |
+| `npcs-sincronia.js` | NPCs do mestre: receber do banco e onde cada ficha é salva |
+| `npcs.js` | NPCs: ficha rápida, modelos prontos, duplicar e pastas |
+| `criaturas.js` | Criaturas: ficha de criatura, arte por elemento, pôr pasta inteira na cena |
+| `galeria-artes.js` | Galeria de artes do bestiário (imagens que o mestre sobe) |
+
+#### `js/mapa/` — Tabuleiro, cenas, tokens, portas, locais escondidos e o criador de mapas
+
+| Arquivo | O que faz |
+| --- | --- |
+| `cenas.js` | Cenas: criar, exibir para os jogadores, trocar de cena |
+| `tokens.js` | Tokens: criar, mover, imagem, cor |
+| `tabuleiro.js` | Tabuleiro: zoom, névoa, desenhos, régua, ferramentas do mapa e desenho da cena |
+| `arte.js` | Criador de mapas: pisos, paredes, portas e acabamento desenhados por código |
+| `objetos.js` | Criador de mapas: todos os objetos (móveis, carros, árvores...) |
+| `editor.js` | Criador de mapas: o editor (ferramentas, desfazer, virar cena) |
+| `modelos.js` | Criador de mapas: mapas prontos |
+| `locais.js` | Locais escondidos do mapa (salas pretas até o mestre revelar) |
+| `tokens-extras.js` | Tokens: não redesenhar durante o arrasto e foto de NPC no token |
+| `portas.js` | Portas que abrem, portas trancadas e passagens entre cenas |
+
+#### `js/jogo/` — Rolagens, combate, privado e trilha sonora
+
+| Arquivo | O que faz |
+| --- | --- |
+| `popup-dados.js` | Resultado de dado que aparece na tela de todos e registro da mesa |
+| `rolagens.js` | Painel Rolagens: rolar dados, teste de Ordem, chat |
+| `combate.js` | Painel Combate: iniciativa, turnos, ataques do bestiário |
+| `privado.js` | Privado: sussurros, rolagens só para o mestre e entrega de documentos |
+| `combate-no-mapa.js` | Combate no mapa: de quem é a vez, centrar no token, pôr tokens no combate |
+| `trilha-sonora.js` | Trilha sonora: YouTube, arquivos e músicas livres sincronizadas para todos |
+
+#### `js/mestre/` — Ferramentas do mestre: escudo, acesso, homebrew, gestão, copiar cena
+
+| Arquivo | O que faz |
+| --- | --- |
+| `escudo.js` | Escudo do mestre: capa, acesso, anotações, tabelas rápidas |
+| `homebrew.js` | Homebrew: itens, rituais e habilidades criados pelo mestre |
+| `acesso.js` | Acesso à mesa: quem entra, senha, aprovação, bloqueio |
+| `gestao.js` | Gestão: apagar mesa, retirar ficha, virar NPC, dar ficha a um jogador, repetidas |
+| `copiar-cena.js` | Copiar cena ou mapa para outra mesa do mesmo mestre |
+
+#### `js/documentos/` — Documentos com tarjas, passar, no mapa, anotações e mural
+
+| Arquivo | O que faz |
+| --- | --- |
+| `documentos.js` | Documentos: modelos, tarjas, biblioteca do mestre, leitura e editor |
+| `passar.js` | Documentos: passar de mão em mão, recolher, mover |
+| `no-mapa.js` | Documentos postos no mapa |
+| `mural-notas.js` | Anotações e grifos do jogador e o mural de pistas |
+
+`js/iniciar.js` chama `boot()` e é sempre o último arquivo.
+
+### Quem chama quem (os pontos principais)
+
+- `documentosHTML()` (`documentos/documentos.js`) monta o painel: mural, biblioteca, entregues
+  (`docsEntreguesHTML`, em `passar.js`) e no mapa (`docsNoMapaHTML`, em `no-mapa.js`).
+- `escudoHTML()` (`mestre/escudo.js`) chama `escudoCapaHTML()` (`mesa/capa.js`) e `escudoApagarHTML()`
+  (`mestre/gestao.js`).
+- `renderBoard()` (`mapa/tabuleiro.js`) desenha portas e passagens (`mapa/portas.js`); `renderNomes()` mostra
+  os documentos no mapa (`renderMapDocs`) e `renderFog()` pinta os locais escondidos (`fogLocais`).
+- `derivados(f)` (`ficha/ficha.js`) calcula PV, PE, SAN e Defesa e no fim chama `ajustarNpcRapido` e
+  `ajustarSobrevivente`.
+- `sheetHTML()` e `bindSheet()` desenham e ligam a ficha; a ficha rápida de NPC fica em `ficha/npcs.js`, o
+  menu Opções em `mestre/gestao.js` (`fichaAcoes`).
 
 ## Firebase: onde cada coisa fica
 

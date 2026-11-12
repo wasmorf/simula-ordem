@@ -1,0 +1,190 @@
+/* Ajustes de toque e de celular, capa, aviso de versão nova e documentos no mapa. */
+/* sem zoom de toque duplo e sem seleção azul ao clicar 2x na interface */
+html,
+body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+button,
+.btn,
+.rail,
+.tok,
+.board,
+.viewport,
+.me-stage,
+.tabs,
+.chip,
+label,
+summary,
+.mesa-card,
+.label,
+.avatar,
+img {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+[contenteditable="true"],
+.log,
+.doc-body,
+.sheet p {
+  -webkit-user-select: text;
+  user-select: text;
+}
+/* celular: campos com 16px para o navegador não dar zoom ao tocar neles */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea,
+  table.t select,
+  input[type="number"] {
+    font-size: 16px !important;
+  }
+}
+.mesa-capa {
+  display: block;
+  width: calc(100% + 28px);
+  margin: -14px -14px 4px;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  background: #000;
+}
+.mesa-wrap .mesa-del {
+  background: rgba(10, 8, 14, 0.75);
+}
+.porta-capa {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #000;
+}
+.capa-prev {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #000;
+}
+.capa-prev.vazia {
+  aspect-ratio: auto;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  background: none;
+  border: 1px dashed var(--line);
+}
+#railTip {
+  position: fixed;
+  z-index: 200;
+  background: var(--panel2);
+  color: var(--ink, #fff);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.1s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+#railTip.on {
+  opacity: 1;
+}
+#novaVersao {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--panel2);
+  border: 1px solid var(--purple, #8b5cf6);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+  max-width: calc(100% - 32px);
+}
+.docico.m-diario {
+  padding-left: 0;
+  background: #efe0bd;
+  font-size: 0;
+}
+.docico.m-diario::after {
+  left: 6px;
+  width: 1px;
+}
+.mdoc {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--mk, 1));
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #fff;
+  touch-action: none;
+}
+.mdoc .mdi {
+  width: 34px;
+  height: 44px;
+  border-radius: 3px;
+  background: #efe9dc;
+  box-shadow:
+    0 0 0 2px var(--purple, #8b5cf6),
+    0 4px 12px rgba(0, 0, 0, 0.7);
+  position: relative;
+  transition: transform 0.12s;
+}
+.mdoc .mdi::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 9px;
+  height: 2px;
+  background: #9a8f7a;
+  box-shadow:
+    0 6px 0 #9a8f7a,
+    0 12px 0 #9a8f7a,
+    0 18px 0 #9a8f7a;
+}
+.mdoc:hover .mdi,
+.mdoc:focus-visible .mdi {
+  transform: scale(1.12);
+}
+.mdoc .mdn {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow:
+    0 0 3px #000,
+    0 0 3px #000,
+    1px 1px 0 #000;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mdoc.dim {
+  opacity: 0.45;
+}
