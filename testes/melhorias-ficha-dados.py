@@ -2,7 +2,7 @@ import asyncio,sys
 from playwright.async_api import async_playwright
 # Poderes que mudam números (Sangue de Ferro, Potencial Aprimorado, Reflexos Defensivos, Rituais Eficientes),
 # barra escura com metade ou menos, fotos por estado, cores dos graus, deslocamento em quadrados,
-# visual e som do dado, data no registro e bestiário com filtro por elemento.
+# visual e som do dado, data no registro e bestiário com filtro por elemento (e fraquezas da criatura na ficha).
 SP=sys.argv[1] if len(sys.argv)>1 else ".";U="http://localhost:8765/index.html"
 FOTO="(()=>{const c=document.createElement('canvas');c.width=30;c.height=40;const g=c.getContext('2d');g.fillStyle='%s';g.fillRect(0,0,30,40);return c.toDataURL('image/jpeg',.7)})()"
 async def main():
@@ -68,6 +68,10 @@ async def main():
     await A.click("[data-ame='Zumbi de Sangue']");await A.wait_for_timeout(800)
     criada=await A.evaluate("Object.values(S.fichas).filter(f=>f.criatura).map(f=>f.base)")
     print("pesquisou e pôs em cena:",criada);ok.append(criada==["Zumbi de Sangue"])
+    emp=await A.evaluate("(()=>{const b=allBest().find(x=>x.n==='Empecilho');const f=criaturaDe(b);return [b.vd,f.rpv,f.rdef,f.rvul,f.pdt]})()")
+    print("Empecilho no bestiário:",emp);ok.append(emp==[20,50,14,"Conhecimento",15])
+    novas=await A.evaluate("""["Aniquilação","Mulher Afogada","O Deus da Morte","Nidere","Estrangeiro","Silhueta","Anomalia"].map(n=>{const b=allBest().find(x=>x.n===n);if(!b)return n+': falta';const f=criaturaDe(b);return [n,b.pv==null?(f.rnotas.startsWith('PV:')?'pede PV':'erro'):f.rpv,!!f.rvul]})""")
+    print("criaturas novas:",novas);ok.append(all(isinstance(x,list) and x[2] for x in novas) and [x[1] for x in novas]==[1200,240,2000,800,750,500,1000])
     await A.screenshot(path=SP+"/melhorias.png")
     print("OK" if all(ok) else "FALHOU "+str(ok))
     print("ERRS",errs);await b.close()

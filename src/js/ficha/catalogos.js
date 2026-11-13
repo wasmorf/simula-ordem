@@ -79,7 +79,17 @@ function allArmas() {
   );
 }
 function allBest() {
-  return AMEACAS.map(([n, el, vd, def, pv, pres, atk, at]) => ({ n, el, vd, def, pv, pres, atk, at })).concat(
+  return AMEACAS.map(([n, el, vd, def, pv, pres, atk, at, ex]) => ({
+    n,
+    el,
+    vd,
+    def,
+    pv,
+    pres,
+    atk,
+    at,
+    ...(ex || {})
+  })).concat(
     hbOf("criatura").map(h => ({
       n: h.nome,
       el: h.el || "",

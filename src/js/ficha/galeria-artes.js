@@ -25,10 +25,13 @@ function subscribeArteBest() {
       });
       S.arteBest = m;
       arteContaNaMesa(); // artes padrão da conta do mestre entram nesta mesa
-      renderBoard();
-      if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
-      const g = $("#galBest");
-      if (g) galeriaRender();
+      // subir várias manda dezenas de artes seguidas: redesenha uma vez só, quando acalmar
+      clearTimeout(S.arteT);
+      S.arteT = setTimeout(() => {
+        renderBoard();
+        if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
+        if ($("#galBest")) galeriaRender();
+      }, 250);
     },
     () => {}
   );
@@ -69,7 +72,7 @@ function arteDaBase(n) {
 async function galeriaArtes() {
   const h = $("#modalHost");
   h.innerHTML = `<div class="modal-back"><div class="modal wide" id="galBest" role="dialog" aria-label="Artes do bestiário"><div class="row between"><h3 style="margin:0">Artes do bestiário</h3><button class="btn sm" id="gbX">Fechar</button></div>
-   <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela fica guardada só nesta mesa e vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>
+   <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>
    <div class="row" style="flex-wrap:nowrap"><input type="search" id="gbQ" placeholder="Buscar criatura"><button class="btn sm" id="gbVarias" style="white-space:nowrap">Subir várias</button></div>
    <p class="muted small" style="margin:0"><b>Subir várias:</b> escolha várias imagens de uma vez; cada uma vai para a criatura com o mesmo nome do arquivo (ex.: <code>zumbi-de-sangue.webp</code> ou <code>Zumbi de Sangue.png</code>).</p>
    <p class="muted small" style="margin:0">As artes que você sobe ficam guardadas na sua conta e entram sozinhas em <b>todas as mesas em que você é mestre</b>. <button class="btn sm ghost" id="gbConta">Guardar as artes desta mesa como padrão</button></p><div class="gb-grid" id="gbGrid"></div></div></div>`;
@@ -126,7 +129,7 @@ function galeriaRender() {
   el.innerHTML =
     B.map(b => {
       const a = arteDaBase(b.n);
-      return `<div class="gb-it ${a ? "on" : ""}"><img src="${a || arteCriatura(b.el, maH(b.n.length, b.n.charCodeAt(0), 11))}" alt=""><b>${esc(b.n)}</b><span class="muted small">${esc(b.el || "—")} · VD ${b.vd}</span>
+      return `<div class="gb-it ${a ? "on" : ""}"><img src="${a || arteThumbEl(b.el)}" alt="" loading="lazy"><b>${esc(b.n)}</b><span class="muted small">${esc(b.el || "—")} · VD ${b.vd}</span>
     <div class="row" style="gap:4px;justify-content:center"><button class="btn sm ${a ? "" : "primary"}" data-gbup="${esc(b.n)}">${a ? "Trocar" : "Escolher arte"}</button>${a ? `<button class="btn sm ghost" data-gbdel="${esc(b.n)}" aria-label="Tirar arte">✕</button>` : ""}</div></div>`;
     }).join("") || `<p class="muted">Nada encontrado.</p>`;
   $$("[data-gbup]").forEach(b => (b.onclick = () => arteBestEscolher(b.dataset.gbup)));

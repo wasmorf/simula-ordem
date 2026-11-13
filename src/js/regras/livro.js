@@ -589,7 +589,9 @@ const DT_REF = [
 const NEX_OPTS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 99];
 const ELEMENTOS = ["Conhecimento", "Energia", "Morte", "Sangue", "Medo"];
 
-/* Ameaças (Capítulo 7): nome, elemento, VD, Defesa, PV, Presença (DT · dano mental), ataque principal [nome, dados d20, bônus, dano], atributos AGI FOR INT PRE VIG */
+/* Ameaças (Capítulo 7): nome, elemento, VD, Defesa, PV, Presença (DT · dano mental), ataque principal [nome, dados d20, bônus, dano], atributos AGI FOR INT PRE VIG
+   e, opcional, {res, vul, imu, notas} (resistências, vulnerabilidades, imunidades e um resumo das habilidades).
+   PV null = ainda não informado: a ficha da criatura pede para o mestre preencher com o valor do livro. */
 const AMEACAS = [
   ["Aberração de Carne", "Sangue", 40, 19, 70, "DT 15 · 3d6", ["Pancada", 3, 10, "2d6+6"], [1, 3, 0, 1, 3]],
   ["Carente", "Sangue", 300, 40, 700, "DT 35 · 7d8", ["Garras de Sangue", 4, 35, "2d8+20"], [4, 4, 2, 3, 4]],
@@ -686,6 +688,17 @@ const AMEACAS = [
   ["Máscara do Desespero", "Conhecimento", 400, 55, 1200, "DT 45 · 10d8", null, [4, 4, 6, 6, 5]],
   ["Anárquico", "Energia", 20, 21, 30, "DT 14 · 2d6", ["Pancada Errática", 2, 5, "2d12"], [3, 2, 0, 0, 1]],
   [
+    "Empecilho",
+    "Energia",
+    20,
+    14,
+    50,
+    "DT 15 · 2d6",
+    ["Desmantelar (desarmar)", 3, 7, "1d6 no objeto (ignora RD)"],
+    [3, 1, 2, 1, 1],
+    { vul: "Conhecimento" }
+  ],
+  [
     "Anárquico Descontrolado",
     "Energia",
     120,
@@ -776,7 +789,123 @@ const AMEACAS = [
   ["Jacaré", "", 40, 16, 40, "", ["Mordida", 3, 5, "1d8+8"], [1, 3, 0, 1, 2]],
   ["Javaporco", "", 20, 14, 35, "", ["Mordida", 2, 5, "1d8+4"], [1, 2, 0, 1, 3]],
   ["Onça-pintada", "", 40, 16, 55, "", ["Mordida", 3, 10, "1d8+5"], [3, 3, 0, 1, 2]],
-  ["Sucuri", "", 40, 16, 68, "", ["Mordida", 3, 10, "1d6+8"], [2, 3, 0, 1, 3]]
+  ["Sucuri", "", 40, 16, 68, "", ["Mordida", 3, 10, "1d6+8"], [2, 3, 0, 1, 3]],
+  // ---------- completadas depois (números do livro; habilidades resumidas, não o texto do livro) ----------
+  [
+    "Aniquilação",
+    "Sangue",
+    380,
+    10,
+    1200,
+    "DT 45 · 9d8",
+    null,
+    [5, 6, 1, 5, 5],
+    {
+      res: "dano 50 (menos Morte)",
+      vul: "Morte",
+      imu: "Sangue; paralisia",
+      notas:
+        "Também Medo. Ocupa 30×30 quadrados, alcance natural de 30 quadrados, sucesso automático em manobras e falha automática em Furtividade.\nImparável: entra no espaço de seres; Reflexos DT 40 ou cai e sofre 8d10+20 de impacto. Destrói estruturas e objetos mundanos em que entrar.\nAtletismo 6d20+30. Deslocamento 24 m."
+    }
+  ],
+  [
+    "Mulher Afogada",
+    "Sangue",
+    140,
+    28,
+    240,
+    "DT 25 · 4d8",
+    ["Mordida", 3, 15, "4d8+8 perfuração"],
+    [4, 3, 2, 2, 3],
+    {
+      res: "balístico 10, impacto 10, perfuração 10, Energia 10, Sangue 20",
+      vul: "Morte",
+      notas:
+        "Também Energia e Medo. NEX 50% ou mais é imune à Presença. Forma líquida: 36 m de deslocamento.\nGarras (2×): 3d20+15, 4d6+6 de corte. Jato de Sangue (curto): 4d20+10, 4d8+8 de Sangue.\nAfogar em Sangue: asfixia um ser em alcance curto; Fortitude DT 24 no início do turno dele encerra.\nInvadir Órgãos: 6d6 de Sangue e enjoado. Arrancar Sangue (ao ser expelida): 6d6 de Sangue e fraco.\nSugar Sangue: devora um corpo adjacente e recupera 40 PV."
+    }
+  ],
+  [
+    "O Deus da Morte",
+    "Morte",
+    400,
+    60,
+    2000,
+    "DT 45 · 10d8",
+    ["Soco Espiral (2×)", 6, 45, "5d10+50 Morte"],
+    [6, 6, 5, 5, 7],
+    {
+      res: "corte 20, impacto 20, perfuração 20",
+      vul: "Energia",
+      imu: "Morte; atordoamento e paralisia",
+      notas:
+        "Relíquia, também Conhecimento e Medo. Deslocamento 15 m.\nAgarrão: depois de acertar o Soco Espiral, agarra (6d20+47).\nEspiral Descendente: quem está agarrado envelhece 3d20 anos e sofre 1 de dano mental por ano.\nEspiral Destrutiva: 12 m de raio em alcance longo, 10d10+50 de Morte (Fortitude DT 45 metade).\nEncerra até duas condições no início do turno. Controla criaturas de Morte em alcance longo."
+    }
+  ],
+  [
+    "Nidere",
+    "Morte",
+    320,
+    50,
+    800,
+    "DT 35 · 8d6",
+    ["Garra Invertida (2×)", 5, 35, "4d10+40 Morte"],
+    [5, 5, 3, 4, 5],
+    {
+      res: "corte 20, impacto 20, perfuração 20, Morte 20",
+      vul: "Energia",
+      notas:
+        "Também Sangue e Medo. NEX 95% ou mais é imune à Presença. Deslocamento 24 m. Faro.\nMordida Invertida: 5d20+35, 4d12+40 de Morte.\nQuem sofre dano da garra fica enjoado até o fim do próximo turno dele.\n+6d6 de dano contra seres desprevenidos. Furtividade 7d20+23."
+    }
+  ],
+  [
+    "Estrangeiro",
+    "Conhecimento",
+    340,
+    50,
+    750,
+    "DT 40 · 10d6",
+    ["Toque Sutil (3×)", 5, 35, "4d8+10 Conhecimento"],
+    [3, 5, 5, 5, 3],
+    {
+      vul: "Sangue",
+      imu: "dano",
+      notas:
+        "Também Energia e Medo. NEX 99% ou mais é imune à Presença. Deslocamento 15 m.\nRajada Psíquica (extremo, 2×): 5d20+35, 4d10+20 de Conhecimento; quem sofre dano faz Vontade DT 35 ou cumpre uma ordem (atacar um aliado, render-se ou fugir). Intelecto 5 ou mais é imune.\nToque Sutil: Vontade DT 30 ou esquece o Estrangeiro (repete no fim de cada turno; ao passar, sofre 6d6 mental).\nIncubar: põe uma larva em quem não o percebe; 1d6 mental por cena."
+    }
+  ],
+  [
+    "Silhueta",
+    "Conhecimento",
+    360,
+    55,
+    500,
+    "DT 40 · 8d8",
+    null,
+    [4, 4, 5, 5, 4],
+    {
+      res: "dano 30",
+      vul: "Sangue",
+      imu: "Conhecimento; paralisia e manobras de combate",
+      notas:
+        "Percepção às cegas. Deslocamento 12 m.\nToque Devastador: toca até dois seres ou objetos e causa o dano da sua aura tangível, 20d12 de Conhecimento.\nReescrever a Realidade: ao se deslocar, transforma objetos em alcance curto em outros do mesmo tamanho (não afeta seres)."
+    }
+  ],
+  [
+    "Anomalia",
+    "Energia",
+    380,
+    0,
+    1000,
+    "DT 45 · 9d8",
+    null,
+    [5, 0, 5, 5, 5],
+    {
+      vul: "Conhecimento",
+      imu: "dano; todas as condições",
+      notas:
+        "Também Medo.\nRomper Consciência: no início do turno, um ser em vista sofre 10d6 de dano mental (Vontade DT 41 metade).\nManipular Ondas: no fim do turno, opera até seis aparelhos em alcance médio ou sobrecarrega: 2d12 de Energia por aparelho em quem estiver na área (Reflexos DT 30 metade).\nManifestar o Impossível: invoca criaturas de Energia que somem até VD 240."
+    }
+  ]
 ];
 
 const RITUAIS_LIVRO = [

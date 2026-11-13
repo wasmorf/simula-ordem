@@ -86,7 +86,7 @@ function bindCombate() {
     const b = B[+$("#bestSel").value];
     if (b)
       $("#bestInfo").textContent =
-        `${b.el || "Realidade"} · VD ${b.vd} · DEF ${b.def} · PV ${b.pv}${b.atk ? ` · ${b.atk[0]} ${b.atk[1]}d20+${b.atk[2]} (${b.atk[3]})` : ""}${b.pres ? " · Presença perturbadora " + b.pres : ""} · AGI ${b.at[0]} FOR ${b.at[1]} INT ${b.at[2]} PRE ${b.at[3]} VIG ${b.at[4]}`;
+        `${b.el || "Realidade"} · VD ${b.vd} · DEF ${b.def} · PV ${b.pv ?? "?"}${b.atk ? ` · ${b.atk[0]} ${b.atk[1]}d20+${b.atk[2]} (${b.atk[3]})` : ""}${b.pres ? " · Presença perturbadora " + b.pres : ""} · AGI ${b.at[0]} FOR ${b.at[1]} INT ${b.at[2]} PRE ${b.at[3]} VIG ${b.at[4]}`;
   };
   $("#bestSel").onchange = show;
   show();

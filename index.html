@@ -5319,7 +5319,9 @@ const DT_REF = [
 const NEX_OPTS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 99];
 const ELEMENTOS = ["Conhecimento", "Energia", "Morte", "Sangue", "Medo"];
 
-/* Ameaças (Capítulo 7): nome, elemento, VD, Defesa, PV, Presença (DT · dano mental), ataque principal [nome, dados d20, bônus, dano], atributos AGI FOR INT PRE VIG */
+/* Ameaças (Capítulo 7): nome, elemento, VD, Defesa, PV, Presença (DT · dano mental), ataque principal [nome, dados d20, bônus, dano], atributos AGI FOR INT PRE VIG
+   e, opcional, {res, vul, imu, notas} (resistências, vulnerabilidades, imunidades e um resumo das habilidades).
+   PV null = ainda não informado: a ficha da criatura pede para o mestre preencher com o valor do livro. */
 const AMEACAS = [
   ["Aberração de Carne", "Sangue", 40, 19, 70, "DT 15 · 3d6", ["Pancada", 3, 10, "2d6+6"], [1, 3, 0, 1, 3]],
   ["Carente", "Sangue", 300, 40, 700, "DT 35 · 7d8", ["Garras de Sangue", 4, 35, "2d8+20"], [4, 4, 2, 3, 4]],
@@ -5416,6 +5418,17 @@ const AMEACAS = [
   ["Máscara do Desespero", "Conhecimento", 400, 55, 1200, "DT 45 · 10d8", null, [4, 4, 6, 6, 5]],
   ["Anárquico", "Energia", 20, 21, 30, "DT 14 · 2d6", ["Pancada Errática", 2, 5, "2d12"], [3, 2, 0, 0, 1]],
   [
+    "Empecilho",
+    "Energia",
+    20,
+    14,
+    50,
+    "DT 15 · 2d6",
+    ["Desmantelar (desarmar)", 3, 7, "1d6 no objeto (ignora RD)"],
+    [3, 1, 2, 1, 1],
+    { vul: "Conhecimento" }
+  ],
+  [
     "Anárquico Descontrolado",
     "Energia",
     120,
@@ -5506,7 +5519,123 @@ const AMEACAS = [
   ["Jacaré", "", 40, 16, 40, "", ["Mordida", 3, 5, "1d8+8"], [1, 3, 0, 1, 2]],
   ["Javaporco", "", 20, 14, 35, "", ["Mordida", 2, 5, "1d8+4"], [1, 2, 0, 1, 3]],
   ["Onça-pintada", "", 40, 16, 55, "", ["Mordida", 3, 10, "1d8+5"], [3, 3, 0, 1, 2]],
-  ["Sucuri", "", 40, 16, 68, "", ["Mordida", 3, 10, "1d6+8"], [2, 3, 0, 1, 3]]
+  ["Sucuri", "", 40, 16, 68, "", ["Mordida", 3, 10, "1d6+8"], [2, 3, 0, 1, 3]],
+  // ---------- completadas depois (números do livro; habilidades resumidas, não o texto do livro) ----------
+  [
+    "Aniquilação",
+    "Sangue",
+    380,
+    10,
+    1200,
+    "DT 45 · 9d8",
+    null,
+    [5, 6, 1, 5, 5],
+    {
+      res: "dano 50 (menos Morte)",
+      vul: "Morte",
+      imu: "Sangue; paralisia",
+      notas:
+        "Também Medo. Ocupa 30×30 quadrados, alcance natural de 30 quadrados, sucesso automático em manobras e falha automática em Furtividade.\nImparável: entra no espaço de seres; Reflexos DT 40 ou cai e sofre 8d10+20 de impacto. Destrói estruturas e objetos mundanos em que entrar.\nAtletismo 6d20+30. Deslocamento 24 m."
+    }
+  ],
+  [
+    "Mulher Afogada",
+    "Sangue",
+    140,
+    28,
+    240,
+    "DT 25 · 4d8",
+    ["Mordida", 3, 15, "4d8+8 perfuração"],
+    [4, 3, 2, 2, 3],
+    {
+      res: "balístico 10, impacto 10, perfuração 10, Energia 10, Sangue 20",
+      vul: "Morte",
+      notas:
+        "Também Energia e Medo. NEX 50% ou mais é imune à Presença. Forma líquida: 36 m de deslocamento.\nGarras (2×): 3d20+15, 4d6+6 de corte. Jato de Sangue (curto): 4d20+10, 4d8+8 de Sangue.\nAfogar em Sangue: asfixia um ser em alcance curto; Fortitude DT 24 no início do turno dele encerra.\nInvadir Órgãos: 6d6 de Sangue e enjoado. Arrancar Sangue (ao ser expelida): 6d6 de Sangue e fraco.\nSugar Sangue: devora um corpo adjacente e recupera 40 PV."
+    }
+  ],
+  [
+    "O Deus da Morte",
+    "Morte",
+    400,
+    60,
+    2000,
+    "DT 45 · 10d8",
+    ["Soco Espiral (2×)", 6, 45, "5d10+50 Morte"],
+    [6, 6, 5, 5, 7],
+    {
+      res: "corte 20, impacto 20, perfuração 20",
+      vul: "Energia",
+      imu: "Morte; atordoamento e paralisia",
+      notas:
+        "Relíquia, também Conhecimento e Medo. Deslocamento 15 m.\nAgarrão: depois de acertar o Soco Espiral, agarra (6d20+47).\nEspiral Descendente: quem está agarrado envelhece 3d20 anos e sofre 1 de dano mental por ano.\nEspiral Destrutiva: 12 m de raio em alcance longo, 10d10+50 de Morte (Fortitude DT 45 metade).\nEncerra até duas condições no início do turno. Controla criaturas de Morte em alcance longo."
+    }
+  ],
+  [
+    "Nidere",
+    "Morte",
+    320,
+    50,
+    800,
+    "DT 35 · 8d6",
+    ["Garra Invertida (2×)", 5, 35, "4d10+40 Morte"],
+    [5, 5, 3, 4, 5],
+    {
+      res: "corte 20, impacto 20, perfuração 20, Morte 20",
+      vul: "Energia",
+      notas:
+        "Também Sangue e Medo. NEX 95% ou mais é imune à Presença. Deslocamento 24 m. Faro.\nMordida Invertida: 5d20+35, 4d12+40 de Morte.\nQuem sofre dano da garra fica enjoado até o fim do próximo turno dele.\n+6d6 de dano contra seres desprevenidos. Furtividade 7d20+23."
+    }
+  ],
+  [
+    "Estrangeiro",
+    "Conhecimento",
+    340,
+    50,
+    750,
+    "DT 40 · 10d6",
+    ["Toque Sutil (3×)", 5, 35, "4d8+10 Conhecimento"],
+    [3, 5, 5, 5, 3],
+    {
+      vul: "Sangue",
+      imu: "dano",
+      notas:
+        "Também Energia e Medo. NEX 99% ou mais é imune à Presença. Deslocamento 15 m.\nRajada Psíquica (extremo, 2×): 5d20+35, 4d10+20 de Conhecimento; quem sofre dano faz Vontade DT 35 ou cumpre uma ordem (atacar um aliado, render-se ou fugir). Intelecto 5 ou mais é imune.\nToque Sutil: Vontade DT 30 ou esquece o Estrangeiro (repete no fim de cada turno; ao passar, sofre 6d6 mental).\nIncubar: põe uma larva em quem não o percebe; 1d6 mental por cena."
+    }
+  ],
+  [
+    "Silhueta",
+    "Conhecimento",
+    360,
+    55,
+    500,
+    "DT 40 · 8d8",
+    null,
+    [4, 4, 5, 5, 4],
+    {
+      res: "dano 30",
+      vul: "Sangue",
+      imu: "Conhecimento; paralisia e manobras de combate",
+      notas:
+        "Percepção às cegas. Deslocamento 12 m.\nToque Devastador: toca até dois seres ou objetos e causa o dano da sua aura tangível, 20d12 de Conhecimento.\nReescrever a Realidade: ao se deslocar, transforma objetos em alcance curto em outros do mesmo tamanho (não afeta seres)."
+    }
+  ],
+  [
+    "Anomalia",
+    "Energia",
+    380,
+    0,
+    1000,
+    "DT 45 · 9d8",
+    null,
+    [5, 0, 5, 5, 5],
+    {
+      vul: "Conhecimento",
+      imu: "dano; todas as condições",
+      notas:
+        "Também Medo.\nRomper Consciência: no início do turno, um ser em vista sofre 10d6 de dano mental (Vontade DT 41 metade).\nManipular Ondas: no fim do turno, opera até seis aparelhos em alcance médio ou sobrecarrega: 2d12 de Energia por aparelho em quem estiver na área (Reflexos DT 30 metade).\nManifestar o Impossível: invoca criaturas de Energia que somem até VD 240."
+    }
+  ]
 ];
 
 const RITUAIS_LIVRO = [
@@ -10208,7 +10337,7 @@ function tokensHTML() {
          : `${!S.viewSid ? `<div class="banner">Abra uma cena para colocar ameaças nela.</div>` : ""}
      <label class="check"><input type="checkbox" id="ameCombate" ${S.ameCombate !== false ? "checked" : ""}> Também colocar no combate (a vida aparece no token)</label>
      <label class="check"><input type="checkbox" id="ameOculto" ${S.ameOculto ? "checked" : ""}> Entrar oculto para os jogadores</label>
-     <div class="cards">${B.map(b => `<div class="tokrow ame el-${esc(elDe(b))}"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${esc(b.n)}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
+     <div class="cards">${B.map(b => `<div class="tokrow ame el-${esc(elDe(b))}"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv ?? "?"} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${esc(b.n)}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
      }`;
   }
   // jogador: em cena só o que ele enxerga no mapa; na biblioteca só os tokens dele
@@ -11480,7 +11609,17 @@ function allArmas() {
   );
 }
 function allBest() {
-  return AMEACAS.map(([n, el, vd, def, pv, pres, atk, at]) => ({ n, el, vd, def, pv, pres, atk, at })).concat(
+  return AMEACAS.map(([n, el, vd, def, pv, pres, atk, at, ex]) => ({
+    n,
+    el,
+    vd,
+    def,
+    pv,
+    pres,
+    atk,
+    at,
+    ...(ex || {})
+  })).concat(
     hbOf("criatura").map(h => ({
       n: h.nome,
       el: h.el || "",
@@ -13685,7 +13824,7 @@ function bindCombate() {
     const b = B[+$("#bestSel").value];
     if (b)
       $("#bestInfo").textContent =
-        `${b.el || "Realidade"} · VD ${b.vd} · DEF ${b.def} · PV ${b.pv}${b.atk ? ` · ${b.atk[0]} ${b.atk[1]}d20+${b.atk[2]} (${b.atk[3]})` : ""}${b.pres ? " · Presença perturbadora " + b.pres : ""} · AGI ${b.at[0]} FOR ${b.at[1]} INT ${b.at[2]} PRE ${b.at[3]} VIG ${b.at[4]}`;
+        `${b.el || "Realidade"} · VD ${b.vd} · DEF ${b.def} · PV ${b.pv ?? "?"}${b.atk ? ` · ${b.atk[0]} ${b.atk[1]}d20+${b.atk[2]} (${b.atk[3]})` : ""}${b.pres ? " · Presença perturbadora " + b.pres : ""} · AGI ${b.at[0]} FOR ${b.at[1]} INT ${b.at[2]} PRE ${b.at[3]} VIG ${b.at[4]}`;
   };
   $("#bestSel").onchange = show;
   show();
@@ -14077,7 +14216,7 @@ function regrasHTML() {
     condicoes: `<table class="t"><tbody>${Object.entries(CONDICOES_LIVRO)
       .map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`)
       .join("")}</tbody></table>`,
-    ameacas: `<div class="scroll-x"><table class="t"><thead><tr><th>Ameaça</th><th>Elemento</th><th>VD</th><th>Def.</th><th>PV</th><th>Ataque</th></tr></thead><tbody>${AMEACAS.map(a => `<tr><td>${a[0]}</td><td>${a[1] || "Realidade"}</td><td>${a[2]}</td><td>${a[3]}</td><td>${a[4]}</td><td>${a[6] ? `${a[6][1]}d20+${a[6][2]} · ${a[6][3]}` : "—"}</td></tr>`).join("")}</tbody></table></div>`
+    ameacas: `<div class="scroll-x"><table class="t"><thead><tr><th>Ameaça</th><th>Elemento</th><th>VD</th><th>Def.</th><th>PV</th><th>Ataque</th></tr></thead><tbody>${AMEACAS.map(a => `<tr><td>${a[0]}</td><td>${a[1] || "Realidade"}</td><td>${a[2]}</td><td>${a[3]}</td><td>${a[4] ?? "?"}</td><td>${a[6] ? `${a[6][1]}d20+${a[6][2]} · ${a[6][3]}` : "—"}</td></tr>`).join("")}</tbody></table></div>`
   };
   return `<div class="tabs2">${tabs.map(([k, n]) => `<button data-rt="${k}" aria-pressed="${t === k}">${n}</button>`).join("")}</div><div class="stack">${t === "suplementos" ? regrasSuplementosHTML() : body[t] || body.testes}</div>
    <p class="muted small">Regras de Ordem Paranormal RPG (Rafael Lange; Jambô Editora) resumidas para a mesa. Os textos completos estão no livro. Simula Ordem é um projeto de fã, não oficial.</p>`;
@@ -27745,7 +27884,7 @@ function criaturaDe(b) {
     rel: b ? b.el || "" : "",
     rvd: b ? +b.vd || 0 : 0,
     rtipo: b ? `Criatura${b.el ? " de " + b.el : ""} · VD ${b.vd}` : "Criatura",
-    rpv: b ? +b.pv || 10 : 20,
+    rpv: b ? +b.pv || (b.pv == null ? "" : 10) : 20, // PV null: o mestre preenche com o valor do livro
     rdef: b ? +b.def || 10 : 12,
     rdesl: 9,
     attr: { AGI: at[0] ?? 1, FOR: at[1] ?? 1, INT: at[2] ?? 1, PRE: at[3] ?? 1, VIG: at[4] ?? 1 },
@@ -27758,14 +27897,19 @@ function criaturaDe(b) {
       b && b.atk
         ? [{ n: b.atk[0], dd: +b.atk[1] || 1, a: "FOR", b: +b.atk[2] || 0, d: b.atk[3] || "", c: "20/x2" }]
         : [],
-    rnotas: ""
+    rnotas: [b && b.pv == null ? "PV: preencha com o valor do livro." : "", (b && b.notas) || ""]
+      .filter(Boolean)
+      .join("\n"),
+    rres: (b && b.res) || "",
+    rvul: (b && b.vul) || "",
+    rimu: (b && b.imu) || ""
   });
   const pm = b && String(b.pres || "").match(/DT\s*(\d+)\s*·?\s*(.*)/i);
   if (pm) {
     f.pdt = +pm[1];
     f.pdano = pm[2].trim();
   }
-  f.pv = f.rpv;
+  f.pv = +f.rpv || 0;
   return f;
 }
 async function novaCriatura() {
@@ -28001,10 +28145,13 @@ function subscribeArteBest() {
       });
       S.arteBest = m;
       arteContaNaMesa(); // artes padrão da conta do mestre entram nesta mesa
-      renderBoard();
-      if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
-      const g = $("#galBest");
-      if (g) galeriaRender();
+      // subir várias manda dezenas de artes seguidas: redesenha uma vez só, quando acalmar
+      clearTimeout(S.arteT);
+      S.arteT = setTimeout(() => {
+        renderBoard();
+        if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
+        if ($("#galBest")) galeriaRender();
+      }, 250);
     },
     () => {}
   );
@@ -28045,7 +28192,7 @@ function arteDaBase(n) {
 async function galeriaArtes() {
   const h = $("#modalHost");
   h.innerHTML = `<div class="modal-back"><div class="modal wide" id="galBest" role="dialog" aria-label="Artes do bestiário"><div class="row between"><h3 style="margin:0">Artes do bestiário</h3><button class="btn sm" id="gbX">Fechar</button></div>
-   <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela fica guardada só nesta mesa e vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>
+   <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>
    <div class="row" style="flex-wrap:nowrap"><input type="search" id="gbQ" placeholder="Buscar criatura"><button class="btn sm" id="gbVarias" style="white-space:nowrap">Subir várias</button></div>
    <p class="muted small" style="margin:0"><b>Subir várias:</b> escolha várias imagens de uma vez; cada uma vai para a criatura com o mesmo nome do arquivo (ex.: <code>zumbi-de-sangue.webp</code> ou <code>Zumbi de Sangue.png</code>).</p>
    <p class="muted small" style="margin:0">As artes que você sobe ficam guardadas na sua conta e entram sozinhas em <b>todas as mesas em que você é mestre</b>. <button class="btn sm ghost" id="gbConta">Guardar as artes desta mesa como padrão</button></p><div class="gb-grid" id="gbGrid"></div></div></div>`;
@@ -28102,7 +28249,7 @@ function galeriaRender() {
   el.innerHTML =
     B.map(b => {
       const a = arteDaBase(b.n);
-      return `<div class="gb-it ${a ? "on" : ""}"><img src="${a || arteCriatura(b.el, maH(b.n.length, b.n.charCodeAt(0), 11))}" alt=""><b>${esc(b.n)}</b><span class="muted small">${esc(b.el || "—")} · VD ${b.vd}</span>
+      return `<div class="gb-it ${a ? "on" : ""}"><img src="${a || arteThumbEl(b.el)}" alt="" loading="lazy"><b>${esc(b.n)}</b><span class="muted small">${esc(b.el || "—")} · VD ${b.vd}</span>
     <div class="row" style="gap:4px;justify-content:center"><button class="btn sm ${a ? "" : "primary"}" data-gbup="${esc(b.n)}">${a ? "Trocar" : "Escolher arte"}</button>${a ? `<button class="btn sm ghost" data-gbdel="${esc(b.n)}" aria-label="Tirar arte">✕</button>` : ""}</div></div>`;
     }).join("") || `<p class="muted">Nada encontrado.</p>`;
   $$("[data-gbup]").forEach(b => (b.onclick = () => arteBestEscolher(b.dataset.gbup)));
@@ -29972,7 +30119,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 14h0924";
+const VERSAO_SITE="13/11 15h0656";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

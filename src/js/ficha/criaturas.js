@@ -319,7 +319,7 @@ function criaturaDe(b) {
     rel: b ? b.el || "" : "",
     rvd: b ? +b.vd || 0 : 0,
     rtipo: b ? `Criatura${b.el ? " de " + b.el : ""} · VD ${b.vd}` : "Criatura",
-    rpv: b ? +b.pv || 10 : 20,
+    rpv: b ? +b.pv || (b.pv == null ? "" : 10) : 20, // PV null: o mestre preenche com o valor do livro
     rdef: b ? +b.def || 10 : 12,
     rdesl: 9,
     attr: { AGI: at[0] ?? 1, FOR: at[1] ?? 1, INT: at[2] ?? 1, PRE: at[3] ?? 1, VIG: at[4] ?? 1 },
@@ -332,14 +332,19 @@ function criaturaDe(b) {
       b && b.atk
         ? [{ n: b.atk[0], dd: +b.atk[1] || 1, a: "FOR", b: +b.atk[2] || 0, d: b.atk[3] || "", c: "20/x2" }]
         : [],
-    rnotas: ""
+    rnotas: [b && b.pv == null ? "PV: preencha com o valor do livro." : "", (b && b.notas) || ""]
+      .filter(Boolean)
+      .join("\n"),
+    rres: (b && b.res) || "",
+    rvul: (b && b.vul) || "",
+    rimu: (b && b.imu) || ""
   });
   const pm = b && String(b.pres || "").match(/DT\s*(\d+)\s*·?\s*(.*)/i);
   if (pm) {
     f.pdt = +pm[1];
     f.pdano = pm[2].trim();
   }
-  f.pv = f.rpv;
+  f.pv = +f.rpv || 0;
   return f;
 }
 async function novaCriatura() {
