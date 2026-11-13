@@ -5635,6 +5635,22 @@ const AMEACAS = [
       notas:
         "Também Medo.\nRomper Consciência: no início do turno, um ser em vista sofre 10d6 de dano mental (Vontade DT 41 metade).\nManipular Ondas: no fim do turno, opera até seis aparelhos em alcance médio ou sobrecarrega: 2d12 de Energia por aparelho em quem estiver na área (Reflexos DT 30 metade).\nManifestar o Impossível: invoca criaturas de Energia que somem até VD 240."
     }
+  ],
+  [
+    "Kian",
+    "Conhecimento",
+    400,
+    45,
+    1600,
+    "",
+    ["Pancada (2×)", 6, 45, "4d10+40 impacto"],
+    [5, 6, 6, 6, 5],
+    {
+      res: "dano 20",
+      imu: "Conhecimento; desprevenido",
+      notas:
+        "Entidade, também Medo. Percepção às cegas. Deslocamento 9 m. Cura acelerada 40 (25 quando machucado; some por 1d3+1 rodadas ao chegar a 0 PV).\nPerícias de Força, Intelecto e Presença +35; as outras +25. Ocultismo 6d20+40.\nConjura qualquer ritual sem componentes nem custo (até 20 PE por conjuração), DT 45.\nAnular Ritual (reação, 1×/rodada): Ocultismo oposto contra quem o alvejou; se vencer, anula ou devolve o ritual.\nFagulhas do Outro Lado (movimento): empresta um ritual a alguém adjacente até o fim da cena ou até sair do alcance curto.\nVerdade Impossível (completa, 1×/cena): um ser adjacente faz Vontade DT 40; se falhar, vai a 100% de exposição e vira um Existido; se passar, fica atordoado 1 rodada.\nAnula os Enigmas de Medo do Anfitrião, do Diabo, do Deus da Morte e da Magistrada.\nNão pode ser morto; só contido por itens amaldiçoados de Medo."
+    }
   ]
 ];
 
@@ -30956,7 +30972,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 15h4323";
+const VERSAO_SITE="13/11 16h1347";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

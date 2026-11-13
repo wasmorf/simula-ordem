@@ -173,7 +173,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 
 | Arquivo | O que faz |
 | --- | --- |
-| `livro.js` | Regras do Livro de Regras: atributos, perícias, classes, origens, armas, tipos de dano, rituais, ameaças (só nomes e números) |
+| `livro.js` | Regras do Livro de Regras: atributos, perícias, classes, origens, armas, tipos de dano, rituais, ameaças (só nomes e números; as completadas depois, como Kian, têm as habilidades resumidas com palavras próprias) |
 | `suplementos.js` | Suplementos: Sobrevivendo ao Horror e Arquivos Secretos (só nomes e números) |
 | `rituais-resumo.js` | Uma frase do que cada ritual faz (escrita para o site), mostrada no cartão do ritual e ao aprender |
 | `aba-regras.js` | Painel Regras: resumo das regras do livro em abas |
