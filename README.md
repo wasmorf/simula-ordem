@@ -208,7 +208,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `npcs.js` | NPCs: ficha rápida, modelos prontos, duplicar e pastas |
 | `arte-criaturas.js` | Arte original das criaturas sem imagem: silhueta escura com luz na cor do elemento, várias formas por elemento escolhidas pelo nome (`arteCriatura`, `sementeDe`) |
 | `criaturas.js` | Criaturas: ficha de criatura, retrato de NPC sem arte, pôr pasta inteira na cena |
-| `galeria-artes.js` | Galeria de artes do bestiário (imagens que o mestre sobe na mesa, uma por vez ou várias pelo nome do arquivo: `arteBestVarias`; ficam também na conta do mestre em `usuarios/<uid>/artes` e entram sozinhas nas mesas dele: `arteContaNaMesa`) |
+| `galeria-artes.js` | Galeria de artes do bestiário, com abas Criaturas e Pessoas e animais (imagens que o mestre sobe na mesa, uma por vez ou várias pelo nome do arquivo: `arteBestVarias`; ficam também na conta do mestre em `usuarios/<uid>/artes` e entram sozinhas nas mesas dele: `arteContaNaMesa`) |
 
 #### `js/mapa/` — Tabuleiro, cenas, tokens, portas, locais escondidos e o criador de mapas
 

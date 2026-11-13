@@ -1,7 +1,7 @@
 import asyncio,sys
 from playwright.async_api import async_playwright
 # Bestiário: pessoas, personagens e animais (sem elemento) entram como NPC, não como criatura; filtro
-# "Pessoas e animais"; quem tem dois elementos aparece nos dois filtros.
+# "Pessoas e animais" (também na galeria de artes); quem tem dois elementos aparece nos dois filtros.
 SP=sys.argv[1] if len(sys.argv)>1 else ".";U="http://localhost:8765/index.html"
 async def main():
   async with async_playwright() as p:
@@ -31,7 +31,12 @@ async def main():
     sec=await A.evaluate("document.querySelector('#pbody').innerText")
     pol=sec.find("Policial");cri=sec.upper().find("CRIATURAS")
     print("Policial antes da seção Criaturas:",0<=pol<cri)
-    ok=rot=="Pessoas e animais" and len(pess)>5 and semEl and len(misto)>0 and ["Policial",False] in [x[:2] for x in f] and ["Zumbi de Sangue",True] in [x[:2] for x in f] and 0<=pol<cri
+    await A.evaluate("subscribeArteBest();galeriaArtes()");await A.wait_for_timeout(400)
+    gcri=await A.evaluate("[...document.querySelectorAll('[data-gbup]')].map(b=>b.dataset.gbup)")
+    await A.click("[data-gbtipo='pes']");await A.wait_for_timeout(300)
+    gpes=await A.evaluate("[...document.querySelectorAll('[data-gbup]')].map(b=>b.dataset.gbup)")
+    print("galeria: criaturas",len(gcri),"| pessoas",len(gpes))
+    ok="Policial" not in gcri and "Zumbi de Sangue" in gcri and "Policial" in gpes and "Zumbi de Sangue" not in gpes and rot=="Pessoas e animais" and len(pess)>5 and semEl and len(misto)>0 and ["Policial",False] in [x[:2] for x in f] and ["Zumbi de Sangue",True] in [x[:2] for x in f] and 0<=pol<cri
     print("OK" if ok else "FALHOU")
     print("ERRS",errs);await b.close()
 asyncio.run(main())
