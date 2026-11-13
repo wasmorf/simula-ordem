@@ -17,6 +17,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | --- | --- |
 | `aviso-versao-nova` | O aviso "Saiu uma versão nova do site" |
 | `backup` | Baixar e restaurar fichas e mesa |
+| `baixar-todos-personagens` | Meus personagens: Baixar todos e importar de volta substituindo, com a arte |
 | `classe-origem-trilha` | Classe e origem livres só na criação, trilha escolhida uma vez; aviso do que a troca muda |
 | `combate` | Painel de combate sem erros |
 | `copiar-cena` | Copiar cena e mapa para outra mesa do mesmo mestre |

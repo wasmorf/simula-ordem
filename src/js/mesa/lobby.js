@@ -142,7 +142,7 @@ function showLobby() {
      <div class="row"><button type="button" class="btn sm ghost" id="btnAjuda">Como usar o site</button><button type="button" class="btn sm ghost" id="btnRestaurar">Restaurar mesa de um backup</button></div>
     </form>
    </section>
-   <section class="stack" style="margin-top:30px"><div class="row between"><h2>Meus personagens</h2><span class="row" style="gap:6px"><button class="btn sm ghost" id="btnImpSolo" title="Abrir um arquivo de personagem baixado aqui ou recebido de um amigo">Importar personagem</button><button class="btn sm primary" id="btnNovoSolo">Criar personagem</button></span></div>
+   <section class="stack" style="margin-top:30px"><div class="row between"><h2>Meus personagens</h2><span class="row" style="gap:6px">${(S.solos || []).length > 1 ? `<button class="btn sm ghost" id="btnBaixarSolos" title="Um arquivo só com todos os seus personagens (backup)">Baixar todos</button>` : ""}<button class="btn sm ghost" id="btnImpSolo" title="Abrir um arquivo de personagem baixado aqui ou recebido de um amigo">Importar personagem</button><button class="btn sm primary" id="btnNovoSolo">Criar personagem</button></span></div>
     <p class="muted small" style="margin:0">Crie aqui, sem mesa, e leve para qualquer mesa depois. Entre com Google para ter seus personagens em qualquer aparelho.</p>
     ${soloCardsHTML()}
     ${

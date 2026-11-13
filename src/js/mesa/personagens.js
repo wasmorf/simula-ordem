@@ -55,6 +55,8 @@ function bindSoloCards() {
   {
     const im = $("#btnImpSolo");
     if (im) im.onclick = importarSolo;
+    const bt = $("#btnBaixarSolos");
+    if (bt) bt.onclick = baixarTodosPersonagens;
   }
   $$("[data-solobx]").forEach(
     b =>
@@ -149,6 +151,49 @@ function baixarPersonagem(c) {
   });
   toast(`${c.nome || "Personagem"} baixado. Mande o arquivo para quem quiser.`);
 }
+/* Um arquivo só com todos os personagens da conta (cada um com o id, para voltar no mesmo lugar). */
+function baixarTodosPersonagens() {
+  const L = S.solos || [];
+  if (!L.length) return;
+  const dia = new Date().toISOString().slice(0, 10);
+  baixar(`meus-personagens-${dia}.json`, {
+    tipo: "simula-ordem-personagens",
+    v: 1,
+    exportada: Date.now(),
+    personagens: L.map(c => {
+      const { id, ...f } = limparPersonagem(c);
+      return { id: c.id, ficha: f };
+    })
+  });
+  toast(`${L.length} personagens num arquivo só.`);
+}
+/* Arquivo de "Baixar todos": quem já existe na conta (mesmo id) é substituído; o resto entra como novo. */
+async function importarTodos(d) {
+  const lista = (d.personagens || []).filter(x => x && x.ficha);
+  if (!lista.length) return toast("Esse arquivo não tem personagens.");
+  const meus = new Set((S.solos || []).map(c => c.id));
+  const subst = lista.filter(x => meus.has(x.id));
+  const ok = await confirmBox(
+    `Importar ${lista.length} personagens?`,
+    subst.length
+      ? `${subst.length} já estão na sua conta e serão substituídos pela versão do arquivo (a arte vem junto). ${lista.length - subst.length ? `${lista.length - subst.length} entram como novos.` : ""}`
+      : "Todos entram como novos em Meus personagens.",
+    "Importar"
+  );
+  if (!ok) return;
+  try {
+    for (const x of lista) {
+      const id = /^p[\w-]{4,}$/.test(x.id || "") ? x.id : "p" + rid(8);
+      const f = migrar({ ...limparPersonagem(x.ficha), dono: S.uid, atualizada: Date.now() });
+      if (!f.criada) f.criada = Date.now();
+      delete f.id;
+      await S.db.set("usuarios/" + S.uid + "/personagens/" + id, f);
+    }
+    toast(`${lista.length} personagens importados${subst.length ? ` (${subst.length} substituídos)` : ""}.`);
+  } catch (e) {
+    fail(e);
+  }
+}
 async function importarSolo() {
   if (toqueDuplo("importarSolo")) return; // evita rodar duas vezes num toque duplo
   if (!S.uid) {
@@ -157,6 +202,7 @@ async function importarSolo() {
   }
   const d = await lerJSON();
   if (!d) return;
+  if (d.tipo === "simula-ordem-personagens") return importarTodos(d); // arquivo do "Baixar todos"
   const lista =
     d.tipo === "simula-ordem-ficha" && d.ficha
       ? [d.ficha]

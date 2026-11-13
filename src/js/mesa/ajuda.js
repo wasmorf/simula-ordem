@@ -54,7 +54,7 @@ const AJUDA = {
       ],
       [
         "Guardar e compartilhar personagens",
-        "Na página inicial, em <b>Meus personagens</b>, toque em <b>Baixar</b> para guardar um arquivo do personagem. Mande esse arquivo para um amigo e ele usa <b>Importar personagem</b>."
+        "Na página inicial, em <b>Meus personagens</b>, toque em <b>Baixar</b> para guardar um arquivo do personagem. Mande esse arquivo para um amigo e ele usa <b>Importar personagem</b>. <b>Baixar todos</b> faz um arquivo só com todos os seus personagens; ao importar esse arquivo de volta, os que já estão na sua conta são substituídos (sem criar cópias)."
       ]
     ]
   },
