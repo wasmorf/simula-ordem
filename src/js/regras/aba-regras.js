@@ -49,7 +49,7 @@ function regrasHTML() {
     condicoes: `<table class="t"><tbody>${Object.entries(CONDICOES_LIVRO)
       .map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`)
       .join("")}</tbody></table>`,
-    ameacas: `<div class="scroll-x"><table class="t"><thead><tr><th>Ameaça</th><th>Elemento</th><th>VD</th><th>Def.</th><th>PV</th><th>Ataque</th></tr></thead><tbody>${AMEACAS.map(a => `<tr><td>${a[0]}</td><td>${a[1] || "Realidade"}</td><td>${a[2]}</td><td>${a[3]}</td><td>${a[4] ?? "?"}</td><td>${a[6] ? `${a[6][1]}d20+${a[6][2]} · ${a[6][3]}` : "—"}</td></tr>`).join("")}</tbody></table></div>`
+    ameacas: `<div class="scroll-x"><table class="t"><thead><tr><th>Ameaça</th><th>Elemento</th><th>VD</th><th>Def.</th><th>PV</th><th>Ataque</th></tr></thead><tbody>${AMEACAS.map(a => `<tr><td>${a[0]}</td><td>${a[1] || "Pessoa ou animal"}</td><td>${a[2]}</td><td>${a[3]}</td><td>${a[4] ?? "?"}</td><td>${a[6] ? `${a[6][1]}d20+${a[6][2]} · ${a[6][3]}` : "—"}</td></tr>`).join("")}</tbody></table></div>`
   };
   return `<div class="tabs2">${tabs.map(([k, n]) => `<button data-rt="${k}" aria-pressed="${t === k}">${n}</button>`).join("")}</div><div class="stack">${t === "suplementos" ? regrasSuplementosHTML() : body[t] || body.testes}</div>
    <p class="muted small">Regras de Ordem Paranormal RPG (Rafael Lange; Jambô Editora) resumidas para a mesa. Os textos completos estão no livro. Simula Ordem é um projeto de fã, não oficial.</p>`;

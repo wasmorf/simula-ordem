@@ -9,230 +9,7 @@ function maToURL(c) {
   if (!u.startsWith("data:image/webp")) u = c.toDataURL("image/png");
   return u;
 }
-/* silhuetas originais de criatura, vistas de cima (fundo transparente) */
-function arteCriatura(el, seed = 1) {
-  const N = 256,
-    c = document.createElement("canvas");
-  c.width = c.height = N;
-  const g = c.getContext("2d");
-  const R = maRng(seed || 1);
-  const cx = N / 2,
-    cy = N / 2;
-  const oldS = MA_S;
-  MA_S = 78;
-  g.shadowColor = "rgba(0,0,0,.6)";
-  g.shadowBlur = 14;
-  g.shadowOffsetY = 6;
-  const halo = (col, r) => {
-    const gr = g.createRadialGradient(cx, cy, 0, cx, cy, r);
-    gr.addColorStop(0, maA(col, 0.35));
-    gr.addColorStop(1, maA(col, 0));
-    g.save();
-    g.shadowColor = "transparent";
-    g.fillStyle = gr;
-    g.fillRect(0, 0, N, N);
-    g.restore();
-  };
-  const membro = (a, len, w, col, garra) => {
-    const pts = [[cx, cy]];
-    let x = cx,
-      y = cy,
-      ang = a;
-    for (let i = 0; i < 4; i++) {
-      ang += (R() - 0.5) * 0.6;
-      x += (Math.cos(ang) * len) / 4;
-      y += (Math.sin(ang) * len) / 4;
-      pts.push([x, y]);
-    }
-    maLine(g, pts, MA_INK, w + 5);
-    maLine(g, pts, col, w);
-    if (garra)
-      for (let k = -1; k <= 1; k++)
-        maLine(
-          g,
-          [
-            [x, y],
-            [x + Math.cos(ang + k * 0.45) * w * 1.6, y + Math.sin(ang + k * 0.45) * w * 1.6]
-          ],
-          MA_INK,
-          4
-        );
-  };
-  if (el === "Sangue") {
-    halo("#d3283b", 120);
-    for (let i = 0; i < 6; i++)
-      membro((i / 6) * 6.28 + R() * 0.3, 70 + R() * 30, 10 + R() * 6, "#6a1520", true);
-    maBlob(g, cx, cy, 58, R, "#5a0f18", { n: 14, j: 0.35, k: 0.2 });
-    for (let i = 0; i < 9; i++)
-      maBlob(g, cx + (R() - 0.5) * 70, cy + (R() - 0.5) * 70, 8 + R() * 12, R, maTone("#8a1a26", R() * 0.2), {
-        n: 8,
-        ink: false
-      });
-    g.shadowColor = "transparent";
-    for (let i = 0; i < 5; i++) {
-      g.strokeStyle = "rgba(20,0,4,.7)";
-      g.lineWidth = 3;
-      g.beginPath();
-      g.moveTo(cx, cy);
-      g.quadraticCurveTo(
-        cx + (R() - 0.5) * 90,
-        cy + (R() - 0.5) * 90,
-        cx + (R() - 0.5) * 100,
-        cy + (R() - 0.5) * 100
-      );
-      g.stroke();
-    }
-    maEll(g, cx, cy - 18, 22, 12, "#1a0205");
-    g.fillStyle = "#e8d8c8";
-    for (let i = 0; i < 7; i++) {
-      g.beginPath();
-      g.moveTo(cx - 18 + i * 6, cy - 24);
-      g.lineTo(cx - 15 + i * 6, cy - 14);
-      g.lineTo(cx - 12 + i * 6, cy - 24);
-      g.fill();
-    }
-  } else if (el === "Morte") {
-    halo("#3a3640", 125);
-    g.save();
-    g.shadowColor = "transparent";
-    for (let i = 0; i < 14; i++) {
-      const a = R() * 6.28,
-        d = 50 + R() * 55;
-      g.fillStyle = `rgba(20,18,24,${0.25 + R() * 0.3})`;
-      g.beginPath();
-      g.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 22 + R() * 20, 10 + R() * 8, a, 0, 7);
-      g.fill();
-    }
-    g.restore();
-    for (let i = 0; i < 4; i++) membro((i / 4) * 6.28 + 0.78, 62 + R() * 20, 7, "#3d3a40", true);
-    maEll(g, cx, cy + 6, 42, 54, "#2a282d", { k: 0.2 });
-    g.save();
-    g.shadowColor = "transparent";
-    g.strokeStyle = "rgba(190,190,200,.6)";
-    g.lineWidth = 3;
-    g.beginPath();
-    for (let t = 0; t < 14; t += 0.15) {
-      const r = 2.6 * t;
-      g.lineTo(cx + Math.cos(t) * r, cy + 10 + Math.sin(t) * r);
-    }
-    g.stroke();
-    g.restore();
-    maCirc(g, cx, cy - 44, 20, "#cfcac0", { k: 0.25 });
-    g.fillStyle = "#111";
-    g.beginPath();
-    g.arc(cx - 7, cy - 46, 5, 0, 7);
-    g.arc(cx + 7, cy - 46, 5, 0, 7);
-    g.fill();
-  } else if (el === "Conhecimento") {
-    halo("#e0b84a", 125);
-    g.save();
-    g.shadowColor = "#e0b84a";
-    g.shadowBlur = 12;
-    g.strokeStyle = "#e8c35a";
-    for (let k = 0; k < 3; k++) {
-      g.lineWidth = 3 - k * 0.6;
-      g.beginPath();
-      g.arc(cx, cy, 64 + k * 22, R() * 6, R() * 6 + 4.5);
-      g.stroke();
-    }
-    for (let i = 0; i < 14; i++) {
-      const a = (i / 14) * 6.28,
-        d = 86;
-      g.save();
-      g.translate(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
-      g.rotate(a);
-      g.lineWidth = 2.5;
-      g.beginPath();
-      g.moveTo(-6, -6);
-      g.lineTo(6, 0);
-      g.lineTo(-6, 6);
-      if (R() < 0.5) {
-        g.moveTo(0, -7);
-        g.lineTo(0, 7);
-      }
-      g.stroke();
-      g.restore();
-    }
-    g.restore();
-    maBlob(g, cx, cy, 50, R, "#2a2214", { n: 12, j: 0.25, k: 0.2 });
-    for (let i = 0; i < 4; i++) membro((i / 4) * 6.28 + R(), 58, 6, "#3a2f18", false);
-    maEll(g, cx, cy, 30, 18, "#f2e6c0", { k: 0.2 });
-    maCirc(g, cx, cy, 13, "#d9a22a", { k: 0.3 });
-    maCirc(g, cx, cy, 6, "#120d05", { ink: false });
-  } else if (el === "Energia") {
-    halo("#b45cff", 128);
-    g.save();
-    g.shadowColor = "#c88aff";
-    g.shadowBlur = 16;
-    for (let i = 0; i < 9; i++) {
-      let x = cx,
-        y = cy,
-        a = R() * 6.28;
-      g.beginPath();
-      g.moveTo(x, y);
-      for (let k = 0; k < 6; k++) {
-        a += (R() - 0.5) * 1.4;
-        x += Math.cos(a) * 16;
-        y += Math.sin(a) * 16;
-        g.lineTo(x, y);
-      }
-      g.strokeStyle = R() < 0.5 ? "#d9b0ff" : "#9a4aff";
-      g.lineWidth = 2 + R() * 3;
-      g.stroke();
-    }
-    g.restore();
-    for (let i = 0; i < 7; i++) {
-      g.save();
-      g.translate(cx + (R() - 0.5) * 80, cy + (R() - 0.5) * 80);
-      g.rotate(R() * 6);
-      g.beginPath();
-      g.moveTo(0, -24);
-      g.lineTo(10, 0);
-      g.lineTo(0, 10);
-      g.lineTo(-10, 0);
-      g.closePath();
-      g.fillStyle = maGrad(g, -10, -24, 20, 34, "#7a2ad8", 0.35);
-      g.fill();
-      g.lineWidth = 3;
-      g.strokeStyle = MA_INK;
-      g.stroke();
-      g.restore();
-    }
-    maBlob(g, cx, cy, 30, R, "#2a0a4a", { n: 9, j: 0.5 });
-    maCirc(g, cx, cy, 14, "#f0dcff", { k: 0.1 });
-  } else if (el === "Medo") {
-    halo("#e8f0ff", 130);
-    g.save();
-    g.shadowColor = "transparent";
-    for (let i = 0; i < 10; i++) {
-      const a = R() * 6.28,
-        d = 40 + R() * 60;
-      g.fillStyle = `rgba(230,236,250,${0.06 + R() * 0.08})`;
-      g.beginPath();
-      g.ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 30, 14, a, 0, 7);
-      g.fill();
-    }
-    g.restore();
-    for (let i = 0; i < 4; i++) membro([0.6, 2.5, 3.8, 5.6][i] + (R() - 0.5) * 0.3, 95, 5, "#d8dce6", true);
-    maEll(g, cx, cy + 12, 22, 46, "#c9ced8", { k: 0.25 });
-    maCirc(g, cx, cy - 40, 24, "#e6e9f0", { k: 0.2 });
-    g.shadowColor = "transparent";
-    g.fillStyle = "#0a0a10";
-    for (let i = 0; i < 7; i++) {
-      g.beginPath();
-      g.ellipse(cx + (R() - 0.5) * 30, cy - 40 + (R() - 0.5) * 26, 3 + R() * 3, 2 + R() * 2, 0, 0, 7);
-      g.fill();
-    }
-  } else {
-    halo("#5aa8ff", 110);
-    for (let i = 0; i < 4; i++) membro((i / 4) * 6.28 + 0.78 + R() * 0.4, 70, 9, "#2c2a33", true);
-    maBlob(g, cx, cy, 50, R, "#24222b", { n: 12, j: 0.3, k: 0.2 });
-    maCirc(g, cx - 14, cy - 16, 6, "#e0e6ff", { k: 0.1 });
-    maCirc(g, cx + 14, cy - 16, 6, "#e0e6ff", { k: 0.1 });
-  }
-  MA_S = oldS;
-  return maToURL(c);
-}
+/* a arte das criaturas sem imagem fica em ficha/arte-criaturas.js (arteCriatura) */
 /* retrato genérico para NPC sem arte (busto, sem rosto definido) */
 function artePessoa(seed = 1) {
   const N = 256,
@@ -305,12 +82,15 @@ function artePessoa(seed = 1) {
 }
 
 /* ---------- ficha de criatura ---------- */
+/* Do bestiário sem elemento (pessoas, personagens e animais) sai NPC, não criatura. */
+const ehPessoaDoBestiario = b => !!b && !b.el;
 function criaturaDe(b) {
   const f = novaFicha();
   const at = (b && b.at) || [1, 1, 1, 1, 1];
+  const pessoa = ehPessoaDoBestiario(b);
   Object.assign(f, {
     npc: true,
-    criatura: true,
+    criatura: !pessoa,
     rapido: true,
     visivel: false,
     dono: S.uid,
@@ -318,7 +98,11 @@ function criaturaDe(b) {
     base: b ? b.n : "",
     rel: b ? b.el || "" : "",
     rvd: b ? +b.vd || 0 : 0,
-    rtipo: b ? `Criatura${b.el ? " de " + b.el : ""} · VD ${b.vd}` : "Criatura",
+    rtipo: b
+      ? pessoa
+        ? `Pessoa ou animal · VD ${b.vd}`
+        : `Criatura${b.el ? " de " + b.el : ""} · VD ${b.vd}`
+      : "Criatura",
     rpv: b ? +b.pv || (b.pv == null ? "" : 10) : 20, // PV null: o mestre preenche com o valor do livro
     rdef: b ? +b.def || 10 : 12,
     rdesl: 9,
@@ -339,6 +123,13 @@ function criaturaDe(b) {
     rvul: (b && b.vul) || "",
     rimu: (b && b.imu) || ""
   });
+  if (pessoa) {
+    // NPC rola pelo atributo: o ataque usa o atributo que tem o mesmo número de dados do bestiário
+    f.ratq = f.ratq.map(w => {
+      const a = ["AGI", "FOR", "INT", "PRE", "VIG"].find(k => f.attr[k] === w.dd) || "FOR";
+      return { n: w.n, a, b: w.b, d: w.d, c: w.c };
+    });
+  }
   const pm = b && String(b.pres || "").match(/DT\s*(\d+)\s*·?\s*(.*)/i);
   if (pm) {
     f.pdt = +pm[1];
@@ -440,9 +231,7 @@ function npcPorNaCenaHTML(pessoas) {
 /* Avatar no card de NPC/criatura: foto; criatura sem foto usa a arte do bestiário ou a gerada. */
 function npcAvatar(f) {
   if (f.foto || !f.criatura) return avatar(f);
-  const url =
-    arteDaBase(f.base) ||
-    arteCriatura(f.rel || "", maH((f.nome || "").length, (f.base || f.nome || "x").charCodeAt(0), 5));
+  const url = arteDaBase(f.base) || arteCriatura(f.rel || "", sementeDe(f.base || f.nome));
   return `<img class="avatar" src="${url}" alt="" style="width:52px;height:52px;object-fit:contain;background:#0d0b10">`;
 }
 async function porGrupoEmCena(pasta, kind) {
@@ -476,7 +265,7 @@ async function porGrupoEmCena(pasta, kind) {
       const url = f.foto
         ? ""
         : f.criatura
-          ? arteCriatura(f.rel || "", maH((f.nome || "").length, (f.base || f.nome || "x").charCodeAt(0), 5))
+          ? arteCriatura(f.rel || "", sementeDe(f.base || f.nome))
           : artePessoa(maH((f.nome || "").length, (f.rtipo || f.nome || "x").charCodeAt(0), 9));
       const doc = {
         nome: f.nome,
@@ -518,10 +307,10 @@ async function porGrupoEmCena(pasta, kind) {
 }
 
 /* ---------- ameaça do bestiário em cena = criatura com ficha ---------- */
-/* Põe uma ameaça do bestiário na cena: cria a ficha de criatura, o token e (se marcado) entra no combate. */
+/* Põe uma ameaça do bestiário na cena: cria a ficha (criatura, ou NPC se for pessoa ou animal), o token e (se marcado) entra no combate. */
 async function ameacaEmCena(b) {
   if (!b || !S.viewSid) return;
-  const n = Object.values(S.fichas).filter(f => f.criatura && f.base === b.n).length;
+  const n = Object.values(S.fichas).filter(f => f.npc && f.base === b.n).length;
   const id = "n" + rid(8);
   const f = criaturaDe(b);
   f.nome = b.n + (n ? " " + (n + 1) : "");
@@ -531,10 +320,10 @@ async function ameacaEmCena(b) {
   await criarToken(
     {
       nome: f.nome,
-      url: arteCriatura(b.el, maH(f.nome.length, b.n.charCodeAt(0), 5)),
+      url: arteCriatura(b.el, sementeDe(b.n)),
       fichaId: id,
       ameaca: b.n,
-      forma: "livre",
+      forma: ehPessoaDoBestiario(b) ? "quadrado" : "livre",
       usaFoto: true,
       oculto: !!S.ameOculto
     },

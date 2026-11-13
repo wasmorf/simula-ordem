@@ -58,16 +58,23 @@ function tokensHTML() {
     <div class="row" style="flex-direction:column;gap:4px">${S.isM ? `<button class="btn sm ghost" data-fav="${esc(t.id)}" aria-label="Favoritar" style="color:${t.fav ? "var(--purple-hi)" : "var(--muted)"}">${t.fav ? "★" : "☆"}</button>` : ""}${mine ? `<button class="btn sm ghost" data-deltok="${esc(t.id)}" aria-label="Apagar token">🗑</button>` : ""}</div></div>`;
   };
   if (S.tokTab === "ameacas") {
-    // filtro por elemento e ordem por VD; "Realidade" = sem elemento (pessoas e animais)
+    // filtro por elemento e ordem por VD; "Realidade" = sem elemento (pessoas, personagens e animais).
+    // Quem tem dois elementos ("Sangue e Morte") aparece nos dois.
     const elDe = b => b.el || "Realidade";
+    const temEl = (b, e) =>
+      b.el
+        ? String(b.el)
+            .split(/\s+e\s+|,\s*/)
+            .includes(e)
+        : e === "Realidade";
     const B = allBest()
       .filter(b => !q || b.n.toLowerCase().includes(q))
-      .filter(b => !S.ameEl || elDe(b) === S.ameEl)
+      .filter(b => !S.ameEl || temEl(b, S.ameEl))
       .sort((a, b) => (+a.vd || 0) - (+b.vd || 0));
     const chips = ["", "Sangue", "Morte", "Conhecimento", "Energia", "Medo", "Realidade"]
       .map(
         e =>
-          `<button type="button" data-ameel="${e}" aria-pressed="${(S.ameEl || "") === e}">${e || "Todos"}</button>`
+          `<button type="button" data-ameel="${e}" aria-pressed="${(S.ameEl || "") === e}">${e === "Realidade" ? "Pessoas e animais" : e || "Todos"}</button>`
       )
       .join("");
     return `<input type="search" id="tokQ" placeholder="Pesquisar" value="${esc(S.tokQ || "")}">${tabsTok()}<div class="tabs2 ame-els">${chips}</div>${S.isM ? `<button class="btn sm ghost" id="galArtes2">Artes do bestiário (imagens suas)</button>` : ""}
@@ -77,7 +84,7 @@ function tokensHTML() {
          : `${!S.viewSid ? `<div class="banner">Abra uma cena para colocar ameaças nela.</div>` : ""}
      <label class="check"><input type="checkbox" id="ameCombate" ${S.ameCombate !== false ? "checked" : ""}> Também colocar no combate (a vida aparece no token)</label>
      <label class="check"><input type="checkbox" id="ameOculto" ${S.ameOculto ? "checked" : ""}> Entrar oculto para os jogadores</label>
-     <div class="cards">${B.map(b => `<div class="tokrow ame el-${esc(elDe(b))}"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv ?? "?"} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${esc(b.n)}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
+     <div class="cards">${B.map(b => `<div class="tokrow ame el-${esc(String(elDe(b)).split(" ")[0])}"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Pessoa ou animal")} · VD ${b.vd} · PV ${b.pv ?? "?"} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${esc(b.n)}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
      }`;
   }
   // jogador: em cena só o que ele enxerga no mapa; na biblioteca só os tokens dele
@@ -243,7 +250,7 @@ async function tokenDaFicha(pre) {
   const forma = r.forma || "quadrado";
   if (!f.foto && f.npc) {
     const url = f.criatura
-      ? arteCriatura(f.rel || "", maH((f.nome || "").length, (f.base || f.nome || "x").charCodeAt(0), 5))
+      ? arteCriatura(f.rel || "", sementeDe(f.base || f.nome))
       : artePessoa(maH((f.nome || "").length, (f.rtipo || f.nome || "x").charCodeAt(0), 9));
     await criarToken(
       {

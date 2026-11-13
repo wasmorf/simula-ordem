@@ -71,6 +71,7 @@ js/mapa/modelos.js
 js/documentos/documentos.js
 js/mesa/ajuda.js
 js/ficha/npcs.js
+js/ficha/arte-criaturas.js
 js/ficha/criaturas.js
 js/ficha/galeria-artes.js
 js/mesa/personagens.js

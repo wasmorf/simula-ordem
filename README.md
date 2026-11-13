@@ -206,7 +206,8 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `subir-nex.js` | Subir de NEX guiado: o que o agente ganhou em cada nível e o aviso para o jogador |
 | `npcs-sincronia.js` | NPCs do mestre: receber do banco e onde cada ficha é salva |
 | `npcs.js` | NPCs: ficha rápida, modelos prontos, duplicar e pastas |
-| `criaturas.js` | Criaturas: ficha de criatura, arte por elemento, pôr pasta inteira na cena |
+| `arte-criaturas.js` | Arte original das criaturas sem imagem: silhueta escura com luz na cor do elemento, várias formas por elemento escolhidas pelo nome (`arteCriatura`, `sementeDe`) |
+| `criaturas.js` | Criaturas: ficha de criatura, retrato de NPC sem arte, pôr pasta inteira na cena |
 | `galeria-artes.js` | Galeria de artes do bestiário (imagens que o mestre sobe na mesa, uma por vez ou várias pelo nome do arquivo: `arteBestVarias`; ficam também na conta do mestre em `usuarios/<uid>/artes` e entram sozinhas nas mesas dele: `arteContaNaMesa`) |
 
 #### `js/mapa/` — Tabuleiro, cenas, tokens, portas, locais escondidos e o criador de mapas
@@ -214,7 +215,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | Arquivo | O que faz |
 | --- | --- |
 | `cenas.js` | Cenas: criar, exibir para os jogadores, trocar de cena |
-| `tokens.js` | Tokens: criar, mover, imagem, cor; aba Ameaças com filtro por elemento |
+| `tokens.js` | Tokens: criar, mover, imagem, cor; aba Ameaças com filtro por elemento e "Pessoas e animais" (sem elemento entram como NPC: `ehPessoaDoBestiario`) |
 | `tabuleiro.js` | Tabuleiro: zoom, névoa, desenhos, régua, ferramentas do mapa e desenho da cena |
 | `arte.js` | Criador de mapas: pisos, paredes, portas e acabamento desenhados por código |
 | `objetos.js` | Criador de mapas: todos os objetos (móveis, carros, árvores...) |
