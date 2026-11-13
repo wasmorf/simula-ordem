@@ -35,6 +35,7 @@ js/nucleo/utilitarios.js
 js/nucleo/erros.js
 js/nucleo/icones.js
 js/regras/suplementos.js
+js/regras/rituais-resumo.js
 js/nucleo/estado.js
 js/mesa/lobby.js
 js/mesa/mesa.js

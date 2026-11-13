@@ -476,7 +476,15 @@ function bindFichaCompleta() {
         rr();
       })
   );
-  // rituais
+  // rituais: o resumo embaixo da lista acompanha o ritual escolhido (regras/rituais-resumo)
+  on(
+    "#ritSel",
+    e => {
+      const r = allRituais().find(x => x.n === e.target.value);
+      $("#ritRes").textContent = (r && r.desc) || "";
+    },
+    "onchange"
+  );
   on("#ritAdd", () => {
     const v = $("#ritSel").value;
     if (!v) return;

@@ -314,7 +314,7 @@ function tabRituais(f, D) {
        ? `<div class="cards">${known
            .map(
              r => `<div class="rcard el-${esc(String(r.el).split(" e ")[0])}"><div class="rh"><span class="rsig">${SIGILO[String(r.el).split(" e ")[0]] || SIGILO.Medo}</span><div style="min-width:0;flex:1"><div class="rt"><span class="rc">${ROMAN[r.c]}</span> ${esc(r.n)}</div>
-     <div class="rdsc">${esc(r.el)}${r.ex ? ` · ${esc(r.ex)}` : ""}${r.al ? ` · ${esc(r.al)}` : ""}${r.alvo ? ` · ${esc(r.alvo)}` : ""}${r.du ? ` · ${esc(r.du)}` : ""}${r.res ? ` · ${esc(r.res)}` : ""}${r.hb ? " · homebrew" : ""}</div>${r.desc ? `<div class="rdsc">${esc(r.desc)}</div>` : ""}</div><button type="button" class="x" data-unrit="${esc(r.n)}" aria-label="Esquecer ${esc(r.n)}">✕</button></div>
+     <div class="rdsc">${esc(r.el)}${r.ex ? ` · ${esc(r.ex)}` : ""}${r.al ? ` · ${esc(r.al)}` : ""}${r.alvo ? ` · ${esc(r.alvo)}` : ""}${r.du ? ` · ${esc(r.du)}` : ""}${r.res ? ` · ${esc(r.res)}` : ""}${r.hb ? " · homebrew" : ""}</div>${r.desc ? `<div class="rres">${esc(r.desc)}</div>` : ""}</div><button type="button" class="x" data-unrit="${esc(r.n)}" aria-label="Esquecer ${esc(r.n)}">✕</button></div>
      <div class="rforms">${r.formas.map((fm, k) => `<button type="button" class="rform" data-conj="${esc(r.n)}" data-forma="${k}" title="${esc(fm.req ? "Requer " + fm.req : "")}"><b>${esc(fm.dado || "—")}</b><span>${fm.k} · ${fm.custo} PE</span></button>`).join("")}</div></div>`
            )
            .join("")}</div>`
@@ -333,6 +333,7 @@ function tabRituais(f, D) {
      .join(
        ""
      )}</select><button type="button" class="btn sm" id="ritAdd" ${cheio ? "disabled" : ""}>Aprender</button></div>
+   <p class="muted small" id="ritRes" style="margin:0">${esc(([1, 2, 3, 4].map(c => circOk(c) && avail.find(r => r.c === c)).find(Boolean) || {}).desc || "")}</p>
    <p class="muted small" style="margin:0">Custo por círculo: 1º 1 PE, 2º 3 PE, 3º 6 PE, 4º 10 PE; Discente e Verdadeiro somam o custo extra e pedem o círculo indicado. Os textos completos dos rituais estão no livro.</p>
   </div>`;
 }

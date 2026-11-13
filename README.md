@@ -175,6 +175,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | --- | --- |
 | `livro.js` | Regras do Livro de Regras: atributos, perícias, classes, origens, armas, rituais, ameaças (só nomes e números) |
 | `suplementos.js` | Suplementos: Sobrevivendo ao Horror e Arquivos Secretos (só nomes e números) |
+| `rituais-resumo.js` | Uma frase do que cada ritual faz (escrita para o site), mostrada no cartão do ritual e ao aprender |
 | `aba-regras.js` | Painel Regras: resumo das regras do livro em abas |
 | `condicoes.js` | Condições nas rolagens (a mais severa vale) e o aviso de Morrendo |
 | `sobrevivente.js` | Classe Sobrevivente (SaH): estágios no lugar do NEX e aba Suplementos |

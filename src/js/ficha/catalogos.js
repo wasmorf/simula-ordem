@@ -8,14 +8,14 @@ function catPlus(c, k) {
   const v = Math.max(0, (CAT_N[c] ?? 0) + k);
   return ["0", "I", "II", "III", "IV", "V", "VI"][v] || String(v);
 }
-// Ritual normalizado: {n, el, c, ex, al, alvo, du, res, tipo, formas:[{k, dado, custo, req}], hb}
+// Ritual normalizado: {n, el, c, ex, al, alvo, du, res, tipo, formas:[{k, dado, custo, req}], desc, hb}
 function allRituais() {
   const base = RITUAIS_LIVRO.map(([n, el, c, ex, al, alvo, du, res, dado, D, V, tipo]) => {
     const custo = CUSTO_CIRCULO[c];
     const formas = [{ k: "Normal", dado, custo, req: "" }];
     if (D) formas.push({ k: "Discente", dado: D[1], custo: custo + D[0], req: D[2] });
     if (V) formas.push({ k: "Verdadeiro", dado: V[1], custo: custo + V[0], req: V[2] });
-    return { n, el, c, ex, al, alvo, du, res, tipo, formas };
+    return { n, el, c, ex, al, alvo, du, res, tipo, formas, desc: RITUAL_RESUMO[n] || "" }; // resumo: regras/rituais-resumo
   });
   const hb = hbOf("ritual").map(h => {
     const c = +h.circulo || 1;

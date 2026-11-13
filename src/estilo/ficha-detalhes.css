@@ -243,6 +243,12 @@ details.more summary {
   opacity: 0.8;
   margin-top: 2px;
 }
+.rcard .rres {
+  /* o que o ritual faz (regras/rituais-resumo.js) */
+  font-size: 13px;
+  line-height: 1.35;
+  margin-top: 4px;
+}
 .rcard .x {
   color: inherit;
   opacity: 0.7;
