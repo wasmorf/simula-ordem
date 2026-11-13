@@ -11,7 +11,7 @@ async def main():
     await A.select_option("#s_classe","Sobrevivente");await A.wait_for_timeout(400)
     D=lambda:A.evaluate("(()=>{const d=derivados(S.fichas[S.openFicha]);return [d.pvMax,d.peMax,d.sanMax,d.limPE]})()")
     print("estágio 1:",await D(),"campo:",await A.locator("#s_est").count())
-    await A.select_option("#s_est","4");await A.wait_for_timeout(400);await A.select_option("#s_trilha","Durão");await A.wait_for_timeout(400)
+    await A.select_option("#s_est","4");await A.wait_for_timeout(400);await A.click("#nvOk");await A.select_option("#s_trilha","Durão");await A.wait_for_timeout(400)
     print("estágio 4 Durão:",await D(),await A.evaluate("[S.fichas[S.openFicha].estagio,S.fichas[S.openFicha].nex]"))
     await A.screenshot(path=sys.argv[1]+"/sv.png")
     await A.click("#soloX");await A.wait_for_timeout(500)

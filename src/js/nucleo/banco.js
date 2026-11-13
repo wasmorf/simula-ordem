@@ -38,7 +38,10 @@ function firebaseDB() {
       return fs.doc(path).set(data);
     },
     merge(path, data) {
-      return fs.doc(path).set(data, { merge: true });
+      // grava só os campos enviados; DEL apaga o campo
+      const d = {};
+      for (const k in data) d[k] = data[k] === DEL ? firebase.firestore.FieldValue.delete() : data[k];
+      return fs.doc(path).set(d, { merge: true });
     },
     setKey(path, key, sub, val, extra) {
       // grava/remove data[key][sub] sem tocar no resto

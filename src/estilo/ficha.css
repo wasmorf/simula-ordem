@@ -313,3 +313,84 @@ table.t select {
   color: var(--red-hi);
   background: var(--red-soft);
 }
+
+/* ---------- regras da ficha: contadores, "falta escolher" e NEX novo (regras/limites, ficha/subir-nex) ---------- */
+.contador {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.contador.falta {
+  color: var(--fg);
+  border-color: var(--purple);
+  background: var(--purple-soft);
+}
+.contador.ruim {
+  color: var(--red-hi);
+  border-color: var(--red);
+  background: var(--red-soft);
+}
+h3 .contador {
+  margin-left: 6px;
+  vertical-align: middle;
+  font-family: var(--f-body);
+  letter-spacing: 0;
+}
+.regras-ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--purple);
+  border-radius: 8px;
+  background: var(--purple-soft);
+}
+.pends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.pend {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--purple);
+  background: var(--panel2);
+  color: var(--fg);
+  cursor: pointer;
+}
+.pend:hover {
+  background: var(--purple);
+}
+.pend.ruim {
+  border-color: var(--red);
+  color: var(--red-hi);
+}
+.pend.ruim:hover {
+  background: var(--red-soft);
+}
+.modal.nivel-novo h3 {
+  font-size: 24px;
+  margin: 0;
+}
+.attr .pm button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.modal.nivel-novo .condrow {
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+.modal.nivel-novo .condrow > span:last-child {
+  display: none;
+}
+.modal.nivel-novo .condrow .tag {
+  min-width: 58px;
+  text-align: center;
+}

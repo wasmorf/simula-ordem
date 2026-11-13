@@ -188,6 +188,35 @@ function canEditFicha(f) {
   return !!f && (S.isM || f.dono === S.uid);
 }
 let saveTimer = null;
+/* Junta o que veio do banco na ficha que já está na tela (mantém o mesmo objeto). */
+function mesclarFicha(old, novo, manter = []) {
+  for (const k of Object.keys(old)) if (!(k in novo) && !manter.includes(k)) delete old[k];
+  return Object.assign(old, novo);
+}
+/* Chegou uma versão da ficha do banco. Se ela está salvando agora, não dá para trocar no meio:
+   guarda a versão e aplica quando o salvamento terminar (assim nada que o mestre mudou se perde). */
+function fichaDoBanco(id, novo, path, manter = []) {
+  const old = S.fichas[id];
+  if (old && S.dirty[id]) {
+    S.fichaRemota[id] = { novo, path };
+    return old;
+  }
+  delete S.fichaRemota[id];
+  S.fichaBase[path] = JSON.parse(JSON.stringify(novo)); // o que o banco tem (para salvar só o que mudar)
+  return old ? mesclarFicha(old, novo, manter) : novo;
+}
+/* Esquece a versão do banco das fichas que sumiram da coleção (apagadas ou movidas). */
+function esquecerBases(prefixo, lista) {
+  const tem = new Set(lista.map(x => prefixo + x.id));
+  for (const k in S.fichaBase) if (k.startsWith(prefixo) && !tem.has(k)) delete S.fichaBase[k];
+}
+/* O que mudou na ficha desde a última versão do banco (campo de cima a campo de cima). */
+function camposMudados(base, dados) {
+  const mud = {};
+  for (const k in dados) if (JSON.stringify(dados[k]) !== JSON.stringify(base[k])) mud[k] = dados[k];
+  for (const k in base) if (!(k in dados)) mud[k] = DEL;
+  return mud;
+}
 function saveFicha(id, now) {
   const stamp = Date.now() + Math.random();
   S.dirty[id] = stamp;
@@ -199,12 +228,27 @@ function saveFicha(id, now) {
     if (!f) return;
     const mine = S.dirty[id];
     const dados = JSON.parse(JSON.stringify(f));
-    queueSet(fichaPath(id), dados);
+    const path = fichaPath(id);
+    const base = S.fichaBase[path];
+    // Salva só os campos que mudaram: se o mestre e o jogador mexem ao mesmo tempo, um não apaga o outro.
+    if (base) {
+      const mud = camposMudados(base, dados);
+      if (Object.keys(mud).length) queueMerge(path, mud);
+    } else queueSet(path, dados); // ficha nova (ou num lugar novo): grava inteira
+    S.fichaBase[path] = dados;
     setTimeout(() => {
       if (S.dirty[id] === mine) {
         S.dirty[id] = 0;
         const s = $("#saveState");
         if (s) s.textContent = "Salvo";
+        const remota = S.fichaRemota[id]; // chegou mudança de outra pessoa enquanto salvava
+        if (remota && S.fichas[id]) {
+          delete S.fichaRemota[id];
+          mesclarFicha(S.fichas[id], remota.novo, ["npc"]);
+          S.fichaBase[remota.path] = JSON.parse(JSON.stringify(remota.novo));
+          renderBoard();
+          if (!isEditing()) renderPanel();
+        }
       }
     }, 1500);
   };

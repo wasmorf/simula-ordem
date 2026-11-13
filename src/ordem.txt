@@ -50,6 +50,7 @@ js/ficha/ficha.js
 js/ficha/ficha-html.js
 js/ficha/ficha-rolagens.js
 js/ficha/ficha-eventos.js
+js/ficha/subir-nex.js
 js/jogo/rolagens.js
 js/jogo/combate.js
 js/mestre/escudo.js
@@ -76,6 +77,7 @@ js/mestre/gestao.js
 js/mapa/locais.js
 js/mesa/capa.js
 js/regras/sobrevivente.js
+js/regras/limites.js
 js/nucleo/versao.js
 js/documentos/passar.js
 js/documentos/no-mapa.js

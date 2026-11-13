@@ -14,13 +14,11 @@ function syncNpcs() {
     list.forEach(x => {
       const { id, ...r } = x;
       const old = S.fichas[id];
-      if (old && S.dirty[id]) next[id] = old;
-      else if (old && old.npc) {
-        for (const k of Object.keys(old)) if (!(k in r) && k !== "npc") delete old[k];
-        Object.assign(old, r, { npc: true });
-        next[id] = old;
-      } else next[id] = { ...r, npc: true };
+      if (old && !old.npc)
+        next[id] = { ...r, npc: true }; // virou NPC: objeto novo
+      else next[id] = fichaDoBanco(id, { ...r, npc: true }, P() + "/npcs/" + id);
     });
+    esquecerBases(P() + "/npcs/", list);
     S.fichas = next;
     renderBoard();
     if (["agentes", "escudo", "combate", "tokens", "rolagens"].includes(S.tool) && !isEditing())

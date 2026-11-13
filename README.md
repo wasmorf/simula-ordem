@@ -71,6 +71,30 @@ function bindSheet() {
   `if (toqueDuplo("nome")) return;` (`js/nucleo/utilitarios.js`).
 - Menus "Opções ▾" e "Mais ▾" usam `menuHTML(id, rótulo, botões)`, também em `utilitarios.js`.
 
+### Travas da ficha (regras do NEX)
+
+Toda regra de limite fica em `js/regras/limites.js`:
+
+- `limitesFicha(f)` calcula quanto a ficha pode ter de cada coisa no NEX dela.
+- `problemas(f)` lista o que passou do limite.
+- `permitido(f, mudança)` aplica a mudança numa cópia da ficha e só deixa passar se nenhum problema aparecer
+  ou aumentar. Tirar sempre passa. Na ficha, cada botão chama `mudar(x => ...)` (em `ficha-eventos.js`),
+  que usa essa conta; os botões e opções que não passariam aparecem desligados.
+- `pendencias(f)` diz o que ainda falta escolher (a caixa no topo da ficha e o aviso de NEX novo).
+- Valem para agentes. NPCs, criaturas e fichas com **Regras livres** não travam. O mestre dá extras em
+  `f.extra` (Principal → Regras da ficha).
+- NEX, prestígio, bônus e números de arma: só o mestre muda (`podeAjustarNivel`).
+
+Para mudar uma regra (por exemplo, quantas perícias o grau de treinamento dá), o número está em
+`CLASSES` (`js/regras/livro.js`, campo `grauTreino`) ou na conta em `limitesFicha`.
+
+### Como a ficha salva
+
+A ficha guarda a última versão que veio do banco (`S.fichaBase`) e, ao salvar, grava só os campos que mudaram
+(`queueMerge`). Assim, se o mestre e o jogador mexem na mesma ficha ao mesmo tempo, um não apaga o que o outro
+fez. Se chega uma versão nova enquanto a ficha está salvando, ela espera e entra logo depois
+(`fichaDoBanco` em `js/ficha/ficha.js`).
+
 ## Pastas
 
 | Pasta / arquivo | O que tem |
@@ -140,6 +164,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `aba-regras.js` | Painel Regras: resumo das regras do livro em abas |
 | `condicoes.js` | Condições nas rolagens (a mais severa vale) e o aviso de Morrendo |
 | `sobrevivente.js` | Classe Sobrevivente (SaH): estágios no lugar do NEX e aba Suplementos |
+| `limites.js` | Limites da ficha pelas regras (atributos, perícias, graus, poderes, rituais, itens), o que falta escolher e a trava `permitido()` |
 
 #### `js/mesa/` — Tela inicial, entrar na mesa, barra de ferramentas, ajuda, backup, Meus personagens
 
@@ -163,6 +188,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `ficha-html.js` | Ficha: o que aparece em cada aba (Principal, Perícias, Combate...) |
 | `ficha-rolagens.js` | Ficha: testes de perícia, ataques e rituais |
 | `ficha-eventos.js` | Ficha: o que cada botão e campo faz |
+| `subir-nex.js` | Subir de NEX guiado: o que o agente ganhou em cada nível e o aviso para o jogador |
 | `npcs-sincronia.js` | NPCs do mestre: receber do banco e onde cada ficha é salva |
 | `npcs.js` | NPCs: ficha rápida, modelos prontos, duplicar e pastas |
 | `criaturas.js` | Criaturas: ficha de criatura, arte por elemento, pôr pasta inteira na cena |

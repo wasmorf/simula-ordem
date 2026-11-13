@@ -1307,6 +1307,7 @@ CLASSES.Sobrevivente = {
   fixas: [],
   livres: 1,
   prof: ["simples"],
+  grauTreino: 0, // não tem grau de treinamento
   poder: "Empenho",
   prog: {
     5: "Empenho",

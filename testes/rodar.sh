@@ -20,7 +20,7 @@ for t in testes/*.py; do
   timeout 300 python3 "$t" "$OUT/fotos" > "$OUT/$n.txt" 2>&1
   rc=$?
   # falhou se o teste quebrou ou se a página teve erro de JavaScript (ERRS [...] com algo dentro)
-  if [ $rc -ne 0 ] || grep -qE "ERRS \[.+\]|Traceback" "$OUT/$n.txt"; then
+  if [ $rc -ne 0 ] || grep -qE "ERRS \[.+\]|Traceback|^FALHOU" "$OUT/$n.txt"; then
     echo "FALHOU  $n"
     falhas=$((falhas + 1))
   else

@@ -95,6 +95,7 @@ const CLASSES = {
     fixas: [],
     livres: 1,
     prof: ["simples", "táticas", "leves"],
+    grauTreino: 2, // grau de treinamento (NEX 35% e 70%): 2 + INT perícias sobem um grau
     poder: "Ataque Especial",
     prog: {
       5: "Ataque especial (2 PE, +5)",
@@ -164,6 +165,7 @@ const CLASSES = {
     fixas: [],
     livres: 7,
     prof: ["simples", "leves"],
+    grauTreino: 5, // grau de treinamento: 5 + INT perícias
     poder: "Eclético e Perito",
     prog: {
       5: "Eclético, perito (2 PE, +1d6)",
@@ -224,6 +226,7 @@ const CLASSES = {
     fixas: ["Ocultismo", "Vontade"],
     livres: 3,
     prof: ["simples"],
+    grauTreino: 3, // grau de treinamento: 3 + INT perícias
     poder: "Escolhido pelo Outro Lado",
     prog: {
       5: "Escolhido pelo Outro Lado (1º círculo)",

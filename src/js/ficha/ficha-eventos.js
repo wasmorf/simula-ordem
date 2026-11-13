@@ -22,6 +22,15 @@ function bindSheet() {
     $$("[data-back]").forEach(b => (b.onclick = soloFechar)); // personagem fora de mesa (mesa/personagens)
   else bindFichaAcoes(f, id); // menu Opções: duplicar, dar, retirar, virar NPC (mestre/gestao)
   bindEstagio(f, id); // classe Sobrevivente (regras/sobrevivente)
+  // "Falta escolher": cada item leva para a aba certa (regras/limites)
+  $$("[data-irpara]").forEach(
+    b =>
+      (b.onclick = () => {
+        S.sheetTab = b.dataset.irpara;
+        renderPanel();
+      })
+  );
+  avisoNivelNovo(f, id); // o mestre subiu o NEX: o jogador vê o que ganhou (ficha/subir-nex)
 }
 function bindFichaCompleta() {
   {
@@ -125,9 +134,18 @@ function bindFichaCompleta() {
   const rr = () => {
     renderPanel();
   };
+  // Muda a ficha só se as regras deixam (regras/limites). fn recebe a ficha (ou uma cópia, no teste).
+  const mudar = fn => {
+    if (!trava(f, fn)) {
+      rr(); // desfaz o que apareceu na tela (um select que mudou, por exemplo)
+      return false;
+    }
+    fn(f);
+    return true;
+  };
   $$("#pbody [data-f]").forEach(el => {
     const k = el.dataset.f;
-    const num = el.type === "number" || k === "nex";
+    const num = el.type === "number";
     if (el.tagName === "SELECT" || num)
       el.onchange = () => {
         f[k] = num ? +el.value || 0 : el.value;
@@ -157,6 +175,33 @@ function bindFichaCompleta() {
     const e = $(sel);
     if (e) e[ev] = fn;
   };
+  on("#s_nex", () => mudarNivel(f, id, +$("#s_nex").value), "onchange"); // subir de NEX guiado (ficha/subir-nex)
+  const mestre = S.isM || !!S.solo; // regras livres e extras: só o mestre (ou o dono fora de mesa)
+  on(
+    "#regLivres",
+    () => {
+      if (!mestre) return;
+      f.regrasLivres = $("#regLivres").checked;
+      sv(true);
+      rr();
+      toast(
+        f.regrasLivres
+          ? "Ficha sem travas: vale o que estiver escrito."
+          : "Travas ligadas: a ficha segue as regras do NEX."
+      );
+    },
+    "onchange"
+  );
+  $$("[data-extra]").forEach(
+    el =>
+      (el.onchange = () => {
+        if (!mestre) return;
+        f.extra = { ...(f.extra || {}), [el.dataset.extra]: +el.value || 0 };
+        sv(true);
+        rr();
+      })
+  );
+
   on("#foto", async () => {
     const file = await pickImage();
     if (!file) return;
@@ -177,7 +222,7 @@ function bindFichaCompleta() {
     b =>
       (b.onclick = () => {
         const k = b.dataset.attr;
-        f.attr[k] = Math.max(0, Math.min(5, f.attr[k] + +b.dataset.d));
+        if (!mudar(x => (x.attr[k] = Math.max(0, Math.min(5, x.attr[k] + +b.dataset.d))))) return;
         sv();
         rr();
       })
@@ -221,8 +266,7 @@ function bindFichaCompleta() {
     s =>
       (s.onchange = () => {
         const p = s.dataset.perg;
-        f.per[p] = f.per[p] || { g: 0, b: 0 };
-        f.per[p].g = +s.value;
+        if (!mudar(x => (x.per[p] = { ...(x.per[p] || { b: 0 }), g: +s.value }))) return;
         sv();
         rr();
       })
@@ -230,6 +274,7 @@ function bindFichaCompleta() {
   $$("[data-perb]").forEach(
     c =>
       (c.onchange = () => {
+        if (!podeAjustarNivel(f)) return; // bônus: quem dá é o mestre
         const p = c.dataset.perb;
         f.per[p] = f.per[p] || { g: 0, b: 0 };
         f.per[p].b = +c.value || 0;
@@ -292,10 +337,12 @@ function bindFichaCompleta() {
   });
   on("#btnAplicar", () => {
     const c = CLASSES[f.classe];
-    [...ORIGENS[f.origem][0], ...c.fixas].forEach(p => {
-      f.per[p] = f.per[p] || { g: 0, b: 0 };
-      if (!f.per[p].g) f.per[p].g = 5;
-    });
+    const marcar = x =>
+      [...ORIGENS[x.origem][0], ...c.fixas].forEach(p => {
+        x.per[p] = x.per[p] || { g: 0, b: 0 };
+        if (!x.per[p].g) x.per[p].g = 5;
+      });
+    if (!mudar(marcar)) return;
     if (c.escolhaFixa.length) toast(`Escolha também: ${c.fixasTxt}.`);
     else toast("Perícias da origem e da classe marcadas.");
     sv();
@@ -307,6 +354,7 @@ function bindFichaCompleta() {
       (el.onchange = () => {
         const i = +el.dataset.arma,
           k = el.dataset.k;
+        if (k !== "nome" && k !== "pericia" && !podeAjustarNivel(f)) return; // números da arma: só o mestre
         f.armas[i][k] = el.type === "number" ? +el.value || 0 : el.value;
         sv();
         rr();
@@ -315,6 +363,7 @@ function bindFichaCompleta() {
   $$("[data-armaagil]").forEach(
     c =>
       (c.onchange = () => {
+        if (!podeAjustarNivel(f)) return;
         f.armas[+c.dataset.armaagil].agil = c.checked;
         sv();
       })
@@ -330,8 +379,8 @@ function bindFichaCompleta() {
   );
   on("#btnAddArma", () => {
     const a = allArmas()[+$("#addArmaSel").value];
-    f.armas = f.armas || [];
-    f.armas.push({
+    if (!a) return;
+    const nova = {
       nome: a.nome,
       pericia: /Fogo|Disparo|distância/.test(a.emp) ? "Pontaria" : "Luta",
       dano: a.dano,
@@ -346,7 +395,8 @@ function bindFichaCompleta() {
       bonus: 0,
       bdano: 0,
       mods: []
-    });
+    };
+    if (!mudar(x => (x.armas = [...(x.armas || []), { ...nova }]))) return;
     sv();
     rr();
   });
@@ -355,13 +405,15 @@ function bindFichaCompleta() {
       (b.onclick = () => {
         const i = +b.dataset.modadd;
         const m = $(`[data-modsel="${i}"]`).value;
-        const a = f.armas[i];
-        a.mods = a.mods || [];
-        if (a.mods.includes(m)) return;
-        a.mods.push(m);
-        a.cat = catPlus(a.cat, 1);
+        if ((f.armas[i].mods || []).includes(m)) return;
         const md = (MODIFICACOES.find(x => x[0] === m) || [])[3] || {};
-        if (md.esp) a.esp = Math.max(0, (+a.esp || 0) + md.esp);
+        const modificar = x => {
+          const a = x.armas[i];
+          a.mods = [...(a.mods || []), m];
+          a.cat = catPlus(a.cat, 1); // cada modificação sobe a categoria
+          if (md.esp) a.esp = Math.max(0, (+a.esp || 0) + md.esp);
+        };
+        if (!mudar(modificar)) return;
         sv();
         rr();
       })
@@ -381,8 +433,9 @@ function bindFichaCompleta() {
   );
   on("#protAdd", () => {
     const p = PROTECOES[+$("#protSel").value];
-    f.protecoes = f.protecoes || [];
-    f.protecoes.push({ nome: p[0], cat: p[1], esp: p[2], def: p[3], rd: p[4], usando: true, mods: [] });
+    if (!p) return;
+    const nova = { nome: p[0], cat: p[1], esp: p[2], def: p[3], rd: p[4], usando: true, mods: [] };
+    if (!mudar(x => (x.protecoes = [...(x.protecoes || []), { ...nova }]))) return;
     sv();
     rr();
   });
@@ -407,15 +460,17 @@ function bindFichaCompleta() {
       (b.onclick = () => {
         const i = +b.dataset.pmodadd;
         const m = $(`[data-pmodsel="${i}"]`).value;
-        const p = f.protecoes[i];
-        p.mods = p.mods || [];
-        if (p.mods.includes(m)) return;
-        p.mods.push(m);
-        p.cat = catPlus(p.cat, 1);
+        if ((f.protecoes[i].mods || []).includes(m)) return;
         const md = (MODIFICACOES.find(x => x[0] === m) || [])[3] || {};
-        if (md.def) p.def += md.def;
-        if (md.rd) p.rd = Math.max(+p.rd || 0, md.rd);
-        if (md.esp) p.esp = Math.max(0, p.esp + md.esp);
+        const modificar = x => {
+          const p = x.protecoes[i];
+          p.mods = [...(p.mods || []), m];
+          p.cat = catPlus(p.cat, 1);
+          if (md.def) p.def += md.def;
+          if (md.rd) p.rd = Math.max(+p.rd || 0, md.rd);
+          if (md.esp) p.esp = Math.max(0, p.esp + md.esp);
+        };
+        if (!mudar(modificar)) return;
         sv();
         rr();
       })
@@ -424,7 +479,7 @@ function bindFichaCompleta() {
   on("#ritAdd", () => {
     const v = $("#ritSel").value;
     if (!v) return;
-    f.rituais = [...new Set([...(f.rituais || []), v])];
+    if (!mudar(x => (x.rituais = [...new Set([...(x.rituais || []), v])]))) return;
     sv();
     rr();
   });
@@ -438,7 +493,8 @@ function bindFichaCompleta() {
   );
   // habilidades
   on("#podAdd", () => {
-    f.poderes = [...(f.poderes || []), $("#podSel").value];
+    const v = $("#podSel").value;
+    if (!v || !mudar(x => (x.poderes = [...(x.poderes || []), v]))) return;
     sv();
     rr();
   });
@@ -455,7 +511,7 @@ function bindFichaCompleta() {
     if ((f.paranormais || []).includes(v) && v !== "Aprender Ritual" && v !== "Resistir a <Elemento>") {
       toast("Esse poder já está na ficha (escolha de novo para ganhar a afinidade).");
     }
-    f.paranormais = [...(f.paranormais || []), v];
+    if (!mudar(x => (x.paranormais = [...(x.paranormais || []), v]))) return;
     sv();
     rr();
   });
@@ -514,10 +570,8 @@ function bindFichaCompleta() {
     ];
     const o = opts[+$("#itemSel").value];
     if (!o) return;
-    f.itens = f.itens || [];
-    if (o.g === "Itens operacionais" && o.n === "Mochila militar") {
-    }
-    f.itens.push({ nome: o.n, grupo: o.g, cat: o.cat, esp: o.esp, qtd: 1, mods: [] });
+    const novo = { nome: o.n, grupo: o.g, cat: o.cat, esp: o.esp, qtd: 1, mods: [] };
+    if (!mudar(x => (x.itens = [...(x.itens || []), { ...novo }]))) return;
     sv();
     rr();
   });
@@ -529,13 +583,15 @@ function bindFichaCompleta() {
         rr();
       })
   );
-  const itemForm = async (it, titulo, ok) => {
+  // travar = true: categoria e espaços de um item que já existe só o mestre muda
+  const itemForm = async (it, titulo, ok, travar = false) => {
     const C = ["0", "I", "II", "III", "IV"];
+    const tv = travar ? 'disabled title="Só o mestre muda"' : "";
     return formBox(
       titulo,
       `<div class="field"><label class="label" for="icN">Nome</label><input type="text" id="icN" name="nome" maxlength="60" required value="${esc(it.nome || "")}"></div>
-     <div class="row" style="gap:8px;flex-wrap:wrap"><div class="field" style="width:110px"><label class="label" for="icC">Categoria</label><select id="icC" name="cat">${C.map(c => `<option value="${c}" ${String(it.cat ?? "0") === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
-     <div class="field" style="width:100px"><label class="label" for="icE">Espaços</label><input type="number" id="icE" name="esp" min="0" max="20" step="0.5" value="${it.esp ?? 1}"></div>
+     <div class="row" style="gap:8px;flex-wrap:wrap"><div class="field" style="width:110px"><label class="label" for="icC">Categoria</label><select id="icC" name="cat" ${tv}>${C.map(c => `<option value="${c}" ${String(it.cat ?? "0") === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+     <div class="field" style="width:100px"><label class="label" for="icE">Espaços</label><input type="number" id="icE" name="esp" min="0" max="20" step="0.5" value="${it.esp ?? 1}" ${tv}></div>
      <div class="field" style="width:100px"><label class="label" for="icQ">Quantidade</label><input type="number" id="icQ" name="qtd" min="1" max="999" value="${+it.qtd || 1}"></div></div>
      <div class="field"><label class="label" for="icT">Descrição ou efeito (opcional)</label><textarea id="icT" name="nota" maxlength="400" placeholder="Ex.: dá +2 em Investigação; 3 usos; foto antiga do pai…">${esc(it.nota || "")}</textarea></div>
      <p class="muted small" style="margin:0">Categoria 0 não conta no limite da patente. Espaços contam na carga.</p>`,
@@ -545,8 +601,7 @@ function bindFichaCompleta() {
   on("#itemCriar", async () => {
     const r = await itemForm({}, "Criar item", "Criar");
     if (!r || !r.nome.trim()) return;
-    f.itens = f.itens || [];
-    f.itens.push({
+    const novo = {
       nome: r.nome.trim(),
       grupo: "Item criado",
       cat: r.cat,
@@ -554,7 +609,8 @@ function bindFichaCompleta() {
       qtd: Math.max(1, +r.qtd || 1),
       nota: r.nota.trim(),
       mods: []
-    });
+    };
+    if (!mudar(x => (x.itens = [...(x.itens || []), { ...novo }]))) return;
     sv();
     rr();
     toast(`${r.nome.trim()} entrou no inventário.`);
@@ -562,17 +618,20 @@ function bindFichaCompleta() {
   $$("[data-itemed]").forEach(
     b =>
       (b.onclick = async () => {
-        const it = f.itens[+b.dataset.itemed];
+        const i = +b.dataset.itemed;
+        const it = f.itens[i];
         if (!it) return;
-        const r = await itemForm(it, "Editar item", "Salvar");
+        const travar = regrasAtivas(f) && !podeAjustarNivel(f);
+        const r = await itemForm(it, "Editar item", "Salvar", travar);
         if (!r || !r.nome.trim()) return;
-        Object.assign(it, {
+        const novo = {
           nome: r.nome.trim(),
-          cat: r.cat,
-          esp: Math.max(0, +r.esp || 0),
+          cat: travar ? it.cat : r.cat,
+          esp: travar ? it.esp : Math.max(0, +r.esp || 0),
           qtd: Math.max(1, +r.qtd || 1),
           nota: r.nota.trim()
-        });
+        };
+        if (!mudar(x => Object.assign(x.itens[i], novo))) return;
         sv();
         rr();
       })
@@ -580,7 +639,8 @@ function bindFichaCompleta() {
   $$("[data-iqtd]").forEach(
     i =>
       (i.onchange = () => {
-        f.itens[+i.dataset.iqtd].qtd = Math.max(1, +i.value || 1);
+        const q = Math.max(1, +i.value || 1);
+        if (!mudar(x => (x.itens[+i.dataset.iqtd].qtd = q))) return;
         sv();
         rr();
       })
@@ -590,13 +650,15 @@ function bindFichaCompleta() {
       (b.onclick = () => {
         const i = +b.dataset.imodadd;
         const m = $(`[data-imodsel="${i}"]`).value;
-        const it = f.itens[i];
-        it.mods = it.mods || [];
-        if (it.mods.includes(m)) return;
-        it.mods.push(m);
-        it.cat = catPlus(it.cat, 1);
+        if ((f.itens[i].mods || []).includes(m)) return;
         const md = (MODIFICACOES.find(x => x[0] === m) || [])[3] || {};
-        if (md.esp) it.esp = Math.max(0, it.esp + md.esp);
+        const modificar = x => {
+          const it = x.itens[i];
+          it.mods = [...(it.mods || []), m];
+          it.cat = catPlus(it.cat, 1);
+          if (md.esp) it.esp = Math.max(0, it.esp + md.esp);
+        };
+        if (!mudar(modificar)) return;
         sv();
         rr();
       })
@@ -604,6 +666,7 @@ function bindFichaCompleta() {
   $$("[data-ppev]").forEach(
     b =>
       (b.onclick = () => {
+        if (!podeAjustarNivel(f)) return; // prestígio: quem dá é o mestre
         const [n, v] = PP_EVENTOS[+b.dataset.ppev];
         f.pp = Math.max(0, (+f.pp || 0) + v);
         sv(true);

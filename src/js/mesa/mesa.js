@@ -168,6 +168,8 @@ function startMesa(id) {
   S.mesaId = id;
   S.mesa = { id, nome: "Mesa " + id };
   S.fichas = {};
+  S.fichaBase = {};
+  S.fichaRemota = {};
   S.log = [];
   S.combate = null;
   S.cenas = [];
@@ -232,18 +234,12 @@ function startMesa(id) {
         const next = {};
         list.forEach(x => {
           const { id: fid, ...rest } = x;
-          const old = S.fichas[fid];
-          if (old && S.dirty[fid]) next[fid] = old;
-          else if (old) {
-            for (const k of Object.keys(old)) if (!(k in rest)) delete old[k];
-            Object.assign(old, rest);
-            next[fid] = old;
-          } // mantém o mesmo objeto (a ficha aberta continua ligada)
-          else next[fid] = rest;
+          next[fid] = fichaDoBanco(fid, rest, p + "/fichas/" + fid); // mantém o mesmo objeto (a ficha aberta continua ligada)
         });
         Object.entries(S.fichas).forEach(([k, f]) => {
           if (f.npc) next[k] = f;
         });
+        esquecerBases(p + "/fichas/", list); // ficha apagada: a próxima gravação vai inteira
         S.fichas = next;
         clearTimeout(S.idxT);
         S.idxT = setTimeout(syncIndice, 1500);

@@ -9,13 +9,14 @@ async def main():
       rituais:RITUAIS_LIVRO.length,armas:ARMAS_LIVRO.length,itens:ITENS_GERAIS.length,amald:AMALDICOADOS.length})"""))
     await A.click("#btnNovoSolo");await A.wait_for_timeout(500)
     await A.select_option("#s_classe","Ocultista");await A.wait_for_timeout(200)
-    await A.select_option("#s_origem","Exorcizado");await A.select_option("#s_nex","40");await A.wait_for_timeout(200)
+    await A.select_option("#s_origem","Exorcizado");await A.select_option("#s_nex","40");await A.wait_for_timeout(200);await A.click("#nvOk")
     await A.select_option("#s_trilha","Exorcista");await A.wait_for_timeout(300)
     print("origem opt:",await A.evaluate("[...document.querySelectorAll('#s_origem option')].find(o=>o.value==='Exorcizado').textContent"))
     await A.click("[data-stab='habilidades']") if await A.locator("[data-stab='habilidades']").count() else None
     await A.wait_for_timeout(300)
     if await A.locator("#podSel").count():
       await A.select_option("#podSel","Meditação Ocultista");await A.click("#podAdd");await A.wait_for_timeout(200)
+      await A.select_option("#podSel","Transcender");await A.click("#podAdd");await A.wait_for_timeout(200)  # o poder paranormal vem do Transcender
       await A.select_option("#parSel","Engolir Sangue");await A.click("#parAdd");await A.wait_for_timeout(200)
     print("poderes:",await A.evaluate("JSON.stringify([S.fichas[S.openFicha].poderes,S.fichas[S.openFicha].paranormais])"))
     await A.screenshot(path=sys.argv[1]+"/sp1.png")

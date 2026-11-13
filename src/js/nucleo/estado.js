@@ -23,6 +23,8 @@ const S = {
   tool: null,
   openFicha: null,
   dirty: {},
+  fichaRemota: {}, // versão que chegou do banco enquanto a ficha salvava (ficha/ficha.js)
+  fichaBase: {}, // última versão de cada ficha no banco, por caminho (para salvar só o que mudou)
   unsub: [],
   posUnsub: null,
   sel: null,
@@ -37,17 +39,33 @@ const P = () => "mesas/" + S.mesaId;
 
 /* gravação em fila por documento (uma de cada vez) */
 const writeQ = {};
+/* Fila de gravação por documento: uma gravação de cada vez, e as que chegam no meio se juntam.
+   queueSet grava o documento inteiro; queueMerge grava só os campos enviados. */
 function queueSet(path, data) {
-  const q = writeQ[path] || (writeQ[path] = { run: false, next: null });
-  q.next = data;
+  filaGravar(path, data, false);
+}
+function queueMerge(path, data) {
+  filaGravar(path, data, true);
+}
+function filaGravar(path, data, soCampos) {
+  const q = writeQ[path] || (writeQ[path] = { run: false, next: null, merge: true });
+  if (soCampos && q.next)
+    q.next = { ...q.next, ...data }; // junta com o que ainda não foi
+  else {
+    q.next = data;
+    q.merge = soCampos;
+  }
+  if (!soCampos) q.merge = false;
   if (q.run) return;
   (async () => {
     q.run = true;
     while (q.next) {
-      const b = q.next;
+      const b = q.next,
+        m = q.merge;
       q.next = null;
+      q.merge = true;
       try {
-        await S.db.set(path, b);
+        await (m ? S.db.merge(path, b) : S.db.set(path, b));
       } catch (e) {
         fail(e);
       }

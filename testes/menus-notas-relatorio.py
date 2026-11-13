@@ -25,7 +25,7 @@ async def main():
     # 3. Sobrevivente
     await x.evaluate("(()=>{const f=novaFicha();Object.assign(f,{nome:'Civil',dono:S.uid,classe:'Sobrevivente',estagio:1,nex:5});S.fichas.fS=f;saveFicha('fS',true);S.openFicha='fS';S.sheetTab='principal';openTool('agentes');renderPanel()})()");await x.wait_for_timeout(600)
     print("sobrevivente campos:",await x.evaluate("[!!document.querySelector('#s_est'),!!document.querySelector('#s_nex'),!!document.querySelector('#s_pp'),document.querySelector('.sheet-top .muted').textContent]"))
-    await x.select_option("#s_est","4");await x.wait_for_timeout(400)
+    await x.select_option("#s_est","4");await x.wait_for_timeout(400);await x.click("#nvOk")
     print("estágio 4:",await x.evaluate("[S.fichas.fS.estagio,S.fichas.fS.nex,derivados(migrar(S.fichas.fS)).pvMax,derivados(migrar(S.fichas.fS)).limPE]"))
     await x.evaluate("S.sheetTab='habilidades';renderPanel()");await x.wait_for_timeout(300)
     print("tags:",await x.evaluate("[...document.querySelectorAll('#pbody .tag.on')].slice(0,4).map(t=>t.textContent)"))

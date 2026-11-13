@@ -16,17 +16,13 @@ function ajustarSobrevivente(f, D) {
   D.limPE = 1;
   D.peRod = 1;
   D.dtRit = 11 + A.PRE;
+  D.circ = f.trilha === "Esotérico" && e >= 4 ? 1 : 0; // Iniciado: um ritual de 1º círculo
 }
 /* Troca de estágio na ficha (o campo s_est é desenhado em tabPrincipal). */
 function bindEstagio(f, id) {
   const s = $("#s_est");
   if (!s || !f) return;
-  s.onchange = () => {
-    f.estagio = +s.value;
-    f.nex = ESTAGIO_NEX[f.estagio];
-    saveFicha(id);
-    renderPanel();
-  };
+  s.onchange = () => mudarNivel(f, id, ESTAGIO_NEX[+s.value]); // subir de nível guiado (ficha/subir-nex)
 }
 /* Aba Suplementos das Regras: classe Sobrevivente e onde achar as regras opcionais. */
 function regrasSuplementosHTML() {

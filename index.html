@@ -1212,6 +1212,87 @@ table.t select {
   color: var(--red-hi);
   background: var(--red-soft);
 }
+
+/* ---------- regras da ficha: contadores, "falta escolher" e NEX novo (regras/limites, ficha/subir-nex) ---------- */
+.contador {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.contador.falta {
+  color: var(--fg);
+  border-color: var(--purple);
+  background: var(--purple-soft);
+}
+.contador.ruim {
+  color: var(--red-hi);
+  border-color: var(--red);
+  background: var(--red-soft);
+}
+h3 .contador {
+  margin-left: 6px;
+  vertical-align: middle;
+  font-family: var(--f-body);
+  letter-spacing: 0;
+}
+.regras-ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--purple);
+  border-radius: 8px;
+  background: var(--purple-soft);
+}
+.pends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.pend {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--purple);
+  background: var(--panel2);
+  color: var(--fg);
+  cursor: pointer;
+}
+.pend:hover {
+  background: var(--purple);
+}
+.pend.ruim {
+  border-color: var(--red);
+  color: var(--red-hi);
+}
+.pend.ruim:hover {
+  background: var(--red-soft);
+}
+.modal.nivel-novo h3 {
+  font-size: 24px;
+  margin: 0;
+}
+.attr .pm button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.modal.nivel-novo .condrow {
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+.modal.nivel-novo .condrow > span:last-child {
+  display: none;
+}
+.modal.nivel-novo .condrow .tag {
+  min-width: 58px;
+  text-align: center;
+}
 /* Rolagens, registro e popup de dado. */
 /* ---------- rolagens ---------- */
 .log {
@@ -4581,6 +4662,7 @@ const CLASSES = {
     fixas: [],
     livres: 1,
     prof: ["simples", "táticas", "leves"],
+    grauTreino: 2, // grau de treinamento (NEX 35% e 70%): 2 + INT perícias sobem um grau
     poder: "Ataque Especial",
     prog: {
       5: "Ataque especial (2 PE, +5)",
@@ -4650,6 +4732,7 @@ const CLASSES = {
     fixas: [],
     livres: 7,
     prof: ["simples", "leves"],
+    grauTreino: 5, // grau de treinamento: 5 + INT perícias
     poder: "Eclético e Perito",
     prog: {
       5: "Eclético, perito (2 PE, +1d6)",
@@ -4710,6 +4793,7 @@ const CLASSES = {
     fixas: ["Ocultismo", "Vontade"],
     livres: 3,
     prof: ["simples"],
+    grauTreino: 3, // grau de treinamento: 3 + INT perícias
     poder: "Escolhido pelo Outro Lado",
     prog: {
       5: "Escolhido pelo Outro Lado (1º círculo)",
@@ -6489,7 +6573,10 @@ function firebaseDB() {
       return fs.doc(path).set(data);
     },
     merge(path, data) {
-      return fs.doc(path).set(data, { merge: true });
+      // grava só os campos enviados; DEL apaga o campo
+      const d = {};
+      for (const k in data) d[k] = data[k] === DEL ? firebase.firestore.FieldValue.delete() : data[k];
+      return fs.doc(path).set(d, { merge: true });
     },
     setKey(path, key, sub, val, extra) {
       // grava/remove data[key][sub] sem tocar no resto
@@ -8204,6 +8291,7 @@ CLASSES.Sobrevivente = {
   fixas: [],
   livres: 1,
   prof: ["simples"],
+  grauTreino: 0, // não tem grau de treinamento
   poder: "Empenho",
   prog: {
     5: "Empenho",
@@ -8262,6 +8350,8 @@ const S = {
   tool: null,
   openFicha: null,
   dirty: {},
+  fichaRemota: {}, // versão que chegou do banco enquanto a ficha salvava (ficha/ficha.js)
+  fichaBase: {}, // última versão de cada ficha no banco, por caminho (para salvar só o que mudou)
   unsub: [],
   posUnsub: null,
   sel: null,
@@ -8276,17 +8366,33 @@ const P = () => "mesas/" + S.mesaId;
 
 /* gravação em fila por documento (uma de cada vez) */
 const writeQ = {};
+/* Fila de gravação por documento: uma gravação de cada vez, e as que chegam no meio se juntam.
+   queueSet grava o documento inteiro; queueMerge grava só os campos enviados. */
 function queueSet(path, data) {
-  const q = writeQ[path] || (writeQ[path] = { run: false, next: null });
-  q.next = data;
+  filaGravar(path, data, false);
+}
+function queueMerge(path, data) {
+  filaGravar(path, data, true);
+}
+function filaGravar(path, data, soCampos) {
+  const q = writeQ[path] || (writeQ[path] = { run: false, next: null, merge: true });
+  if (soCampos && q.next)
+    q.next = { ...q.next, ...data }; // junta com o que ainda não foi
+  else {
+    q.next = data;
+    q.merge = soCampos;
+  }
+  if (!soCampos) q.merge = false;
   if (q.run) return;
   (async () => {
     q.run = true;
     while (q.next) {
-      const b = q.next;
+      const b = q.next,
+        m = q.merge;
       q.next = null;
+      q.merge = true;
       try {
-        await S.db.set(path, b);
+        await (m ? S.db.merge(path, b) : S.db.set(path, b));
       } catch (e) {
         fail(e);
       }
@@ -8909,6 +9015,8 @@ function startMesa(id) {
   S.mesaId = id;
   S.mesa = { id, nome: "Mesa " + id };
   S.fichas = {};
+  S.fichaBase = {};
+  S.fichaRemota = {};
   S.log = [];
   S.combate = null;
   S.cenas = [];
@@ -8973,18 +9081,12 @@ function startMesa(id) {
         const next = {};
         list.forEach(x => {
           const { id: fid, ...rest } = x;
-          const old = S.fichas[fid];
-          if (old && S.dirty[fid]) next[fid] = old;
-          else if (old) {
-            for (const k of Object.keys(old)) if (!(k in rest)) delete old[k];
-            Object.assign(old, rest);
-            next[fid] = old;
-          } // mantém o mesmo objeto (a ficha aberta continua ligada)
-          else next[fid] = rest;
+          next[fid] = fichaDoBanco(fid, rest, p + "/fichas/" + fid); // mantém o mesmo objeto (a ficha aberta continua ligada)
         });
         Object.entries(S.fichas).forEach(([k, f]) => {
           if (f.npc) next[k] = f;
         });
+        esquecerBases(p + "/fichas/", list); // ficha apagada: a próxima gravação vai inteira
         S.fichas = next;
         clearTimeout(S.idxT);
         S.idxT = setTimeout(syncIndice, 1500);
@@ -11270,6 +11372,35 @@ function canEditFicha(f) {
   return !!f && (S.isM || f.dono === S.uid);
 }
 let saveTimer = null;
+/* Junta o que veio do banco na ficha que já está na tela (mantém o mesmo objeto). */
+function mesclarFicha(old, novo, manter = []) {
+  for (const k of Object.keys(old)) if (!(k in novo) && !manter.includes(k)) delete old[k];
+  return Object.assign(old, novo);
+}
+/* Chegou uma versão da ficha do banco. Se ela está salvando agora, não dá para trocar no meio:
+   guarda a versão e aplica quando o salvamento terminar (assim nada que o mestre mudou se perde). */
+function fichaDoBanco(id, novo, path, manter = []) {
+  const old = S.fichas[id];
+  if (old && S.dirty[id]) {
+    S.fichaRemota[id] = { novo, path };
+    return old;
+  }
+  delete S.fichaRemota[id];
+  S.fichaBase[path] = JSON.parse(JSON.stringify(novo)); // o que o banco tem (para salvar só o que mudar)
+  return old ? mesclarFicha(old, novo, manter) : novo;
+}
+/* Esquece a versão do banco das fichas que sumiram da coleção (apagadas ou movidas). */
+function esquecerBases(prefixo, lista) {
+  const tem = new Set(lista.map(x => prefixo + x.id));
+  for (const k in S.fichaBase) if (k.startsWith(prefixo) && !tem.has(k)) delete S.fichaBase[k];
+}
+/* O que mudou na ficha desde a última versão do banco (campo de cima a campo de cima). */
+function camposMudados(base, dados) {
+  const mud = {};
+  for (const k in dados) if (JSON.stringify(dados[k]) !== JSON.stringify(base[k])) mud[k] = dados[k];
+  for (const k in base) if (!(k in dados)) mud[k] = DEL;
+  return mud;
+}
 function saveFicha(id, now) {
   const stamp = Date.now() + Math.random();
   S.dirty[id] = stamp;
@@ -11281,12 +11412,27 @@ function saveFicha(id, now) {
     if (!f) return;
     const mine = S.dirty[id];
     const dados = JSON.parse(JSON.stringify(f));
-    queueSet(fichaPath(id), dados);
+    const path = fichaPath(id);
+    const base = S.fichaBase[path];
+    // Salva só os campos que mudaram: se o mestre e o jogador mexem ao mesmo tempo, um não apaga o outro.
+    if (base) {
+      const mud = camposMudados(base, dados);
+      if (Object.keys(mud).length) queueMerge(path, mud);
+    } else queueSet(path, dados); // ficha nova (ou num lugar novo): grava inteira
+    S.fichaBase[path] = dados;
     setTimeout(() => {
       if (S.dirty[id] === mine) {
         S.dirty[id] = 0;
         const s = $("#saveState");
         if (s) s.textContent = "Salvo";
+        const remota = S.fichaRemota[id]; // chegou mudança de outra pessoa enquanto salvava
+        if (remota && S.fichas[id]) {
+          delete S.fichaRemota[id];
+          mesclarFicha(S.fichas[id], remota.novo, ["npc"]);
+          S.fichaBase[remota.path] = JSON.parse(JSON.stringify(remota.novo));
+          renderBoard();
+          if (!isEditing()) renderPanel();
+        }
       }
     }, 1500);
   };
@@ -11435,6 +11581,7 @@ function sheetHTML() {
   }[t]();
   return (
     head +
+    regrasFichaHTML(f) + // "Falta escolher" e avisos de regra (regras/limites)
     `<fieldset ${ed ? "" : "disabled"} style="border:0;padding:0;margin:0;min-width:0" class="stack">${body}</fieldset>`
   );
 }
@@ -11451,10 +11598,13 @@ function rbar(k, lab, v, max) {
 }
 
 function tabPrincipal(f, D, c, sel) {
-  const pts = ATTRS.reduce((a, k) => a + f.attr[k], 0) - 5;
   const sob = ehSobrevivente(f); // Sobrevivente: estágio no lugar do NEX, 3 pontos de atributo, sem patente
-  const ptsCriacao = sob ? 3 : 4;
   const og = ORIGENS[f.origem];
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f);
+  const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // NEX, prestígio e bônus
+  const sobra = L.attr.total - L.attr.usados;
+  const pode = (k, d) => permitido(f, x => (x.attr[k] += d)).ok;
   const auto = condAuto(f);
   return `<div class="fields">
    <div class="field"><label class="label" for="s_jogador">Jogador</label><input type="text" id="s_jogador" data-f="jogador" value="${esc(f.jogador)}" maxlength="40"></div>
@@ -11465,18 +11615,25 @@ function tabPrincipal(f, D, c, sel) {
      f.origem
    )}</div>
    <div class="field"><label class="label" for="s_classe">Classe</label>${sel("classe", Object.keys(CLASSES), f.classe)}</div>
-   <div class="field"><label class="label" for="s_trilha">Trilha</label>${sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Em NEX 10%")}</div>
+   <div class="field"><label class="label" for="s_trilha">Trilha</label>${
+     travas && !L.trilhaLiberada
+       ? `<select id="s_trilha" disabled><option>Em ${sob ? "estágio 2" : "NEX 10%"}</option></select>`
+       : sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Escolha a trilha")
+   }</div>
    ${
      sob
-       ? `<div class="field"><label class="label" for="s_est">Estágio</label><select id="s_est">${[1, 2, 3, 4, 5].map(i => `<option value="${i}" ${i === estagioDe(f) ? "selected" : ""}>Estágio ${i}</option>`).join("")}</select></div>`
-       : `<div class="field"><label class="label" for="s_nex">NEX</label>${sel("nex", NEX_OPTS, f.nex, "%")}</div>
-   <div class="field"><label class="label" for="s_pp">Pontos de prestígio</label><input type="number" id="s_pp" data-f="pp" value="${+f.pp || 0}" min="0"></div>
-   <div class="field"><label class="label" for="s_pat">Patente</label><select id="s_pat" data-patsel ${canEditFicha(f) ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></div>`
+       ? `<div class="field"><label class="label" for="s_est">Estágio</label><select id="s_est" ${nivel}>${[1, 2, 3, 4, 5].map(i => `<option value="${i}" ${i === estagioDe(f) ? "selected" : ""}>Estágio ${i}</option>`).join("")}</select></div>`
+       : `<div class="field"><label class="label" for="s_nex">NEX</label><select id="s_nex" ${nivel}>${NEX_OPTS.map(n => `<option value="${n}" ${+f.nex === n ? "selected" : ""}>${n}%</option>`).join("")}</select></div>
+   <div class="field"><label class="label" for="s_pp">Pontos de prestígio</label><input type="number" id="s_pp" data-f="pp" value="${+f.pp || 0}" min="0" ${nivel}></div>
+   <div class="field"><label class="label" for="s_pat">Patente</label><select id="s_pat" data-patsel ${canEditFicha(f) && !nivel ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></div>`
    }
   </div>
+  ${travas && nivel ? `<p class="muted small" style="margin:0">${sob ? "Estágio" : "NEX, prestígio"} e bônus: quem muda é o mestre.</p>` : ""}
   <p class="muted small" style="margin:0">Origem: <b style="color:var(--fg)">${esc(og[1])}</b> · perícias ${og[0].join(" e ") || "à escolha do mestre"}. Classe: ${c.fixasTxt ? esc(c.fixasTxt) + " + " : ""}${c.livres} + INT perícias à escolha. <button type="button" class="btn sm" id="btnAplicar">Marcar perícias da origem e classe</button></p>
-  <div class="box stack"><div class="row between"><h3>Atributos</h3><span class="muted small">${pts === ptsCriacao ? `${ptsCriacao} pontos distribuídos` : pts > ptsCriacao ? `${pts} pontos (criação: ${ptsCriacao}; ${sob ? "+1 no estágio 3" : "aumentos em NEX 20/50/80/95%"})` : `${ptsCriacao - pts} ponto(s) livre(s)`}${sob ? " · Sobrevivente: 3 pontos" : ""}</span></div>
-   <div class="attrs">${ATTRS.map(k => `<div class="attr" title="${ATTR_NOME[k]}"><span class="k">${k}</span><span class="n">${f.attr[k]}</span><div class="pm"><button type="button" data-attr="${k}" data-d="-1" aria-label="Diminuir ${ATTR_NOME[k]}">−</button><button type="button" data-attr="${k}" data-d="1" aria-label="Aumentar ${ATTR_NOME[k]}">+</button></div></div>`).join("")}</div></div>
+  <div class="box stack"><div class="row between"><h3>Atributos</h3><span class="contador ${sobra < 0 ? "ruim" : sobra ? "falta" : ""}">${L.attr.usados} de ${L.attr.total} pontos${sobra > 0 ? ` · faltam ${sobra}` : sobra < 0 ? ` · ${-sobra} acima` : ""}</span></div>
+   <div class="attrs">${ATTRS.map(k => `<div class="attr" title="${ATTR_NOME[k]}"><span class="k">${k}</span><span class="n">${f.attr[k]}</span><div class="pm"><button type="button" data-attr="${k}" data-d="-1" aria-label="Diminuir ${ATTR_NOME[k]}" ${pode(k, -1) && f.attr[k] > 0 ? "" : "disabled"}>−</button><button type="button" data-attr="${k}" data-d="1" aria-label="Aumentar ${ATTR_NOME[k]}" ${pode(k, 1) && f.attr[k] < 5 ? "" : "disabled"}>+</button></div></div>`).join("")}</div>
+   ${travas ? `<p class="muted small" style="margin:0">Todos começam em 1. ${sob ? "3 pontos" : "4 pontos"} para distribuir, máximo ${L.attr.max} em cada${L.attr.aumentos ? ` (já conta ${L.attr.aumentos} aumento${L.attr.aumentos > 1 ? "s" : ""} de atributo)` : " na criação"}. Reduzir um atributo a 0 dá 1 ponto a mais.</p>` : ""}
+   ${regrasMestreHTML(f)}</div>
   ${morrendoHTML(f)}
   <div class="box stack"><h3>Recursos</h3>
    ${rbar("pv", "Vida", cur(f, "pv"), D.pvMax)}${rbar("san", "Sanidade", cur(f, "san"), D.sanMax)}${rbar("pe", "Esforço", cur(f, "pe"), D.peMax)}
@@ -11492,11 +11649,11 @@ function tabPrincipal(f, D, c, sel) {
      .join("")}</div>
    ${D.usados > D.carga ? `<div class="banner">Sobrecarregado: −5 na Defesa e em perícias com carga, deslocamento −3m.${D.usados > D.carga * 2 ? " Acima do dobro do limite: não dá para carregar tudo isso." : ""}</div>` : ""}
    <details class="more"><summary>Ajustar bônus e máximos</summary><div class="fields" style="margin-top:8px">
-    <div class="field"><label class="label" for="s_outrosDef">Outros na Defesa</label><input type="number" id="s_outrosDef" data-f="outrosDef" value="${+f.outrosDef || 0}"></div>
-    <div class="field"><label class="label" for="s_desl">Deslocamento</label><input type="text" id="s_desl" data-f="desl" value="${esc(f.desl || "9m")}" maxlength="12"></div>
-    <div class="field"><label class="label" for="s_bonusPV">Ajuste PV máx.</label><input type="number" id="s_bonusPV" data-f="bonusPV" value="${+f.bonusPV || 0}"></div>
-    <div class="field"><label class="label" for="s_bonusSAN">Ajuste SAN máx.</label><input type="number" id="s_bonusSAN" data-f="bonusSAN" value="${+f.bonusSAN || 0}"></div>
-    <div class="field"><label class="label" for="s_bonusPE">Ajuste PE máx.</label><input type="number" id="s_bonusPE" data-f="bonusPE" value="${+f.bonusPE || 0}"></div>
+    <div class="field"><label class="label" for="s_outrosDef">Outros na Defesa</label><input type="number" id="s_outrosDef" data-f="outrosDef" value="${+f.outrosDef || 0}" ${nivel}></div>
+    <div class="field"><label class="label" for="s_desl">Deslocamento</label><input type="text" id="s_desl" data-f="desl" value="${esc(f.desl || "9m")}" maxlength="12" ${nivel}></div>
+    <div class="field"><label class="label" for="s_bonusPV">Ajuste PV máx.</label><input type="number" id="s_bonusPV" data-f="bonusPV" value="${+f.bonusPV || 0}" ${nivel}></div>
+    <div class="field"><label class="label" for="s_bonusSAN">Ajuste SAN máx.</label><input type="number" id="s_bonusSAN" data-f="bonusSAN" value="${+f.bonusSAN || 0}" ${nivel}></div>
+    <div class="field"><label class="label" for="s_bonusPE">Ajuste PE máx.</label><input type="number" id="s_bonusPE" data-f="bonusPE" value="${+f.bonusPE || 0}" ${nivel}></div>
    </div></details>
   </div>
   <div class="box stack"><div class="row between"><h3>Condições</h3><div class="row" style="flex-wrap:nowrap"><select id="condSel" style="width:auto;max-width:170px">${CONDICOES.filter(
@@ -11516,15 +11673,25 @@ function tabPrincipal(f, D, c, sel) {
   </div>`;
 }
 function tabPericias(f, D) {
-  const c = CLASSES[f.classe];
-  return `<div class="box stack"><div class="row between"><h3>Perícias</h3><span class="muted small">grau · outros · rolar</span></div>
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f).per;
+  // um grau pode ser escolhido se a regra deixa (o atual sempre aparece)
+  const pode = (p, g, n) => g === n || permitido(f, x => (x.per[p] = { ...(x.per[p] || { b: 0 }), g: n })).ok;
+  const cont = (usado, max, nome) =>
+    `<span class="contador ${usado > max ? "ruim" : usado < max ? "falta" : ""}">${nome} ${usado} de ${max}</span>`;
+  return `<div class="box stack"><div class="row between"><h3>Perícias</h3>${
+    travas
+      ? `<span class="row" style="gap:6px">${cont(L.usadas, L.max, "treinadas")}${L.grausMax || L.grausUsados ? cont(L.grausUsados, L.grausMax, "graus") : ""}</span>`
+      : `<span class="muted small">grau · outros · rolar</span>`
+  }</div>
+   ${travas ? `<p class="muted small" style="margin:0">Treinadas: origem, classe e Intelecto${L.flex ? `, mais ${L.flex} do Treinamento em Perícia` : ""}. ${L.veteranoLiberado ? `Grau de treinamento: cada perícia que sobe de grau (veterano, ${L.expertLiberado ? "expert" : "expert em NEX 70%"}) gasta 1.` : "Veterano a partir de NEX 35%."}</p>` : ""}
    ${f.classe === "Especialista" && D.perito ? `<label class="check"><input type="checkbox" id="usarPerito"> Perito no próximo teste (${D.perito[1]} PE: +${D.perito[2]})</label>` : ""}
    <div>${PERICIAS.map(([p, a, r]) => {
      const v = f.per[p] || { g: 0, b: 0 };
      const g = +v.g || 0;
      return `<div class="per2 ${g ? "tr" : ""}"><span class="pn">${esc(p)}${r ? ` <span class="only">${esc(r)}</span>` : ""}</span><span class="a">${a}</span>
-     <select data-perg="${esc(p)}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""}>${l}</option>`).join("")}</select>
-     <input type="number" data-perb="${esc(p)}" value="${+v.b || 0}" aria-label="Outros bônus em ${esc(p)}">
+     <select data-perg="${esc(p)}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""} ${pode(p, g, n) ? "" : "disabled"}>${l}</option>`).join("")}</select>
+     <input type="number" data-perb="${esc(p)}" value="${+v.b || 0}" aria-label="Outros bônus em ${esc(p)}" ${podeAjustarNivel(f) ? "" : 'disabled title="Bônus: quem dá é o mestre"'}>
      <button type="button" class="rollbtn" data-roll="${esc(p)}" ${/só treinada/.test(r) && !g ? 'title="Só pode ser usada treinada"' : ""}>${rollLabel(f, p, a)}</button></div>`;
    }).join("")}</div>
    <p class="muted small" style="margin:0">Treinado +5, veterano +10, expert +15. Perícias "só treinada" não podem ser usadas sem treino; "kit" sofre −5 sem o kit.</p></div>`;
@@ -11561,8 +11728,14 @@ function profOK(f, a) {
   return true;
 }
 function tabCombate(f, D, c) {
+  const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // números da arma
+  const L = limitesFicha(f);
+  const naoCabe = (cat, esp) => itemNaoCabe(f, L, cat, esp); // categoria cheia ou pesado demais (regras/limites)
   return `<div class="box stack"><div class="row between"><h3>Ataques</h3><div class="row" style="flex-wrap:nowrap"><select id="addArmaSel" style="width:auto;max-width:180px">${allArmas()
-    .map((a, i) => `<option value="${i}">${esc(a.nome)} · ${a.dano}${a.hb ? " (homebrew)" : ""}</option>`)
+    .map(
+      (a, i) =>
+        `<option value="${i}" ${naoCabe(a.cat, a.esp) ? "disabled" : ""}>${esc(a.nome)} · ${a.dano}${a.hb ? " (homebrew)" : ""}${naoCabe(a.cat, a.esp) ? " · " + naoCabe(a.cat, a.esp) : ""}</option>`
+    )
     .join("")}</select><button type="button" class="btn sm" id="btnAddArma">Adicionar</button></div></div>
    ${
      f.classe === "Combatente" && D.atq
@@ -11582,13 +11755,13 @@ function tabCombate(f, D, c) {
          ? `<div class="fields" style="margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">
       <div class="field"><label class="label">Nome</label><input type="text" data-arma="${i}" data-k="nome" value="${esc(a.nome)}"></div>
       <div class="field"><label class="label">Perícia</label><select data-arma="${i}" data-k="pericia">${["Luta", "Pontaria"].map(p => `<option ${a.pericia === p ? "selected" : ""}>${p}</option>`).join("")}</select></div>
-      <div class="field"><label class="label">Dano</label><input type="text" data-arma="${i}" data-k="dano" value="${esc(a.dano)}"></div>
-      <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3"></div>
-      <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}"></div>
-      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}"></div>
-      <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}"></div>
-      <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}"></div>
-      <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""}> Arma ágil</label>
+      <div class="field"><label class="label">Dano</label><input type="text" data-arma="${i}" data-k="dano" value="${esc(a.dano)}" ${nivel}></div>
+      <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3" ${nivel}></div>
+      <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}" ${nivel}></div>
+      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}" ${nivel}></div>
+      <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}" ${nivel}></div>
+      <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}" ${nivel}></div>
+      <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""} ${nivel}> Arma ágil</label>
       <div class="field" style="grid-column:1/-1"><label class="label">Modificações e maldições</label><div class="row" style="flex-wrap:nowrap"><select data-modsel="${i}">${MODIFICACOES.filter(
         m => /corpo|fogo|munição/.test(m[1])
       )
@@ -11607,7 +11780,7 @@ function tabCombate(f, D, c) {
    }</div>
    <p class="muted small" style="margin:0">Luta usa FOR (armas ágeis podem usar AGI) e soma FOR no dano; Pontaria usa AGI. No crítico, os dados de dano são multiplicados. Cada modificação aumenta a categoria em I.</p>
   </div>
-  <div class="box stack"><div class="row between"><h3>Proteções</h3><div class="row" style="flex-wrap:nowrap"><select id="protSel" style="width:auto">${PROTECOES.map((p, i) => `<option value="${i}">${p[0]} · +${p[3]} Def</option>`).join("")}</select><button type="button" class="btn sm" id="protAdd">Adicionar</button></div></div>
+  <div class="box stack"><div class="row between"><h3>Proteções</h3><div class="row" style="flex-wrap:nowrap"><select id="protSel" style="width:auto">${PROTECOES.map((p, i) => `<option value="${i}" ${naoCabe(p[1], p[2]) ? "disabled" : ""}>${p[0]} · +${p[3]} Def${naoCabe(p[1], p[2]) ? " · " + naoCabe(p[1], p[2]) : ""}</option>`).join("")}</select><button type="button" class="btn sm" id="protAdd">Adicionar</button></div></div>
    ${
      (f.protecoes || []).length
        ? `<div class="cards">${f.protecoes
@@ -11640,7 +11813,11 @@ function tabRituais(f, D) {
     .filter(r => !(f.rituais || []).includes(r.n))
     .filter(r => !S.ritFiltro || String(r.el).split(" e ").includes(S.ritFiltro));
   const ocult = f.classe === "Ocultista";
-  return `<div class="box stack"><div class="row between"><h3>Rituais</h3><span class="muted small">DT ${D.dtRit} · ${D.circ ? `até ${D.circ}º círculo` : "sem acesso a rituais"}</span></div>
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f).rituais;
+  const cheio = travas && L.usados >= L.max;
+  const circOk = c => !travas || c <= L.circulo;
+  return `<div class="box stack"><div class="row between"><h3>Rituais ${travas ? `<span class="contador ${L.usados > L.max ? "ruim" : L.usados < L.max ? "falta" : ""}">${L.usados} de ${L.max}</span>` : ""}</h3><span class="muted small">DT ${D.dtRit} · ${D.circ ? `até ${D.circ}º círculo` : "sem acesso a rituais"}</span></div>
    ${!ocult ? `<p class="muted small" style="margin:0">Sem ser ocultista, você aprende rituais com o poder paranormal Aprender Ritual (via Transcender).</p>` : ""}
    <label class="check"><input type="checkbox" id="semComp"> Sem componentes ritualísticos (não dá para conjurar, exceto Medo)</label>
    ${
@@ -11655,15 +11832,18 @@ function tabRituais(f, D) {
        : `<div class="muted small">Nenhum ritual aprendido.</div>`
    }
    <div class="sub">Aprender ritual</div>
+   ${travas ? `<p class="muted small" style="margin:0">${ocult ? "Ocultista: 3 rituais no começo e mais 1 a cada NEX." : "Cada Aprender Ritual (poder paranormal) ensina 1 ritual."}${cheio ? " Você já aprendeu todos os rituais que pode agora." : ""}</p>` : ""}
    <div class="tabs2">${["", ...ELEMENTOS].map(e => `<button type="button" data-ritf="${e}" aria-pressed="${(S.ritFiltro || "") === e}">${e || "Todos"}</button>`).join("")}</div>
-   <div class="row" style="flex-wrap:nowrap"><select id="ritSel">${[1, 2, 3, 4]
+   <div class="row" style="flex-wrap:nowrap"><select id="ritSel" ${cheio ? "disabled" : ""}>${[1, 2, 3, 4]
      .map(c => {
        const l = avail.filter(r => r.c === c);
        return l.length
-         ? `<optgroup label="${c}º círculo · ${CUSTO_CIRCULO[c]} PE">${l.map(r => `<option value="${esc(r.n)}">${esc(r.n)} · ${esc(r.el)}${r.hb ? " (homebrew)" : ""}${fonteTag(r.n)}</option>`).join("")}</optgroup>`
+         ? `<optgroup label="${c}º círculo · ${CUSTO_CIRCULO[c]} PE${circOk(c) ? "" : " · ainda não"}" ${circOk(c) ? "" : "disabled"}>${l.map(r => `<option value="${esc(r.n)}">${esc(r.n)} · ${esc(r.el)}${r.hb ? " (homebrew)" : ""}${fonteTag(r.n)}</option>`).join("")}</optgroup>`
          : "";
      })
-     .join("")}</select><button type="button" class="btn sm" id="ritAdd">Aprender</button></div>
+     .join(
+       ""
+     )}</select><button type="button" class="btn sm" id="ritAdd" ${cheio ? "disabled" : ""}>Aprender</button></div>
    <p class="muted small" style="margin:0">Custo por círculo: 1º 1 PE, 2º 3 PE, 3º 6 PE, 4º 10 PE; Discente e Verdadeiro somam o custo extra e pedem o círculo indicado. Os textos completos dos rituais estão no livro.</p>
   </div>`;
 }
@@ -11674,6 +11854,14 @@ function tabHabilidades(f, D, c) {
   const pod = f.poderes || [];
   const par = f.paranormais || [];
   const habs = hbOf("habilidade");
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f);
+  const cont = ({ usados, max }) =>
+    travas
+      ? `<span class="contador ${usados > max ? "ruim" : usados < max ? "falta" : ""}">${usados} de ${max}</span>`
+      : "";
+  const cheioPod = travas && L.poderes.usados >= L.poderes.max;
+  const cheioPar = travas && L.paranormais.usados >= L.paranormais.max;
   return `<div class="box stack"><h3>Classe: ${esc(f.classe)}</h3>
     <div class="cards">${progs.map(([n, h]) => `<div class="condrow" style="border-left-color:var(--purple)"><span class="tag on">${ehSobrevivente(f) ? "Estágio " + NEX_ESTAGIO[n] : n + "%"}</span><div class="small">${esc(h)}</div><span></span></div>`).join("")}</div>
     ${f.classe === "Combatente" && D.atq ? `<p class="muted small" style="margin:0">Ataque Especial agora: ${D.atq[1]} PE, +${D.atq[2]}.</p>` : ""}
@@ -11683,16 +11871,19 @@ function tabHabilidades(f, D, c) {
    <div class="box stack"><h3>Trilha${f.trilha ? ": " + esc(f.trilha) : ""}</h3>
     ${tr ? `<div class="cards">${tr.map((h, i) => `<div class="condrow" style="border-left-color:${nex >= TRILHA_NEX[i] ? "var(--purple)" : "var(--line)"}"><span class="tag ${nex >= TRILHA_NEX[i] ? "on" : ""}">${TRILHA_NEX[i]}%</span><div><b>${esc(h)}</b>${nex < TRILHA_NEX[i] ? `<div class="muted small">Libera em NEX ${TRILHA_NEX[i]}%</div>` : ""}</div><span></span></div>`).join("")}</div>` : `<div class="muted small">Escolha a trilha na aba Principal (a partir de NEX 10%).</div>`}
    </div>
-   <div class="box stack"><div class="row between"><h3>Poderes de ${esc(f.classe.toLowerCase())}</h3><div class="row" style="flex-wrap:nowrap"><select id="podSel" style="width:auto;max-width:180px">${c.poderes
+   <div class="box stack"><div class="row between"><h3>Poderes de ${esc(f.classe.toLowerCase())} ${cont(L.poderes)}</h3><div class="row" style="flex-wrap:nowrap"><select id="podSel" style="width:auto;max-width:180px" ${cheioPod ? "disabled" : ""}>${c.poderes
      .filter(p => p === "Transcender" || p === "Treinamento em Perícia" || !pod.includes(p))
      .map(
        p =>
          `<option value="${esc(p)}">${esc(p)}${PODERES_GERAIS.some(g => g[0] === p) && !FONTE_CLASSE[p] ? " (geral)" : ""}${fonteTag(p)}</option>`
      )
-     .join("")}</select><button type="button" class="btn sm" id="podAdd">+</button></div></div>
+     .join(
+       ""
+     )}</select><button type="button" class="btn sm" id="podAdd" aria-label="Adicionar poder" ${cheioPod ? "disabled" : ""}>+</button></div></div>
     ${pod.length ? `<div class="conds">${pod.map((p, i) => `<button type="button" class="cond" aria-pressed="true" data-podrm="${i}">${esc(p)} ✕</button>`).join("")}</div>` : `<div class="muted small">Nenhum poder escolhido. Você recebe um em NEX 15% e a cada 15% depois.</div>`}
+    ${cheioPod && travas ? `<div class="muted small">${L.poderes.max ? "Todos os poderes deste NEX já foram escolhidos." : "Ainda sem poderes: o primeiro vem em NEX 15%."}</div>` : ""}
    </div>
-   <div class="box stack"><div class="row between"><h3>Poderes paranormais</h3><div class="row" style="flex-wrap:nowrap"><select id="parSel" style="width:auto;max-width:180px">${PODERES_PARANORMAIS.map(([n, e]) => `<option value="${esc(n)}">${esc(n)}${e !== "—" ? " · " + e : ""}${fonteTag(n)}</option>`).join("")}</select><button type="button" class="btn sm" id="parAdd">+</button></div></div>
+   <div class="box stack"><div class="row between"><h3>Poderes paranormais ${cont(L.paranormais)}</h3><div class="row" style="flex-wrap:nowrap"><select id="parSel" style="width:auto;max-width:180px" ${cheioPar ? "disabled" : ""}>${PODERES_PARANORMAIS.map(([n, e]) => `<option value="${esc(n)}">${esc(n)}${e !== "—" ? " · " + e : ""}${fonteTag(n)}</option>`).join("")}</select><button type="button" class="btn sm" id="parAdd" aria-label="Adicionar poder paranormal" ${cheioPar ? "disabled" : ""}>+</button></div></div>
     ${par.length ? `<div class="conds">${par.map((p, i) => `<button type="button" class="cond" aria-pressed="true" data-parrm="${i}">${esc(p)} ✕</button>`).join("")}</div>` : `<div class="muted small">Recebidos com o poder Transcender (sem ganhar Sanidade naquele aumento de NEX).</div>`}
     ${
       +f.nex >= 50
@@ -11718,6 +11909,8 @@ function tabHabilidades(f, D, c) {
 }
 function tabInventario(f, D) {
   const lim = D.pat;
+  const L = limitesFicha(f);
+  const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // patente, prestígio e extras
   const cats = ["I", "II", "III", "IV"];
   const opts = [
     ...ITENS_GERAIS.map(i => ({ n: i[0], g: i[1], cat: i[2], esp: i[3] })),
@@ -11731,10 +11924,10 @@ function tabInventario(f, D) {
     ...hbOf("item").map(h => ({ n: h.nome, g: "Homebrew", cat: h.cat || "0", esp: +h.esp || 1 }))
   ];
   const grupos = [...new Set(opts.map(o => o.g))];
-  return `<div class="box stack"><div class="row between" style="flex-wrap:wrap;gap:8px"><label class="row" style="gap:8px;flex-wrap:nowrap"><h3 style="margin:0">Patente</h3><select id="s_pat2" data-patsel ${canEditFicha(f) ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></label><span class="muted small">${+f.pp || 0} PP · crédito ${esc(lim[2])}</span></div>
+  return `<div class="box stack"><div class="row between" style="flex-wrap:wrap;gap:8px"><label class="row" style="gap:8px;flex-wrap:nowrap"><h3 style="margin:0">Patente</h3><select id="s_pat2" data-patsel ${canEditFicha(f) && !nivel ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></label><span class="muted small">${+f.pp || 0} PP · crédito ${esc(lim[2])}</span></div>
     <div class="stats" style="grid-template-columns:repeat(4,minmax(0,1fr))">${cats
       .map((c, i) => {
-        const max = lim[3 + i] + (+f["catx" + (i + 1)] || 0);
+        const max = regrasAtivas(f) ? L.itens.cat[i + 1] : lim[3 + i] + (+f["catx" + (i + 1)] || 0);
         const u = D.usoCat[i + 1];
         return `<div style="${u > max ? "border-color:var(--red)" : ""}"><b>${u}/${max}</b><span>Categoria ${c}</span></div>`;
       })
@@ -11742,12 +11935,12 @@ function tabInventario(f, D) {
     <div class="muted small">Espaços: ${D.usados}/${D.carga} (dobro: ${D.carga * 2})${D.mochila ? " · Mochila militar +2" : ""}${+f.cargaExtra ? ` · extra ${+f.cargaExtra > 0 ? "+" : ""}${+f.cargaExtra}` : ""}. Categoria 0 é livre.</div>
     <details class="more"><summary>Aumentar espaços e itens por categoria</summary><div class="stack" style="margin-top:8px;gap:8px">
      <p class="muted small" style="margin:0">Pelas regras: mais <b>Força</b> dá mais espaço (5 por ponto), a <b>Mochila militar</b> dá +2 espaços (já conta sozinha), e subir de <b>patente</b> com pontos de prestígio libera mais itens por categoria. Use os campos abaixo para bônus que o mestre der (poder, homebrew, recompensa).</p>
-     <div class="row" style="flex-wrap:wrap;gap:8px"><div class="field" style="width:120px"><label class="label" for="s_cx">Espaços extras</label><input type="number" id="s_cx" data-f="cargaExtra" value="${+f.cargaExtra || 0}" min="-20" max="50"></div>
-      ${cats.map((c, i) => `<div class="field" style="width:96px"><label class="label" for="s_catx${i + 1}">Extra cat. ${c}</label><input type="number" id="s_catx${i + 1}" data-f="catx${i + 1}" value="${+f["catx" + (i + 1)] || 0}" min="-5" max="20"></div>`).join("")}</div></div></details>
-    <details class="more"><summary>Pontos de prestígio por missão</summary><div class="row" style="margin-top:8px">${PP_EVENTOS.map(([n, v], i) => `<button type="button" class="btn sm" data-ppev="${i}">${esc(n)} ${v > 0 ? "+" : ""}${v}</button>`).join("")}</div></details>
+     <div class="row" style="flex-wrap:wrap;gap:8px"><div class="field" style="width:120px"><label class="label" for="s_cx">Espaços extras</label><input type="number" id="s_cx" data-f="cargaExtra" value="${+f.cargaExtra || 0}" min="-20" max="50" ${nivel}></div>
+      ${cats.map((c, i) => `<div class="field" style="width:96px"><label class="label" for="s_catx${i + 1}">Extra cat. ${c}</label><input type="number" id="s_catx${i + 1}" data-f="catx${i + 1}" value="${+f["catx" + (i + 1)] || 0}" min="-5" max="20" ${nivel}></div>`).join("")}</div></div></details>
+    <details class="more"><summary>Pontos de prestígio por missão</summary><div class="row" style="margin-top:8px">${PP_EVENTOS.map(([n, v], i) => `<button type="button" class="btn sm" data-ppev="${i}" ${nivel}>${esc(n)} ${v > 0 ? "+" : ""}${v}</button>`).join("")}</div></details>
    </div>
    <div class="box stack"><div class="row between"><h3>Itens</h3></div>
-    <div class="row" style="flex-wrap:nowrap"><select id="itemSel">${grupos.map(g => `<optgroup label="${esc(g)}">${opts.map((o, i) => (o.g === g ? `<option value="${i}">${esc(o.n)} · cat. ${o.cat} · ${o.esp} esp.</option>` : "")).join("")}</optgroup>`).join("")}</select><button type="button" class="btn sm" id="itemAdd">Adicionar</button><button type="button" class="btn sm ghost" id="itemCriar" style="white-space:nowrap">Criar item</button></div>
+    <div class="row" style="flex-wrap:nowrap"><select id="itemSel">${grupos.map(g => `<optgroup label="${esc(g)}">${opts.map((o, i) => (o.g === g ? `<option value="${i}" ${itemNaoCabe(f, L, o.cat, o.esp) ? "disabled" : ""}>${esc(o.n)} · cat. ${o.cat} · ${o.esp} esp.${itemNaoCabe(f, L, o.cat, o.esp) ? " · " + itemNaoCabe(f, L, o.cat, o.esp) : ""}</option>` : "")).join("")}</optgroup>`).join("")}</select><button type="button" class="btn sm" id="itemAdd">Adicionar</button><button type="button" class="btn sm ghost" id="itemCriar" style="white-space:nowrap">Criar item</button></div>
     ${
       (f.itens || []).length
         ? `<div class="cards">${f.itens
@@ -11968,6 +12161,15 @@ function bindSheet() {
     $$("[data-back]").forEach(b => (b.onclick = soloFechar)); // personagem fora de mesa (mesa/personagens)
   else bindFichaAcoes(f, id); // menu Opções: duplicar, dar, retirar, virar NPC (mestre/gestao)
   bindEstagio(f, id); // classe Sobrevivente (regras/sobrevivente)
+  // "Falta escolher": cada item leva para a aba certa (regras/limites)
+  $$("[data-irpara]").forEach(
+    b =>
+      (b.onclick = () => {
+        S.sheetTab = b.dataset.irpara;
+        renderPanel();
+      })
+  );
+  avisoNivelNovo(f, id); // o mestre subiu o NEX: o jogador vê o que ganhou (ficha/subir-nex)
 }
 function bindFichaCompleta() {
   {
@@ -12071,9 +12273,18 @@ function bindFichaCompleta() {
   const rr = () => {
     renderPanel();
   };
+  // Muda a ficha só se as regras deixam (regras/limites). fn recebe a ficha (ou uma cópia, no teste).
+  const mudar = fn => {
+    if (!trava(f, fn)) {
+      rr(); // desfaz o que apareceu na tela (um select que mudou, por exemplo)
+      return false;
+    }
+    fn(f);
+    return true;
+  };
   $$("#pbody [data-f]").forEach(el => {
     const k = el.dataset.f;
-    const num = el.type === "number" || k === "nex";
+    const num = el.type === "number";
     if (el.tagName === "SELECT" || num)
       el.onchange = () => {
         f[k] = num ? +el.value || 0 : el.value;
@@ -12103,6 +12314,33 @@ function bindFichaCompleta() {
     const e = $(sel);
     if (e) e[ev] = fn;
   };
+  on("#s_nex", () => mudarNivel(f, id, +$("#s_nex").value), "onchange"); // subir de NEX guiado (ficha/subir-nex)
+  const mestre = S.isM || !!S.solo; // regras livres e extras: só o mestre (ou o dono fora de mesa)
+  on(
+    "#regLivres",
+    () => {
+      if (!mestre) return;
+      f.regrasLivres = $("#regLivres").checked;
+      sv(true);
+      rr();
+      toast(
+        f.regrasLivres
+          ? "Ficha sem travas: vale o que estiver escrito."
+          : "Travas ligadas: a ficha segue as regras do NEX."
+      );
+    },
+    "onchange"
+  );
+  $$("[data-extra]").forEach(
+    el =>
+      (el.onchange = () => {
+        if (!mestre) return;
+        f.extra = { ...(f.extra || {}), [el.dataset.extra]: +el.value || 0 };
+        sv(true);
+        rr();
+      })
+  );
+
   on("#foto", async () => {
     const file = await pickImage();
     if (!file) return;
@@ -12123,7 +12361,7 @@ function bindFichaCompleta() {
     b =>
       (b.onclick = () => {
         const k = b.dataset.attr;
-        f.attr[k] = Math.max(0, Math.min(5, f.attr[k] + +b.dataset.d));
+        if (!mudar(x => (x.attr[k] = Math.max(0, Math.min(5, x.attr[k] + +b.dataset.d))))) return;
         sv();
         rr();
       })
@@ -12167,8 +12405,7 @@ function bindFichaCompleta() {
     s =>
       (s.onchange = () => {
         const p = s.dataset.perg;
-        f.per[p] = f.per[p] || { g: 0, b: 0 };
-        f.per[p].g = +s.value;
+        if (!mudar(x => (x.per[p] = { ...(x.per[p] || { b: 0 }), g: +s.value }))) return;
         sv();
         rr();
       })
@@ -12176,6 +12413,7 @@ function bindFichaCompleta() {
   $$("[data-perb]").forEach(
     c =>
       (c.onchange = () => {
+        if (!podeAjustarNivel(f)) return; // bônus: quem dá é o mestre
         const p = c.dataset.perb;
         f.per[p] = f.per[p] || { g: 0, b: 0 };
         f.per[p].b = +c.value || 0;
@@ -12238,10 +12476,12 @@ function bindFichaCompleta() {
   });
   on("#btnAplicar", () => {
     const c = CLASSES[f.classe];
-    [...ORIGENS[f.origem][0], ...c.fixas].forEach(p => {
-      f.per[p] = f.per[p] || { g: 0, b: 0 };
-      if (!f.per[p].g) f.per[p].g = 5;
-    });
+    const marcar = x =>
+      [...ORIGENS[x.origem][0], ...c.fixas].forEach(p => {
+        x.per[p] = x.per[p] || { g: 0, b: 0 };
+        if (!x.per[p].g) x.per[p].g = 5;
+      });
+    if (!mudar(marcar)) return;
     if (c.escolhaFixa.length) toast(`Escolha também: ${c.fixasTxt}.`);
     else toast("Perícias da origem e da classe marcadas.");
     sv();
@@ -12253,6 +12493,7 @@ function bindFichaCompleta() {
       (el.onchange = () => {
         const i = +el.dataset.arma,
           k = el.dataset.k;
+        if (k !== "nome" && k !== "pericia" && !podeAjustarNivel(f)) return; // números da arma: só o mestre
         f.armas[i][k] = el.type === "number" ? +el.value || 0 : el.value;
         sv();
         rr();
@@ -12261,6 +12502,7 @@ function bindFichaCompleta() {
   $$("[data-armaagil]").forEach(
     c =>
       (c.onchange = () => {
+        if (!podeAjustarNivel(f)) return;
         f.armas[+c.dataset.armaagil].agil = c.checked;
         sv();
       })
@@ -12276,8 +12518,8 @@ function bindFichaCompleta() {
   );
   on("#btnAddArma", () => {
     const a = allArmas()[+$("#addArmaSel").value];
-    f.armas = f.armas || [];
-    f.armas.push({
+    if (!a) return;
+    const nova = {
       nome: a.nome,
       pericia: /Fogo|Disparo|distância/.test(a.emp) ? "Pontaria" : "Luta",
       dano: a.dano,
@@ -12292,7 +12534,8 @@ function bindFichaCompleta() {
       bonus: 0,
       bdano: 0,
       mods: []
-    });
+    };
+    if (!mudar(x => (x.armas = [...(x.armas || []), { ...nova }]))) return;
     sv();
     rr();
   });
@@ -12301,13 +12544,15 @@ function bindFichaCompleta() {
       (b.onclick = () => {
         const i = +b.dataset.modadd;
         const m = $(`[data-modsel="${i}"]`).value;
-        const a = f.armas[i];
-        a.mods = a.mods || [];
-        if (a.mods.includes(m)) return;
-        a.mods.push(m);
-        a.cat = catPlus(a.cat, 1);
+        if ((f.armas[i].mods || []).includes(m)) return;
         const md = (MODIFICACOES.find(x => x[0] === m) || [])[3] || {};
-        if (md.esp) a.esp = Math.max(0, (+a.esp || 0) + md.esp);
+        const modificar = x => {
+          const a = x.armas[i];
+          a.mods = [...(a.mods || []), m];
+          a.cat = catPlus(a.cat, 1); // cada modificação sobe a categoria
+          if (md.esp) a.esp = Math.max(0, (+a.esp || 0) + md.esp);
+        };
+        if (!mudar(modificar)) return;
         sv();
         rr();
       })
@@ -12327,8 +12572,9 @@ function bindFichaCompleta() {
   );
   on("#protAdd", () => {
     const p = PROTECOES[+$("#protSel").value];
-    f.protecoes = f.protecoes || [];
-    f.protecoes.push({ nome: p[0], cat: p[1], esp: p[2], def: p[3], rd: p[4], usando: true, mods: [] });
+    if (!p) return;
+    const nova = { nome: p[0], cat: p[1], esp: p[2], def: p[3], rd: p[4], usando: true, mods: [] };
+    if (!mudar(x => (x.protecoes = [...(x.protecoes || []), { ...nova }]))) return;
     sv();
     rr();
   });
@@ -12353,15 +12599,17 @@ function bindFichaCompleta() {
       (b.onclick = () => {
         const i = +b.dataset.pmodadd;
         const m = $(`[data-pmodsel="${i}"]`).value;
-        const p = f.protecoes[i];
-        p.mods = p.mods || [];
-        if (p.mods.includes(m)) return;
-        p.mods.push(m);
-        p.cat = catPlus(p.cat, 1);
+        if ((f.protecoes[i].mods || []).includes(m)) return;
         const md = (MODIFICACOES.find(x => x[0] === m) || [])[3] || {};
-        if (md.def) p.def += md.def;
-        if (md.rd) p.rd = Math.max(+p.rd || 0, md.rd);
-        if (md.esp) p.esp = Math.max(0, p.esp + md.esp);
+        const modificar = x => {
+          const p = x.protecoes[i];
+          p.mods = [...(p.mods || []), m];
+          p.cat = catPlus(p.cat, 1);
+          if (md.def) p.def += md.def;
+          if (md.rd) p.rd = Math.max(+p.rd || 0, md.rd);
+          if (md.esp) p.esp = Math.max(0, p.esp + md.esp);
+        };
+        if (!mudar(modificar)) return;
         sv();
         rr();
       })
@@ -12370,7 +12618,7 @@ function bindFichaCompleta() {
   on("#ritAdd", () => {
     const v = $("#ritSel").value;
     if (!v) return;
-    f.rituais = [...new Set([...(f.rituais || []), v])];
+    if (!mudar(x => (x.rituais = [...new Set([...(x.rituais || []), v])]))) return;
     sv();
     rr();
   });
@@ -12384,7 +12632,8 @@ function bindFichaCompleta() {
   );
   // habilidades
   on("#podAdd", () => {
-    f.poderes = [...(f.poderes || []), $("#podSel").value];
+    const v = $("#podSel").value;
+    if (!v || !mudar(x => (x.poderes = [...(x.poderes || []), v]))) return;
     sv();
     rr();
   });
@@ -12401,7 +12650,7 @@ function bindFichaCompleta() {
     if ((f.paranormais || []).includes(v) && v !== "Aprender Ritual" && v !== "Resistir a <Elemento>") {
       toast("Esse poder já está na ficha (escolha de novo para ganhar a afinidade).");
     }
-    f.paranormais = [...(f.paranormais || []), v];
+    if (!mudar(x => (x.paranormais = [...(x.paranormais || []), v]))) return;
     sv();
     rr();
   });
@@ -12460,10 +12709,8 @@ function bindFichaCompleta() {
     ];
     const o = opts[+$("#itemSel").value];
     if (!o) return;
-    f.itens = f.itens || [];
-    if (o.g === "Itens operacionais" && o.n === "Mochila militar") {
-    }
-    f.itens.push({ nome: o.n, grupo: o.g, cat: o.cat, esp: o.esp, qtd: 1, mods: [] });
+    const novo = { nome: o.n, grupo: o.g, cat: o.cat, esp: o.esp, qtd: 1, mods: [] };
+    if (!mudar(x => (x.itens = [...(x.itens || []), { ...novo }]))) return;
     sv();
     rr();
   });
@@ -12475,13 +12722,15 @@ function bindFichaCompleta() {
         rr();
       })
   );
-  const itemForm = async (it, titulo, ok) => {
+  // travar = true: categoria e espaços de um item que já existe só o mestre muda
+  const itemForm = async (it, titulo, ok, travar = false) => {
     const C = ["0", "I", "II", "III", "IV"];
+    const tv = travar ? 'disabled title="Só o mestre muda"' : "";
     return formBox(
       titulo,
       `<div class="field"><label class="label" for="icN">Nome</label><input type="text" id="icN" name="nome" maxlength="60" required value="${esc(it.nome || "")}"></div>
-     <div class="row" style="gap:8px;flex-wrap:wrap"><div class="field" style="width:110px"><label class="label" for="icC">Categoria</label><select id="icC" name="cat">${C.map(c => `<option value="${c}" ${String(it.cat ?? "0") === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
-     <div class="field" style="width:100px"><label class="label" for="icE">Espaços</label><input type="number" id="icE" name="esp" min="0" max="20" step="0.5" value="${it.esp ?? 1}"></div>
+     <div class="row" style="gap:8px;flex-wrap:wrap"><div class="field" style="width:110px"><label class="label" for="icC">Categoria</label><select id="icC" name="cat" ${tv}>${C.map(c => `<option value="${c}" ${String(it.cat ?? "0") === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+     <div class="field" style="width:100px"><label class="label" for="icE">Espaços</label><input type="number" id="icE" name="esp" min="0" max="20" step="0.5" value="${it.esp ?? 1}" ${tv}></div>
      <div class="field" style="width:100px"><label class="label" for="icQ">Quantidade</label><input type="number" id="icQ" name="qtd" min="1" max="999" value="${+it.qtd || 1}"></div></div>
      <div class="field"><label class="label" for="icT">Descrição ou efeito (opcional)</label><textarea id="icT" name="nota" maxlength="400" placeholder="Ex.: dá +2 em Investigação; 3 usos; foto antiga do pai…">${esc(it.nota || "")}</textarea></div>
      <p class="muted small" style="margin:0">Categoria 0 não conta no limite da patente. Espaços contam na carga.</p>`,
@@ -12491,8 +12740,7 @@ function bindFichaCompleta() {
   on("#itemCriar", async () => {
     const r = await itemForm({}, "Criar item", "Criar");
     if (!r || !r.nome.trim()) return;
-    f.itens = f.itens || [];
-    f.itens.push({
+    const novo = {
       nome: r.nome.trim(),
       grupo: "Item criado",
       cat: r.cat,
@@ -12500,7 +12748,8 @@ function bindFichaCompleta() {
       qtd: Math.max(1, +r.qtd || 1),
       nota: r.nota.trim(),
       mods: []
-    });
+    };
+    if (!mudar(x => (x.itens = [...(x.itens || []), { ...novo }]))) return;
     sv();
     rr();
     toast(`${r.nome.trim()} entrou no inventário.`);
@@ -12508,17 +12757,20 @@ function bindFichaCompleta() {
   $$("[data-itemed]").forEach(
     b =>
       (b.onclick = async () => {
-        const it = f.itens[+b.dataset.itemed];
+        const i = +b.dataset.itemed;
+        const it = f.itens[i];
         if (!it) return;
-        const r = await itemForm(it, "Editar item", "Salvar");
+        const travar = regrasAtivas(f) && !podeAjustarNivel(f);
+        const r = await itemForm(it, "Editar item", "Salvar", travar);
         if (!r || !r.nome.trim()) return;
-        Object.assign(it, {
+        const novo = {
           nome: r.nome.trim(),
-          cat: r.cat,
-          esp: Math.max(0, +r.esp || 0),
+          cat: travar ? it.cat : r.cat,
+          esp: travar ? it.esp : Math.max(0, +r.esp || 0),
           qtd: Math.max(1, +r.qtd || 1),
           nota: r.nota.trim()
-        });
+        };
+        if (!mudar(x => Object.assign(x.itens[i], novo))) return;
         sv();
         rr();
       })
@@ -12526,7 +12778,8 @@ function bindFichaCompleta() {
   $$("[data-iqtd]").forEach(
     i =>
       (i.onchange = () => {
-        f.itens[+i.dataset.iqtd].qtd = Math.max(1, +i.value || 1);
+        const q = Math.max(1, +i.value || 1);
+        if (!mudar(x => (x.itens[+i.dataset.iqtd].qtd = q))) return;
         sv();
         rr();
       })
@@ -12536,13 +12789,15 @@ function bindFichaCompleta() {
       (b.onclick = () => {
         const i = +b.dataset.imodadd;
         const m = $(`[data-imodsel="${i}"]`).value;
-        const it = f.itens[i];
-        it.mods = it.mods || [];
-        if (it.mods.includes(m)) return;
-        it.mods.push(m);
-        it.cat = catPlus(it.cat, 1);
+        if ((f.itens[i].mods || []).includes(m)) return;
         const md = (MODIFICACOES.find(x => x[0] === m) || [])[3] || {};
-        if (md.esp) it.esp = Math.max(0, it.esp + md.esp);
+        const modificar = x => {
+          const it = x.itens[i];
+          it.mods = [...(it.mods || []), m];
+          it.cat = catPlus(it.cat, 1);
+          if (md.esp) it.esp = Math.max(0, it.esp + md.esp);
+        };
+        if (!mudar(modificar)) return;
         sv();
         rr();
       })
@@ -12550,6 +12805,7 @@ function bindFichaCompleta() {
   $$("[data-ppev]").forEach(
     b =>
       (b.onclick = () => {
+        if (!podeAjustarNivel(f)) return; // prestígio: quem dá é o mestre
         const [n, v] = PP_EVENTOS[+b.dataset.ppev];
         f.pp = Math.max(0, (+f.pp || 0) + v);
         sv(true);
@@ -12572,6 +12828,95 @@ function bindFichaCompleta() {
       fail(e);
     }
   });
+}
+</script>
+<script>
+"use strict";
+/* Subir de NEX guiado: quando o NEX (ou o estágio do Sobrevivente) sobe, mostra o que o agente ganhou
+   em cada nível e o que falta escolher. Quem sobe o NEX é o mestre; o jogador vê o aviso na próxima
+   vez que abrir a ficha (f.nexVisto guarda até onde ele já viu). */
+
+/* O que muda de um NEX para outro: PV, PE e SAN máximos e as linhas da progressão da classe. */
+function ganhosDeNivel(f, de, para) {
+  const c = CLASSES[f.classe] || CLASSES.Combatente;
+  const antes = derivados({ ...f, nex: de });
+  const depois = derivados({ ...f, nex: para });
+  const trilha = (f.trilha && c.trilhas[f.trilha]) || null;
+  const linhas = Object.entries(c.prog)
+    .filter(([n]) => +n > de && +n <= para)
+    .map(([n, t]) => {
+      // habilidade de trilha: diz qual é, se a trilha já foi escolhida
+      const i = TRILHA_NEX.indexOf(+n);
+      const qual = /trilha/i.test(t) && trilha && i >= 0 && trilha[i] ? `: ${trilha[i]}` : "";
+      return { nivel: ehSobrevivente(f) ? "Estágio " + NEX_ESTAGIO[n] : n + "%", texto: t + qual };
+    });
+  return {
+    pv: depois.pvMax - antes.pvMax,
+    pe: depois.peMax - antes.peMax,
+    san: depois.sanMax - antes.sanMax,
+    linhas
+  };
+}
+const nomeNivel = (f, nex) => (ehSobrevivente(f) ? "estágio " + NEX_ESTAGIO[nex] : "NEX " + nex + "%");
+
+/* Janela "Subiu de NEX": o que ganhou e o que falta escolher (com atalhos para a aba certa). */
+function janelaNivel(f, de, para) {
+  const g = ganhosDeNivel(f, de, para);
+  const pend = pendencias(f);
+  const num = (v, n) => (v ? `<span class="tag on">${v > 0 ? "+" : ""}${v} ${n}</span>` : "");
+  const h = $("#modalHost");
+  h.innerHTML = `<div class="modal-back"><div class="modal nivel-novo" role="dialog" aria-label="Subiu de nível">
+    <span class="label">${esc(f.nome)}</span>
+    <h3>${nomeNivel(f, de)} → ${nomeNivel(f, para)}</h3>
+    <div class="row" style="gap:6px">${num(g.pv, "PV")}${num(g.pe, "PE")}${num(g.san, "SAN")}</div>
+    ${
+      g.linhas.length
+        ? `<div class="stack" style="gap:6px">${g.linhas.map(l => `<div class="condrow" style="border-left-color:var(--purple)"><span class="tag on">${l.nivel}</span><div class="small">${esc(l.texto)}</div><span></span></div>`).join("")}</div>`
+        : ""
+    }
+    ${
+      pend.length
+        ? `<div class="stack" style="gap:6px"><span class="label">Agora escolha</span><div class="pends">${pend.map(x => `<button type="button" class="pend" data-nvpara="${x.aba}">${esc(x.texto)}</button>`).join("")}</div></div>`
+        : `<p class="muted small" style="margin:0">Nada para escolher agora: o site já somou tudo.</p>`
+    }
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn primary" id="nvOk">Certo</button></div>
+  </div></div>`;
+  const fechar = () => (h.innerHTML = "");
+  $("#nvOk").onclick = fechar;
+  $$("[data-nvpara]").forEach(
+    b =>
+      (b.onclick = () => {
+        fechar();
+        S.sheetTab = b.dataset.nvpara;
+        renderPanel();
+      })
+  );
+}
+
+/* Muda o NEX da ficha (select de NEX e de estágio). Subindo, mostra a janela de ganhos. */
+function mudarNivel(f, id, novoNex) {
+  if (!podeAjustarNivel(f)) return;
+  const velho = +f.nex || 5;
+  if (novoNex === velho) return;
+  f.nex = novoNex;
+  if (ehSobrevivente(f)) f.estagio = NEX_ESTAGIO[novoNex];
+  // o dono vê o aviso quando abrir a ficha; se é ele mesmo quem sobe, já viu
+  if (f.dono === S.uid) f.nexVisto = novoNex;
+  else if (f.nexVisto == null || f.nexVisto > velho) f.nexVisto = velho;
+  saveFicha(id, true);
+  renderPanel();
+  renderBoard();
+  if (novoNex > velho) janelaNivel(f, velho, novoNex);
+}
+
+/* Jogador abrindo a própria ficha depois que o mestre subiu o NEX: mostra o aviso uma vez. */
+function avisoNivelNovo(f, id) {
+  if (!f || S.isM || f.dono !== S.uid || !canEditFicha(f)) return;
+  const visto = f.nexVisto;
+  if (visto == null || visto >= +f.nex) return;
+  f.nexVisto = +f.nex;
+  saveFicha(id, true);
+  janelaNivel(f, visto, +f.nex);
 }
 </script>
 <script>
@@ -13788,13 +14133,11 @@ function syncNpcs() {
     list.forEach(x => {
       const { id, ...r } = x;
       const old = S.fichas[id];
-      if (old && S.dirty[id]) next[id] = old;
-      else if (old && old.npc) {
-        for (const k of Object.keys(old)) if (!(k in r) && k !== "npc") delete old[k];
-        Object.assign(old, r, { npc: true });
-        next[id] = old;
-      } else next[id] = { ...r, npc: true };
+      if (old && !old.npc)
+        next[id] = { ...r, npc: true }; // virou NPC: objeto novo
+      else next[id] = fichaDoBanco(id, { ...r, npc: true }, P() + "/npcs/" + id);
     });
+    esquecerBases(P() + "/npcs/", list);
     S.fichas = next;
     renderBoard();
     if (["agentes", "escudo", "combate", "tokens", "rolagens"].includes(S.tool) && !isEditing())
@@ -25616,7 +25959,11 @@ const AJUDA = {
       ],
       [
         "Criar sua ficha",
-        `Abra ${AJ_I("Agentes")} → <b>Criar ficha</b>. Escolha origem, classe, trilha e NEX; distribua os atributos e toque em <b>Marcar perícias da origem e classe</b>. Vida, PE, Sanidade e Defesa são calculados sozinhos. Na aba <b>História</b> você põe a arte do personagem.`
+        `Abra ${AJ_I("Agentes")} → <b>Criar ficha</b>. Escolha origem e classe, distribua os atributos e toque em <b>Marcar perícias da origem e classe</b>. Vida, PE, Sanidade e Defesa são calculados sozinhos. Na aba <b>História</b> você põe a arte do personagem.`
+      ],
+      [
+        "O que a ficha deixa escolher",
+        "A ficha segue as regras do seu NEX: mostra quantos pontos de atributo, perícias, poderes e rituais você tem (<b>2 de 4</b>) e trava o que passaria do limite. A caixa <b>Falta escolher</b> no topo diz o que ainda está livre; toque num item para ir à aba certa. Tirar sempre pode. O <b>NEX</b>, o prestígio e os bônus quem muda é o mestre; quando ele sobe o seu NEX, a ficha mostra o que você ganhou."
       ],
       [
         "Rolar dados",
@@ -25657,6 +26004,10 @@ const AJUDA = {
   mestre: {
     nome: "Mestre",
     itens: [
+      [
+        "Subir o NEX e as travas da ficha",
+        "Abra a ficha do agente e mude o <b>NEX</b> (ou o estágio do Sobrevivente): aparece o que ele ganhou em cada nível e o que falta escolher, e o jogador vê o mesmo aviso quando abrir a ficha. As fichas dos agentes travam no limite das regras. Para homebrew ou recompensa, em Principal → <b>Regras da ficha</b> dê extras (+1 poder, +2 perícias…) ou marque <b>Regras livres</b> para tirar as travas daquela ficha. NPCs e criaturas não têm trava."
+      ],
       [
         "Criar a mesa e chamar os jogadores",
         "Na página inicial, crie a mesa e escolha quem pode entrar: qualquer um com o link, só com senha, ou só quem você aprovar. Mande o link. No " +
@@ -28462,17 +28813,13 @@ function ajustarSobrevivente(f, D) {
   D.limPE = 1;
   D.peRod = 1;
   D.dtRit = 11 + A.PRE;
+  D.circ = f.trilha === "Esotérico" && e >= 4 ? 1 : 0; // Iniciado: um ritual de 1º círculo
 }
 /* Troca de estágio na ficha (o campo s_est é desenhado em tabPrincipal). */
 function bindEstagio(f, id) {
   const s = $("#s_est");
   if (!s || !f) return;
-  s.onchange = () => {
-    f.estagio = +s.value;
-    f.nex = ESTAGIO_NEX[f.estagio];
-    saveFicha(id);
-    renderPanel();
-  };
+  s.onchange = () => mudarNivel(f, id, ESTAGIO_NEX[+s.value]); // subir de nível guiado (ficha/subir-nex)
 }
 /* Aba Suplementos das Regras: classe Sobrevivente e onde achar as regras opcionais. */
 function regrasSuplementosHTML() {
@@ -28525,10 +28872,312 @@ function regrasSuplementosHTML() {
 </script>
 <script>
 "use strict";
+/* Limites da ficha pelas regras: quantos pontos de atributo, perícias, graus, poderes, rituais e
+   itens o agente pode ter no NEX dele. A ficha usa isto para travar o que passaria do limite e para
+   mostrar "o que falta escolher". Tudo de regra de limite fica neste arquivo.
+
+   Como funciona a trava: permitido(f, mudança) aplica a mudança numa cópia da ficha e compara os
+   problemas() antes e depois. Se algum problema aparece ou aumenta, a mudança não passa. Tirar
+   alguma coisa sempre passa, mesmo numa ficha que já estava acima do limite. */
+
+/* As regras valem para agentes. NPCs, criaturas e fichas liberadas pelo mestre ficam livres. */
+function regrasAtivas(f) {
+  return !!f && !f.npc && !f.criatura && !f.rapido && !f.regrasLivres;
+}
+/* NEX, estágio, prestígio, bônus e extras: só o mestre muda (ou o dono, fora de mesa ou com a ficha liberada). */
+function podeAjustarNivel(f) {
+  return canEditFicha(f) && (S.isM || !!S.solo || !regrasAtivas(f));
+}
+/* Extras que o mestre deu na ficha (homebrew, recompensa): f.extra = { attr, pericias, graus, ... } */
+const EXTRAS = [
+  ["attr", "Pontos de atributo"],
+  ["pericias", "Perícias treinadas"],
+  ["graus", "Graus de treinamento"],
+  ["poderes", "Poderes de classe"],
+  ["paranormais", "Poderes paranormais"],
+  ["rituais", "Rituais"]
+];
+const extraDe = (f, k) => +(f.extra || {})[k] || 0;
+const contar = (lista, nome) => (lista || []).filter(x => x === nome).length;
+/* Textos da progressão da classe já alcançados (NEX da ficha ou outro). */
+function progAte(f, nex = +f.nex || 5) {
+  const c = CLASSES[f.classe] || CLASSES.Combatente;
+  return Object.entries(c.prog)
+    .filter(([n]) => +n <= nex)
+    .map(([, t]) => t);
+}
+
+/* Todos os números de limite da ficha. */
+function limitesFicha(f) {
+  const c = CLASSES[f.classe] || CLASSES.Combatente;
+  const nex = +f.nex || 5;
+  const sob = ehSobrevivente(f);
+  const INT = Math.max(0, +f.attr.INT || 0);
+  const prog = progAte(f);
+  const quantos = re => prog.filter(t => re.test(t)).length;
+  const D = derivados(f);
+
+  // Atributos: 4 pontos na criação (Sobrevivente: 3), +1 a cada "aumento de atributo".
+  // Máximo 3 na criação; cada aumento deixa um atributo passar disso, até 5.
+  const aumentos = quantos(/aumento de atributo/i);
+  const attr = {
+    total: (sob ? 3 : 4) + aumentos + extraDe(f, "attr"),
+    usados: ATTRS.reduce((s, k) => s + (+f.attr[k] || 0), 0) - 5,
+    max: Math.min(5, 3 + aumentos + Math.max(0, extraDe(f, "attr"))),
+    aumentos
+  };
+
+  // Perícias treinadas: origem (2) + classe (fixas + à escolha + INT) + trilha Esperto + extras.
+  // Graus (veterano/expert): em cada "grau de treinamento", grauTreino + INT perícias sobem um grau.
+  // Treinamento em Perícia: 2 por poder, para treinar ou (a partir de NEX 35%) subir um grau.
+  const og = ORIGENS[f.origem] || [[]];
+  const graus = PERICIAS.map(([p]) => grau(f, p));
+  const per = {
+    base:
+      (og[0].length || 2) +
+      c.fixas.length +
+      c.escolhaFixa.length +
+      c.livres +
+      INT +
+      (sob && f.trilha === "Esperto" && nex >= 10 ? 1 : 0) +
+      extraDe(f, "pericias"),
+    usadas: graus.filter(g => g >= 5).length,
+    flex: 2 * contar(f.poderes, "Treinamento em Perícia"),
+    grausBase: quantos(/grau de treinamento/i) * ((c.grauTreino || 0) + INT) + extraDe(f, "graus"),
+    grausUsados: graus.reduce((s, g) => s + Math.max(0, (g - 5) / 5), 0),
+    veteranoLiberado: nex >= 35,
+    expertLiberado: nex >= 70
+  };
+  const excT = Math.max(0, per.usadas - per.base);
+  const excG = Math.max(0, per.grausUsados - per.grausBase);
+  per.flexUsado = excT + (nex >= 35 ? excG : 0);
+  per.flexSobra = per.flex - per.flexUsado;
+  per.max = per.base + Math.max(0, per.flex - (nex >= 35 ? excG : 0)); // treinadas possíveis agora
+  per.grausMax = per.grausBase + (nex >= 35 ? Math.max(0, per.flex - excT) : 0);
+
+  // Poderes de classe: um em cada "poder de <classe>" e mais um na versatilidade (NEX 50%).
+  // Poderes paranormais: um por Transcender.
+  const poderes = {
+    max:
+      quantos(/poder de (combatente|especialista|ocultista)/i) +
+      quantos(/versatilidade/i) +
+      extraDe(f, "poderes"),
+    usados: (f.poderes || []).length
+  };
+  const paranormais = {
+    max: contar(f.poderes, "Transcender") + extraDe(f, "paranormais"),
+    usados: (f.paranormais || []).length
+  };
+
+  // Rituais: ocultista começa com 3 e aprende 1 a cada NEX; Aprender Ritual dá 1;
+  // Sobrevivente Esotérico (Iniciado, estágio 4) dá 1. Círculo máximo vem de derivados().
+  const rituais = {
+    max:
+      (f.classe === "Ocultista" ? 2 + nexN(nex) : 0) +
+      contar(f.paranormais, "Aprender Ritual") +
+      (sob && f.trilha === "Esotérico" && nex >= 40 ? 1 : 0) +
+      extraDe(f, "rituais"),
+    usados: (f.rituais || []).length,
+    circulo: D.circ
+  };
+
+  // Itens por categoria (patente; Sobrevivente: 1 de categoria I) e carga (até o dobro do limite).
+  const lim = D.pat;
+  const itens = {
+    cat: [0, 1, 2, 3, 4].map(i =>
+      i === 0 ? Infinity : (sob ? [0, 1, 0, 0, 0][i] : lim[2 + i]) + (+f["catx" + i] || 0)
+    ),
+    uso: D.usoCat,
+    carga: D.carga,
+    usados: D.usados
+  };
+  return { attr, per, poderes, paranormais, rituais, itens, trilhaLiberada: nex >= 10, nex, D };
+}
+
+/* O que está acima do que as regras permitem. Cada problema tem um número (quanto passou) e um texto. */
+function problemas(f) {
+  const P = {};
+  if (!regrasAtivas(f)) return P;
+  const L = limitesFicha(f);
+  const c = CLASSES[f.classe] || CLASSES.Combatente;
+  const add = (k, n, texto, aba) => {
+    if (n > 0) P[k] = { n, texto, aba };
+  };
+  const { attr, per } = L;
+  add(
+    "attr",
+    attr.usados - attr.total,
+    `Atributos: ${attr.usados - attr.total} ponto(s) acima do permitido`,
+    "principal"
+  );
+  const acima = ATTRS.filter(k => f.attr[k] > attr.max);
+  add(
+    "attrMax",
+    acima.reduce((s, k) => s + f.attr[k] - attr.max, 0),
+    `${acima.join(", ")} acima de ${attr.max}${attr.aumentos ? "" : " (máximo na criação)"}`,
+    "principal"
+  );
+  add(
+    "attrZero",
+    ATTRS.filter(k => f.attr[k] <= 0).length - 1,
+    "Só um atributo pode ser reduzido a 0",
+    "principal"
+  );
+  add(
+    "pericias",
+    per.flexUsado - per.flex,
+    `Perícias: ${per.flexUsado - per.flex} treino(s) ou grau(s) acima do permitido`,
+    "pericias"
+  );
+  const grauCedo = PERICIAS.filter(([p]) => {
+    const g = grau(f, p);
+    return (g >= 10 && !per.veteranoLiberado) || (g >= 15 && !per.expertLiberado);
+  }).length;
+  add("grauNex", grauCedo, "Veterano só a partir de NEX 35% e expert a partir de 70%", "pericias");
+  add(
+    "poderes",
+    L.poderes.usados - L.poderes.max,
+    `Poderes: ${L.poderes.usados - L.poderes.max} acima do permitido`,
+    "habilidades"
+  );
+  const deFora = (f.poderes || []).filter(p => !c.poderes.includes(p));
+  add(
+    "poderClasse",
+    deFora.length,
+    `${deFora.join(", ")}: não é poder de ${f.classe.toLowerCase()}`,
+    "habilidades"
+  );
+  add(
+    "paranormais",
+    L.paranormais.usados - L.paranormais.max,
+    `Poderes paranormais: ${L.paranormais.usados - L.paranormais.max} acima (cada um vem de um Transcender)`,
+    "habilidades"
+  );
+  add(
+    "rituais",
+    L.rituais.usados - L.rituais.max,
+    `Rituais: ${L.rituais.usados - L.rituais.max} acima do permitido`,
+    "rituais"
+  );
+  const altos = allRituais().filter(r => (f.rituais || []).includes(r.n) && r.c > L.rituais.circulo);
+  add(
+    "circulo",
+    altos.length,
+    `${altos.map(r => r.n).join(", ")}: círculo acima do ${L.rituais.circulo || "permitido"}${L.rituais.circulo ? "º" : ""}`,
+    "rituais"
+  );
+  add("trilha", f.trilha && !L.trilhaLiberada ? 1 : 0, "Trilha só a partir de NEX 10%", "principal");
+  ["I", "II", "III", "IV"].forEach((cat, i) => {
+    const n = L.itens.uso[i + 1] - L.itens.cat[i + 1];
+    add("cat" + (i + 1), n, `Itens de categoria ${cat}: ${n} acima do limite da patente`, "inventario");
+  });
+  add(
+    "carga",
+    L.itens.usados - L.itens.carga * 2,
+    `Carga: ${L.itens.usados} espaços, acima do dobro do limite (${L.itens.carga * 2})`,
+    "inventario"
+  );
+  return P;
+}
+
+/* A mudança pode ser feita? mudar(cópia) altera a cópia da ficha. Devolve { ok, motivo }. */
+function permitido(f, mudar) {
+  if (!regrasAtivas(f)) return { ok: true };
+  const { foto, ...resto } = f; // a foto não entra na conta e deixa a cópia pesada
+  const copia = JSON.parse(JSON.stringify(resto));
+  mudar(copia);
+  const antes = problemas(f),
+    depois = problemas(copia);
+  for (const k in depois)
+    if (depois[k].n > ((antes[k] || {}).n || 0)) return { ok: false, motivo: depois[k].texto };
+  return { ok: true };
+}
+/* Para os botões: tenta a mudança; se a regra não deixa, avisa o motivo e devolve false. */
+function trava(f, mudar) {
+  const r = permitido(f, mudar);
+  if (!r.ok) toast(r.motivo + ".");
+  return r.ok;
+}
+
+/* O que ainda falta escolher (para a caixa no topo da ficha e o aviso de NEX novo). */
+function pendencias(f) {
+  if (!regrasAtivas(f)) return [];
+  const L = limitesFicha(f);
+  const c = CLASSES[f.classe] || CLASSES.Combatente;
+  const out = [];
+  const add = (n, um, varios, aba) => {
+    if (n > 0) out.push({ n, texto: n === 1 ? um : `${n} ${varios}`, aba });
+  };
+  add(L.attr.total - L.attr.usados, "1 ponto de atributo", "pontos de atributo", "principal");
+  add(L.per.base - L.per.usadas, "1 perícia para treinar", "perícias para treinar", "pericias");
+  add(
+    L.per.grausBase - L.per.grausUsados,
+    "1 grau de treinamento (subir uma perícia)",
+    "graus de treinamento",
+    "pericias"
+  );
+  add(
+    L.per.flexUsado < L.per.flex ? L.per.flex - L.per.flexUsado : 0,
+    "1 perícia do Treinamento em Perícia",
+    "perícias do Treinamento em Perícia",
+    "pericias"
+  );
+  if (L.trilhaLiberada && !f.trilha) out.push({ n: 1, texto: "a trilha", aba: "principal" });
+  add(
+    L.poderes.max - L.poderes.usados,
+    `1 poder de ${f.classe.toLowerCase()}`,
+    `poderes de ${f.classe.toLowerCase()}`,
+    "habilidades"
+  );
+  add(L.paranormais.max - L.paranormais.usados, "1 poder paranormal", "poderes paranormais", "habilidades");
+  add(L.rituais.max - L.rituais.usados, "1 ritual", "rituais", "rituais");
+  if (L.nex >= 50 && !f.afinidade && !ehSobrevivente(f) && (f.paranormais || []).length)
+    out.push({ n: 1, texto: "a afinidade (NEX 50%)", aba: "habilidades" });
+  return out;
+}
+
+/* Caixa "O que falta escolher" e os avisos de regra, no topo da ficha. */
+function regrasFichaHTML(f) {
+  if (!regrasAtivas(f) || !canEditFicha(f)) return "";
+  const pend = pendencias(f);
+  const prob = Object.values(problemas(f));
+  if (!pend.length && !prob.length) return "";
+  const aba = (x, cls) =>
+    `<button type="button" class="pend ${cls}" data-irpara="${x.aba}">${esc(x.texto)}</button>`;
+  return `<div class="regras-ficha">
+    ${pend.length ? `<div><span class="label">Falta escolher</span><div class="pends">${pend.map(x => aba(x, "")).join("")}</div></div>` : ""}
+    ${prob.length ? `<div><span class="label" style="color:var(--red-hi)">Acima do que as regras deixam</span><div class="pends">${prob.map(x => aba(x, "ruim")).join("")}</div><div class="muted small">Tire o que passou do limite ou peça ao mestre para liberar.</div></div>` : ""}
+  </div>`;
+}
+
+/* Caixa do mestre na aba Principal: regras livres nesta ficha e extras. */
+function regrasMestreHTML(f) {
+  if (f.npc || f.criatura || f.rapido) return "";
+  const pode = S.isM || !!S.solo;
+  return `<details class="more"><summary>Regras da ficha${pode ? "" : " (o mestre ajusta)"}</summary><div class="stack" style="margin-top:8px;gap:8px">
+    <label class="check"><input type="checkbox" id="regLivres" ${f.regrasLivres ? "checked" : ""} ${pode ? "" : "disabled"}> Regras livres nesta ficha (sem travas)</label>
+    <p class="muted small" style="margin:0">Com as travas, a ficha só deixa pôr o que o NEX permite. Para homebrew ou recompensa, dê extras:</p>
+    <div class="row" style="flex-wrap:wrap;gap:8px">${EXTRAS.map(
+      ([k, n]) =>
+        `<div class="field" style="width:132px"><label class="label" for="ex_${k}">${n}</label><input type="number" id="ex_${k}" data-extra="${k}" value="${extraDe(f, k)}" min="-10" max="30" ${pode ? "" : "disabled"}></div>`
+    ).join("")}</div></div></details>`;
+}
+
+/* Um item novo (categoria cat, esp espaços) cabe? Devolve "" ou o motivo curto, para as listas de itens. */
+function itemNaoCabe(f, L, cat, esp) {
+  if (!regrasAtivas(f)) return "";
+  const k = CAT_N[cat];
+  if (k >= 1 && k <= 4 && L.itens.uso[k] + 1 > L.itens.cat[k]) return `categoria ${cat} cheia`;
+  if (L.itens.usados + (+esp || 0) > L.itens.carga * 2) return "pesado demais";
+  return "";
+}
+</script>
+<script>
+"use strict";
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="12/11 20h4120";
+const VERSAO_SITE="13/11 08h4204";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

@@ -16,7 +16,11 @@ const AJUDA = {
       ],
       [
         "Criar sua ficha",
-        `Abra ${AJ_I("Agentes")} → <b>Criar ficha</b>. Escolha origem, classe, trilha e NEX; distribua os atributos e toque em <b>Marcar perícias da origem e classe</b>. Vida, PE, Sanidade e Defesa são calculados sozinhos. Na aba <b>História</b> você põe a arte do personagem.`
+        `Abra ${AJ_I("Agentes")} → <b>Criar ficha</b>. Escolha origem e classe, distribua os atributos e toque em <b>Marcar perícias da origem e classe</b>. Vida, PE, Sanidade e Defesa são calculados sozinhos. Na aba <b>História</b> você põe a arte do personagem.`
+      ],
+      [
+        "O que a ficha deixa escolher",
+        "A ficha segue as regras do seu NEX: mostra quantos pontos de atributo, perícias, poderes e rituais você tem (<b>2 de 4</b>) e trava o que passaria do limite. A caixa <b>Falta escolher</b> no topo diz o que ainda está livre; toque num item para ir à aba certa. Tirar sempre pode. O <b>NEX</b>, o prestígio e os bônus quem muda é o mestre; quando ele sobe o seu NEX, a ficha mostra o que você ganhou."
       ],
       [
         "Rolar dados",
@@ -57,6 +61,10 @@ const AJUDA = {
   mestre: {
     nome: "Mestre",
     itens: [
+      [
+        "Subir o NEX e as travas da ficha",
+        "Abra a ficha do agente e mude o <b>NEX</b> (ou o estágio do Sobrevivente): aparece o que ele ganhou em cada nível e o que falta escolher, e o jogador vê o mesmo aviso quando abrir a ficha. As fichas dos agentes travam no limite das regras. Para homebrew ou recompensa, em Principal → <b>Regras da ficha</b> dê extras (+1 poder, +2 perícias…) ou marque <b>Regras livres</b> para tirar as travas daquela ficha. NPCs e criaturas não têm trava."
+      ],
       [
         "Criar a mesa e chamar os jogadores",
         "Na página inicial, crie a mesa e escolha quem pode entrar: qualquer um com o link, só com senha, ou só quem você aprovar. Mande o link. No " +

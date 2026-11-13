@@ -19,6 +19,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | `backup` | Baixar e restaurar fichas e mesa |
 | `combate` | Painel de combate sem erros |
 | `copiar-cena` | Copiar cena e mapa para outra mesa do mesmo mestre |
+| `edicao-ao-mesmo-tempo` | Mestre e jogador mexendo na mesma ficha juntos: nenhum apaga o outro |
 | `dar-ficha` | Dar uma ficha a um jogador e tirar; o token acompanha |
 | `documentos-no-mapa` | Pôr documento no mapa, ler, arrastar e tirar |
 | `documentos-passar` | Jogador passa documento adiante; mestre recolhe |
@@ -39,5 +40,6 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | `passagens` | Passagens entre cenas (andares) |
 | `portas` | Portas que abrem e fecham |
 | `portas-trancadas` | Trancar e destrancar portas |
+| `regras-da-ficha` | Travas da ficha (atributos, perícias, poderes, rituais, itens), extras do mestre e subir de NEX |
 | `sobrevivente` | Classe Sobrevivente e ameaças dos suplementos |
 | `suplementos` | Origens, poderes e rituais dos suplementos |

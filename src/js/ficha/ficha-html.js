@@ -61,6 +61,7 @@ function sheetHTML() {
   }[t]();
   return (
     head +
+    regrasFichaHTML(f) + // "Falta escolher" e avisos de regra (regras/limites)
     `<fieldset ${ed ? "" : "disabled"} style="border:0;padding:0;margin:0;min-width:0" class="stack">${body}</fieldset>`
   );
 }
@@ -77,10 +78,13 @@ function rbar(k, lab, v, max) {
 }
 
 function tabPrincipal(f, D, c, sel) {
-  const pts = ATTRS.reduce((a, k) => a + f.attr[k], 0) - 5;
   const sob = ehSobrevivente(f); // Sobrevivente: estágio no lugar do NEX, 3 pontos de atributo, sem patente
-  const ptsCriacao = sob ? 3 : 4;
   const og = ORIGENS[f.origem];
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f);
+  const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // NEX, prestígio e bônus
+  const sobra = L.attr.total - L.attr.usados;
+  const pode = (k, d) => permitido(f, x => (x.attr[k] += d)).ok;
   const auto = condAuto(f);
   return `<div class="fields">
    <div class="field"><label class="label" for="s_jogador">Jogador</label><input type="text" id="s_jogador" data-f="jogador" value="${esc(f.jogador)}" maxlength="40"></div>
@@ -91,18 +95,25 @@ function tabPrincipal(f, D, c, sel) {
      f.origem
    )}</div>
    <div class="field"><label class="label" for="s_classe">Classe</label>${sel("classe", Object.keys(CLASSES), f.classe)}</div>
-   <div class="field"><label class="label" for="s_trilha">Trilha</label>${sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Em NEX 10%")}</div>
+   <div class="field"><label class="label" for="s_trilha">Trilha</label>${
+     travas && !L.trilhaLiberada
+       ? `<select id="s_trilha" disabled><option>Em ${sob ? "estágio 2" : "NEX 10%"}</option></select>`
+       : sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Escolha a trilha")
+   }</div>
    ${
      sob
-       ? `<div class="field"><label class="label" for="s_est">Estágio</label><select id="s_est">${[1, 2, 3, 4, 5].map(i => `<option value="${i}" ${i === estagioDe(f) ? "selected" : ""}>Estágio ${i}</option>`).join("")}</select></div>`
-       : `<div class="field"><label class="label" for="s_nex">NEX</label>${sel("nex", NEX_OPTS, f.nex, "%")}</div>
-   <div class="field"><label class="label" for="s_pp">Pontos de prestígio</label><input type="number" id="s_pp" data-f="pp" value="${+f.pp || 0}" min="0"></div>
-   <div class="field"><label class="label" for="s_pat">Patente</label><select id="s_pat" data-patsel ${canEditFicha(f) ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></div>`
+       ? `<div class="field"><label class="label" for="s_est">Estágio</label><select id="s_est" ${nivel}>${[1, 2, 3, 4, 5].map(i => `<option value="${i}" ${i === estagioDe(f) ? "selected" : ""}>Estágio ${i}</option>`).join("")}</select></div>`
+       : `<div class="field"><label class="label" for="s_nex">NEX</label><select id="s_nex" ${nivel}>${NEX_OPTS.map(n => `<option value="${n}" ${+f.nex === n ? "selected" : ""}>${n}%</option>`).join("")}</select></div>
+   <div class="field"><label class="label" for="s_pp">Pontos de prestígio</label><input type="number" id="s_pp" data-f="pp" value="${+f.pp || 0}" min="0" ${nivel}></div>
+   <div class="field"><label class="label" for="s_pat">Patente</label><select id="s_pat" data-patsel ${canEditFicha(f) && !nivel ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></div>`
    }
   </div>
+  ${travas && nivel ? `<p class="muted small" style="margin:0">${sob ? "Estágio" : "NEX, prestígio"} e bônus: quem muda é o mestre.</p>` : ""}
   <p class="muted small" style="margin:0">Origem: <b style="color:var(--fg)">${esc(og[1])}</b> · perícias ${og[0].join(" e ") || "à escolha do mestre"}. Classe: ${c.fixasTxt ? esc(c.fixasTxt) + " + " : ""}${c.livres} + INT perícias à escolha. <button type="button" class="btn sm" id="btnAplicar">Marcar perícias da origem e classe</button></p>
-  <div class="box stack"><div class="row between"><h3>Atributos</h3><span class="muted small">${pts === ptsCriacao ? `${ptsCriacao} pontos distribuídos` : pts > ptsCriacao ? `${pts} pontos (criação: ${ptsCriacao}; ${sob ? "+1 no estágio 3" : "aumentos em NEX 20/50/80/95%"})` : `${ptsCriacao - pts} ponto(s) livre(s)`}${sob ? " · Sobrevivente: 3 pontos" : ""}</span></div>
-   <div class="attrs">${ATTRS.map(k => `<div class="attr" title="${ATTR_NOME[k]}"><span class="k">${k}</span><span class="n">${f.attr[k]}</span><div class="pm"><button type="button" data-attr="${k}" data-d="-1" aria-label="Diminuir ${ATTR_NOME[k]}">−</button><button type="button" data-attr="${k}" data-d="1" aria-label="Aumentar ${ATTR_NOME[k]}">+</button></div></div>`).join("")}</div></div>
+  <div class="box stack"><div class="row between"><h3>Atributos</h3><span class="contador ${sobra < 0 ? "ruim" : sobra ? "falta" : ""}">${L.attr.usados} de ${L.attr.total} pontos${sobra > 0 ? ` · faltam ${sobra}` : sobra < 0 ? ` · ${-sobra} acima` : ""}</span></div>
+   <div class="attrs">${ATTRS.map(k => `<div class="attr" title="${ATTR_NOME[k]}"><span class="k">${k}</span><span class="n">${f.attr[k]}</span><div class="pm"><button type="button" data-attr="${k}" data-d="-1" aria-label="Diminuir ${ATTR_NOME[k]}" ${pode(k, -1) && f.attr[k] > 0 ? "" : "disabled"}>−</button><button type="button" data-attr="${k}" data-d="1" aria-label="Aumentar ${ATTR_NOME[k]}" ${pode(k, 1) && f.attr[k] < 5 ? "" : "disabled"}>+</button></div></div>`).join("")}</div>
+   ${travas ? `<p class="muted small" style="margin:0">Todos começam em 1. ${sob ? "3 pontos" : "4 pontos"} para distribuir, máximo ${L.attr.max} em cada${L.attr.aumentos ? ` (já conta ${L.attr.aumentos} aumento${L.attr.aumentos > 1 ? "s" : ""} de atributo)` : " na criação"}. Reduzir um atributo a 0 dá 1 ponto a mais.</p>` : ""}
+   ${regrasMestreHTML(f)}</div>
   ${morrendoHTML(f)}
   <div class="box stack"><h3>Recursos</h3>
    ${rbar("pv", "Vida", cur(f, "pv"), D.pvMax)}${rbar("san", "Sanidade", cur(f, "san"), D.sanMax)}${rbar("pe", "Esforço", cur(f, "pe"), D.peMax)}
@@ -118,11 +129,11 @@ function tabPrincipal(f, D, c, sel) {
      .join("")}</div>
    ${D.usados > D.carga ? `<div class="banner">Sobrecarregado: −5 na Defesa e em perícias com carga, deslocamento −3m.${D.usados > D.carga * 2 ? " Acima do dobro do limite: não dá para carregar tudo isso." : ""}</div>` : ""}
    <details class="more"><summary>Ajustar bônus e máximos</summary><div class="fields" style="margin-top:8px">
-    <div class="field"><label class="label" for="s_outrosDef">Outros na Defesa</label><input type="number" id="s_outrosDef" data-f="outrosDef" value="${+f.outrosDef || 0}"></div>
-    <div class="field"><label class="label" for="s_desl">Deslocamento</label><input type="text" id="s_desl" data-f="desl" value="${esc(f.desl || "9m")}" maxlength="12"></div>
-    <div class="field"><label class="label" for="s_bonusPV">Ajuste PV máx.</label><input type="number" id="s_bonusPV" data-f="bonusPV" value="${+f.bonusPV || 0}"></div>
-    <div class="field"><label class="label" for="s_bonusSAN">Ajuste SAN máx.</label><input type="number" id="s_bonusSAN" data-f="bonusSAN" value="${+f.bonusSAN || 0}"></div>
-    <div class="field"><label class="label" for="s_bonusPE">Ajuste PE máx.</label><input type="number" id="s_bonusPE" data-f="bonusPE" value="${+f.bonusPE || 0}"></div>
+    <div class="field"><label class="label" for="s_outrosDef">Outros na Defesa</label><input type="number" id="s_outrosDef" data-f="outrosDef" value="${+f.outrosDef || 0}" ${nivel}></div>
+    <div class="field"><label class="label" for="s_desl">Deslocamento</label><input type="text" id="s_desl" data-f="desl" value="${esc(f.desl || "9m")}" maxlength="12" ${nivel}></div>
+    <div class="field"><label class="label" for="s_bonusPV">Ajuste PV máx.</label><input type="number" id="s_bonusPV" data-f="bonusPV" value="${+f.bonusPV || 0}" ${nivel}></div>
+    <div class="field"><label class="label" for="s_bonusSAN">Ajuste SAN máx.</label><input type="number" id="s_bonusSAN" data-f="bonusSAN" value="${+f.bonusSAN || 0}" ${nivel}></div>
+    <div class="field"><label class="label" for="s_bonusPE">Ajuste PE máx.</label><input type="number" id="s_bonusPE" data-f="bonusPE" value="${+f.bonusPE || 0}" ${nivel}></div>
    </div></details>
   </div>
   <div class="box stack"><div class="row between"><h3>Condições</h3><div class="row" style="flex-wrap:nowrap"><select id="condSel" style="width:auto;max-width:170px">${CONDICOES.filter(
@@ -142,15 +153,25 @@ function tabPrincipal(f, D, c, sel) {
   </div>`;
 }
 function tabPericias(f, D) {
-  const c = CLASSES[f.classe];
-  return `<div class="box stack"><div class="row between"><h3>Perícias</h3><span class="muted small">grau · outros · rolar</span></div>
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f).per;
+  // um grau pode ser escolhido se a regra deixa (o atual sempre aparece)
+  const pode = (p, g, n) => g === n || permitido(f, x => (x.per[p] = { ...(x.per[p] || { b: 0 }), g: n })).ok;
+  const cont = (usado, max, nome) =>
+    `<span class="contador ${usado > max ? "ruim" : usado < max ? "falta" : ""}">${nome} ${usado} de ${max}</span>`;
+  return `<div class="box stack"><div class="row between"><h3>Perícias</h3>${
+    travas
+      ? `<span class="row" style="gap:6px">${cont(L.usadas, L.max, "treinadas")}${L.grausMax || L.grausUsados ? cont(L.grausUsados, L.grausMax, "graus") : ""}</span>`
+      : `<span class="muted small">grau · outros · rolar</span>`
+  }</div>
+   ${travas ? `<p class="muted small" style="margin:0">Treinadas: origem, classe e Intelecto${L.flex ? `, mais ${L.flex} do Treinamento em Perícia` : ""}. ${L.veteranoLiberado ? `Grau de treinamento: cada perícia que sobe de grau (veterano, ${L.expertLiberado ? "expert" : "expert em NEX 70%"}) gasta 1.` : "Veterano a partir de NEX 35%."}</p>` : ""}
    ${f.classe === "Especialista" && D.perito ? `<label class="check"><input type="checkbox" id="usarPerito"> Perito no próximo teste (${D.perito[1]} PE: +${D.perito[2]})</label>` : ""}
    <div>${PERICIAS.map(([p, a, r]) => {
      const v = f.per[p] || { g: 0, b: 0 };
      const g = +v.g || 0;
      return `<div class="per2 ${g ? "tr" : ""}"><span class="pn">${esc(p)}${r ? ` <span class="only">${esc(r)}</span>` : ""}</span><span class="a">${a}</span>
-     <select data-perg="${esc(p)}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""}>${l}</option>`).join("")}</select>
-     <input type="number" data-perb="${esc(p)}" value="${+v.b || 0}" aria-label="Outros bônus em ${esc(p)}">
+     <select data-perg="${esc(p)}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""} ${pode(p, g, n) ? "" : "disabled"}>${l}</option>`).join("")}</select>
+     <input type="number" data-perb="${esc(p)}" value="${+v.b || 0}" aria-label="Outros bônus em ${esc(p)}" ${podeAjustarNivel(f) ? "" : 'disabled title="Bônus: quem dá é o mestre"'}>
      <button type="button" class="rollbtn" data-roll="${esc(p)}" ${/só treinada/.test(r) && !g ? 'title="Só pode ser usada treinada"' : ""}>${rollLabel(f, p, a)}</button></div>`;
    }).join("")}</div>
    <p class="muted small" style="margin:0">Treinado +5, veterano +10, expert +15. Perícias "só treinada" não podem ser usadas sem treino; "kit" sofre −5 sem o kit.</p></div>`;
@@ -187,8 +208,14 @@ function profOK(f, a) {
   return true;
 }
 function tabCombate(f, D, c) {
+  const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // números da arma
+  const L = limitesFicha(f);
+  const naoCabe = (cat, esp) => itemNaoCabe(f, L, cat, esp); // categoria cheia ou pesado demais (regras/limites)
   return `<div class="box stack"><div class="row between"><h3>Ataques</h3><div class="row" style="flex-wrap:nowrap"><select id="addArmaSel" style="width:auto;max-width:180px">${allArmas()
-    .map((a, i) => `<option value="${i}">${esc(a.nome)} · ${a.dano}${a.hb ? " (homebrew)" : ""}</option>`)
+    .map(
+      (a, i) =>
+        `<option value="${i}" ${naoCabe(a.cat, a.esp) ? "disabled" : ""}>${esc(a.nome)} · ${a.dano}${a.hb ? " (homebrew)" : ""}${naoCabe(a.cat, a.esp) ? " · " + naoCabe(a.cat, a.esp) : ""}</option>`
+    )
     .join("")}</select><button type="button" class="btn sm" id="btnAddArma">Adicionar</button></div></div>
    ${
      f.classe === "Combatente" && D.atq
@@ -208,13 +235,13 @@ function tabCombate(f, D, c) {
          ? `<div class="fields" style="margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">
       <div class="field"><label class="label">Nome</label><input type="text" data-arma="${i}" data-k="nome" value="${esc(a.nome)}"></div>
       <div class="field"><label class="label">Perícia</label><select data-arma="${i}" data-k="pericia">${["Luta", "Pontaria"].map(p => `<option ${a.pericia === p ? "selected" : ""}>${p}</option>`).join("")}</select></div>
-      <div class="field"><label class="label">Dano</label><input type="text" data-arma="${i}" data-k="dano" value="${esc(a.dano)}"></div>
-      <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3"></div>
-      <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}"></div>
-      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}"></div>
-      <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}"></div>
-      <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}"></div>
-      <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""}> Arma ágil</label>
+      <div class="field"><label class="label">Dano</label><input type="text" data-arma="${i}" data-k="dano" value="${esc(a.dano)}" ${nivel}></div>
+      <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3" ${nivel}></div>
+      <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}" ${nivel}></div>
+      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}" ${nivel}></div>
+      <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}" ${nivel}></div>
+      <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}" ${nivel}></div>
+      <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""} ${nivel}> Arma ágil</label>
       <div class="field" style="grid-column:1/-1"><label class="label">Modificações e maldições</label><div class="row" style="flex-wrap:nowrap"><select data-modsel="${i}">${MODIFICACOES.filter(
         m => /corpo|fogo|munição/.test(m[1])
       )
@@ -233,7 +260,7 @@ function tabCombate(f, D, c) {
    }</div>
    <p class="muted small" style="margin:0">Luta usa FOR (armas ágeis podem usar AGI) e soma FOR no dano; Pontaria usa AGI. No crítico, os dados de dano são multiplicados. Cada modificação aumenta a categoria em I.</p>
   </div>
-  <div class="box stack"><div class="row between"><h3>Proteções</h3><div class="row" style="flex-wrap:nowrap"><select id="protSel" style="width:auto">${PROTECOES.map((p, i) => `<option value="${i}">${p[0]} · +${p[3]} Def</option>`).join("")}</select><button type="button" class="btn sm" id="protAdd">Adicionar</button></div></div>
+  <div class="box stack"><div class="row between"><h3>Proteções</h3><div class="row" style="flex-wrap:nowrap"><select id="protSel" style="width:auto">${PROTECOES.map((p, i) => `<option value="${i}" ${naoCabe(p[1], p[2]) ? "disabled" : ""}>${p[0]} · +${p[3]} Def${naoCabe(p[1], p[2]) ? " · " + naoCabe(p[1], p[2]) : ""}</option>`).join("")}</select><button type="button" class="btn sm" id="protAdd">Adicionar</button></div></div>
    ${
      (f.protecoes || []).length
        ? `<div class="cards">${f.protecoes
@@ -266,7 +293,11 @@ function tabRituais(f, D) {
     .filter(r => !(f.rituais || []).includes(r.n))
     .filter(r => !S.ritFiltro || String(r.el).split(" e ").includes(S.ritFiltro));
   const ocult = f.classe === "Ocultista";
-  return `<div class="box stack"><div class="row between"><h3>Rituais</h3><span class="muted small">DT ${D.dtRit} · ${D.circ ? `até ${D.circ}º círculo` : "sem acesso a rituais"}</span></div>
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f).rituais;
+  const cheio = travas && L.usados >= L.max;
+  const circOk = c => !travas || c <= L.circulo;
+  return `<div class="box stack"><div class="row between"><h3>Rituais ${travas ? `<span class="contador ${L.usados > L.max ? "ruim" : L.usados < L.max ? "falta" : ""}">${L.usados} de ${L.max}</span>` : ""}</h3><span class="muted small">DT ${D.dtRit} · ${D.circ ? `até ${D.circ}º círculo` : "sem acesso a rituais"}</span></div>
    ${!ocult ? `<p class="muted small" style="margin:0">Sem ser ocultista, você aprende rituais com o poder paranormal Aprender Ritual (via Transcender).</p>` : ""}
    <label class="check"><input type="checkbox" id="semComp"> Sem componentes ritualísticos (não dá para conjurar, exceto Medo)</label>
    ${
@@ -281,15 +312,18 @@ function tabRituais(f, D) {
        : `<div class="muted small">Nenhum ritual aprendido.</div>`
    }
    <div class="sub">Aprender ritual</div>
+   ${travas ? `<p class="muted small" style="margin:0">${ocult ? "Ocultista: 3 rituais no começo e mais 1 a cada NEX." : "Cada Aprender Ritual (poder paranormal) ensina 1 ritual."}${cheio ? " Você já aprendeu todos os rituais que pode agora." : ""}</p>` : ""}
    <div class="tabs2">${["", ...ELEMENTOS].map(e => `<button type="button" data-ritf="${e}" aria-pressed="${(S.ritFiltro || "") === e}">${e || "Todos"}</button>`).join("")}</div>
-   <div class="row" style="flex-wrap:nowrap"><select id="ritSel">${[1, 2, 3, 4]
+   <div class="row" style="flex-wrap:nowrap"><select id="ritSel" ${cheio ? "disabled" : ""}>${[1, 2, 3, 4]
      .map(c => {
        const l = avail.filter(r => r.c === c);
        return l.length
-         ? `<optgroup label="${c}º círculo · ${CUSTO_CIRCULO[c]} PE">${l.map(r => `<option value="${esc(r.n)}">${esc(r.n)} · ${esc(r.el)}${r.hb ? " (homebrew)" : ""}${fonteTag(r.n)}</option>`).join("")}</optgroup>`
+         ? `<optgroup label="${c}º círculo · ${CUSTO_CIRCULO[c]} PE${circOk(c) ? "" : " · ainda não"}" ${circOk(c) ? "" : "disabled"}>${l.map(r => `<option value="${esc(r.n)}">${esc(r.n)} · ${esc(r.el)}${r.hb ? " (homebrew)" : ""}${fonteTag(r.n)}</option>`).join("")}</optgroup>`
          : "";
      })
-     .join("")}</select><button type="button" class="btn sm" id="ritAdd">Aprender</button></div>
+     .join(
+       ""
+     )}</select><button type="button" class="btn sm" id="ritAdd" ${cheio ? "disabled" : ""}>Aprender</button></div>
    <p class="muted small" style="margin:0">Custo por círculo: 1º 1 PE, 2º 3 PE, 3º 6 PE, 4º 10 PE; Discente e Verdadeiro somam o custo extra e pedem o círculo indicado. Os textos completos dos rituais estão no livro.</p>
   </div>`;
 }
@@ -300,6 +334,14 @@ function tabHabilidades(f, D, c) {
   const pod = f.poderes || [];
   const par = f.paranormais || [];
   const habs = hbOf("habilidade");
+  const travas = regrasAtivas(f);
+  const L = limitesFicha(f);
+  const cont = ({ usados, max }) =>
+    travas
+      ? `<span class="contador ${usados > max ? "ruim" : usados < max ? "falta" : ""}">${usados} de ${max}</span>`
+      : "";
+  const cheioPod = travas && L.poderes.usados >= L.poderes.max;
+  const cheioPar = travas && L.paranormais.usados >= L.paranormais.max;
   return `<div class="box stack"><h3>Classe: ${esc(f.classe)}</h3>
     <div class="cards">${progs.map(([n, h]) => `<div class="condrow" style="border-left-color:var(--purple)"><span class="tag on">${ehSobrevivente(f) ? "Estágio " + NEX_ESTAGIO[n] : n + "%"}</span><div class="small">${esc(h)}</div><span></span></div>`).join("")}</div>
     ${f.classe === "Combatente" && D.atq ? `<p class="muted small" style="margin:0">Ataque Especial agora: ${D.atq[1]} PE, +${D.atq[2]}.</p>` : ""}
@@ -309,16 +351,19 @@ function tabHabilidades(f, D, c) {
    <div class="box stack"><h3>Trilha${f.trilha ? ": " + esc(f.trilha) : ""}</h3>
     ${tr ? `<div class="cards">${tr.map((h, i) => `<div class="condrow" style="border-left-color:${nex >= TRILHA_NEX[i] ? "var(--purple)" : "var(--line)"}"><span class="tag ${nex >= TRILHA_NEX[i] ? "on" : ""}">${TRILHA_NEX[i]}%</span><div><b>${esc(h)}</b>${nex < TRILHA_NEX[i] ? `<div class="muted small">Libera em NEX ${TRILHA_NEX[i]}%</div>` : ""}</div><span></span></div>`).join("")}</div>` : `<div class="muted small">Escolha a trilha na aba Principal (a partir de NEX 10%).</div>`}
    </div>
-   <div class="box stack"><div class="row between"><h3>Poderes de ${esc(f.classe.toLowerCase())}</h3><div class="row" style="flex-wrap:nowrap"><select id="podSel" style="width:auto;max-width:180px">${c.poderes
+   <div class="box stack"><div class="row between"><h3>Poderes de ${esc(f.classe.toLowerCase())} ${cont(L.poderes)}</h3><div class="row" style="flex-wrap:nowrap"><select id="podSel" style="width:auto;max-width:180px" ${cheioPod ? "disabled" : ""}>${c.poderes
      .filter(p => p === "Transcender" || p === "Treinamento em Perícia" || !pod.includes(p))
      .map(
        p =>
          `<option value="${esc(p)}">${esc(p)}${PODERES_GERAIS.some(g => g[0] === p) && !FONTE_CLASSE[p] ? " (geral)" : ""}${fonteTag(p)}</option>`
      )
-     .join("")}</select><button type="button" class="btn sm" id="podAdd">+</button></div></div>
+     .join(
+       ""
+     )}</select><button type="button" class="btn sm" id="podAdd" aria-label="Adicionar poder" ${cheioPod ? "disabled" : ""}>+</button></div></div>
     ${pod.length ? `<div class="conds">${pod.map((p, i) => `<button type="button" class="cond" aria-pressed="true" data-podrm="${i}">${esc(p)} ✕</button>`).join("")}</div>` : `<div class="muted small">Nenhum poder escolhido. Você recebe um em NEX 15% e a cada 15% depois.</div>`}
+    ${cheioPod && travas ? `<div class="muted small">${L.poderes.max ? "Todos os poderes deste NEX já foram escolhidos." : "Ainda sem poderes: o primeiro vem em NEX 15%."}</div>` : ""}
    </div>
-   <div class="box stack"><div class="row between"><h3>Poderes paranormais</h3><div class="row" style="flex-wrap:nowrap"><select id="parSel" style="width:auto;max-width:180px">${PODERES_PARANORMAIS.map(([n, e]) => `<option value="${esc(n)}">${esc(n)}${e !== "—" ? " · " + e : ""}${fonteTag(n)}</option>`).join("")}</select><button type="button" class="btn sm" id="parAdd">+</button></div></div>
+   <div class="box stack"><div class="row between"><h3>Poderes paranormais ${cont(L.paranormais)}</h3><div class="row" style="flex-wrap:nowrap"><select id="parSel" style="width:auto;max-width:180px" ${cheioPar ? "disabled" : ""}>${PODERES_PARANORMAIS.map(([n, e]) => `<option value="${esc(n)}">${esc(n)}${e !== "—" ? " · " + e : ""}${fonteTag(n)}</option>`).join("")}</select><button type="button" class="btn sm" id="parAdd" aria-label="Adicionar poder paranormal" ${cheioPar ? "disabled" : ""}>+</button></div></div>
     ${par.length ? `<div class="conds">${par.map((p, i) => `<button type="button" class="cond" aria-pressed="true" data-parrm="${i}">${esc(p)} ✕</button>`).join("")}</div>` : `<div class="muted small">Recebidos com o poder Transcender (sem ganhar Sanidade naquele aumento de NEX).</div>`}
     ${
       +f.nex >= 50
@@ -344,6 +389,8 @@ function tabHabilidades(f, D, c) {
 }
 function tabInventario(f, D) {
   const lim = D.pat;
+  const L = limitesFicha(f);
+  const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // patente, prestígio e extras
   const cats = ["I", "II", "III", "IV"];
   const opts = [
     ...ITENS_GERAIS.map(i => ({ n: i[0], g: i[1], cat: i[2], esp: i[3] })),
@@ -357,10 +404,10 @@ function tabInventario(f, D) {
     ...hbOf("item").map(h => ({ n: h.nome, g: "Homebrew", cat: h.cat || "0", esp: +h.esp || 1 }))
   ];
   const grupos = [...new Set(opts.map(o => o.g))];
-  return `<div class="box stack"><div class="row between" style="flex-wrap:wrap;gap:8px"><label class="row" style="gap:8px;flex-wrap:nowrap"><h3 style="margin:0">Patente</h3><select id="s_pat2" data-patsel ${canEditFicha(f) ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></label><span class="muted small">${+f.pp || 0} PP · crédito ${esc(lim[2])}</span></div>
+  return `<div class="box stack"><div class="row between" style="flex-wrap:wrap;gap:8px"><label class="row" style="gap:8px;flex-wrap:nowrap"><h3 style="margin:0">Patente</h3><select id="s_pat2" data-patsel ${canEditFicha(f) && !nivel ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></label><span class="muted small">${+f.pp || 0} PP · crédito ${esc(lim[2])}</span></div>
     <div class="stats" style="grid-template-columns:repeat(4,minmax(0,1fr))">${cats
       .map((c, i) => {
-        const max = lim[3 + i] + (+f["catx" + (i + 1)] || 0);
+        const max = regrasAtivas(f) ? L.itens.cat[i + 1] : lim[3 + i] + (+f["catx" + (i + 1)] || 0);
         const u = D.usoCat[i + 1];
         return `<div style="${u > max ? "border-color:var(--red)" : ""}"><b>${u}/${max}</b><span>Categoria ${c}</span></div>`;
       })
@@ -368,12 +415,12 @@ function tabInventario(f, D) {
     <div class="muted small">Espaços: ${D.usados}/${D.carga} (dobro: ${D.carga * 2})${D.mochila ? " · Mochila militar +2" : ""}${+f.cargaExtra ? ` · extra ${+f.cargaExtra > 0 ? "+" : ""}${+f.cargaExtra}` : ""}. Categoria 0 é livre.</div>
     <details class="more"><summary>Aumentar espaços e itens por categoria</summary><div class="stack" style="margin-top:8px;gap:8px">
      <p class="muted small" style="margin:0">Pelas regras: mais <b>Força</b> dá mais espaço (5 por ponto), a <b>Mochila militar</b> dá +2 espaços (já conta sozinha), e subir de <b>patente</b> com pontos de prestígio libera mais itens por categoria. Use os campos abaixo para bônus que o mestre der (poder, homebrew, recompensa).</p>
-     <div class="row" style="flex-wrap:wrap;gap:8px"><div class="field" style="width:120px"><label class="label" for="s_cx">Espaços extras</label><input type="number" id="s_cx" data-f="cargaExtra" value="${+f.cargaExtra || 0}" min="-20" max="50"></div>
-      ${cats.map((c, i) => `<div class="field" style="width:96px"><label class="label" for="s_catx${i + 1}">Extra cat. ${c}</label><input type="number" id="s_catx${i + 1}" data-f="catx${i + 1}" value="${+f["catx" + (i + 1)] || 0}" min="-5" max="20"></div>`).join("")}</div></div></details>
-    <details class="more"><summary>Pontos de prestígio por missão</summary><div class="row" style="margin-top:8px">${PP_EVENTOS.map(([n, v], i) => `<button type="button" class="btn sm" data-ppev="${i}">${esc(n)} ${v > 0 ? "+" : ""}${v}</button>`).join("")}</div></details>
+     <div class="row" style="flex-wrap:wrap;gap:8px"><div class="field" style="width:120px"><label class="label" for="s_cx">Espaços extras</label><input type="number" id="s_cx" data-f="cargaExtra" value="${+f.cargaExtra || 0}" min="-20" max="50" ${nivel}></div>
+      ${cats.map((c, i) => `<div class="field" style="width:96px"><label class="label" for="s_catx${i + 1}">Extra cat. ${c}</label><input type="number" id="s_catx${i + 1}" data-f="catx${i + 1}" value="${+f["catx" + (i + 1)] || 0}" min="-5" max="20" ${nivel}></div>`).join("")}</div></div></details>
+    <details class="more"><summary>Pontos de prestígio por missão</summary><div class="row" style="margin-top:8px">${PP_EVENTOS.map(([n, v], i) => `<button type="button" class="btn sm" data-ppev="${i}" ${nivel}>${esc(n)} ${v > 0 ? "+" : ""}${v}</button>`).join("")}</div></details>
    </div>
    <div class="box stack"><div class="row between"><h3>Itens</h3></div>
-    <div class="row" style="flex-wrap:nowrap"><select id="itemSel">${grupos.map(g => `<optgroup label="${esc(g)}">${opts.map((o, i) => (o.g === g ? `<option value="${i}">${esc(o.n)} · cat. ${o.cat} · ${o.esp} esp.</option>` : "")).join("")}</optgroup>`).join("")}</select><button type="button" class="btn sm" id="itemAdd">Adicionar</button><button type="button" class="btn sm ghost" id="itemCriar" style="white-space:nowrap">Criar item</button></div>
+    <div class="row" style="flex-wrap:nowrap"><select id="itemSel">${grupos.map(g => `<optgroup label="${esc(g)}">${opts.map((o, i) => (o.g === g ? `<option value="${i}" ${itemNaoCabe(f, L, o.cat, o.esp) ? "disabled" : ""}>${esc(o.n)} · cat. ${o.cat} · ${o.esp} esp.${itemNaoCabe(f, L, o.cat, o.esp) ? " · " + itemNaoCabe(f, L, o.cat, o.esp) : ""}</option>` : "")).join("")}</optgroup>`).join("")}</select><button type="button" class="btn sm" id="itemAdd">Adicionar</button><button type="button" class="btn sm ghost" id="itemCriar" style="white-space:nowrap">Criar item</button></div>
     ${
       (f.itens || []).length
         ? `<div class="cards">${f.itens
