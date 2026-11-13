@@ -341,6 +341,23 @@ const PP_EVENTOS = [
 ];
 
 /* Armas (Tabela 3.3): nome, grupo, empunhadura, categoria, dano, crítico, alcance, tipo, espaços, ágil */
+// Tipos de dano: usados para dizer de que é o bônus de dano de uma arma (ficha: arma.tdano)
+const TIPOS_DANO = [
+  "Corte",
+  "Impacto",
+  "Perfuração",
+  "Balístico",
+  "Fogo",
+  "Frio",
+  "Eletricidade",
+  "Químico",
+  "Mental",
+  "Sangue",
+  "Morte",
+  "Conhecimento",
+  "Energia",
+  "Medo"
+];
 const ARMAS_LIVRO = [
   ["Coronhada", "simples", "Corpo a corpo · leve", "—", "1d4/1d6", "x2", "—", "I", 0, 0],
   ["Faca", "simples", "Corpo a corpo · leve", "0", "1d4", "19", "Curto", "C", 1, 1],

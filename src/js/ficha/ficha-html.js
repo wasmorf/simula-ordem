@@ -238,7 +238,7 @@ function tabCombate(f, D, c) {
          const open = S.openArma === i;
          const ok = profOK(f, a);
          return `<div class="wcard ${open ? "open" : ""}"><div class="wh"><span class="wi">${weaponIcon(a)}</span><button type="button" class="wn" data-wtog="${i}" aria-expanded="${open}">${esc(a.nome)}</button><button type="button" class="rollbtn" data-atk="${i}">Atacar</button><button type="button" class="chev" data-wtog="${i}" aria-label="${open ? "Fechar" : "Editar"} ${esc(a.nome)}">${open ? "▴" : "▾"}</button></div>
-     <div class="wst"><span>DANO <b>${esc(a.dano)}</b></span><span>CRÍTICO <b>${esc(a.crit)}</b></span>${a.alc && a.alc !== "—" ? `<span>ALCANCE <b>${esc(a.alc)}</b></span>` : ""}${a.tipo ? `<span>TIPO <b>${esc(a.tipo)}</b></span>` : ""}<span>CATEGORIA <b>${esc(a.cat ?? "0")}</b></span><span>ESPAÇO <b>${a.esp ?? 1}</b></span><span>${esc(a.pericia)}${+a.bonus ? ` <b>${sgn(+a.bonus).trim()}</b>` : ""}</span>${(a.mods || []).length ? `<span>MODS <b>${esc(a.mods.join(", "))}</b></span>` : ""}${!ok ? `<span style="color:var(--red-hi)">SEM PROFICIÊNCIA −2d20</span>` : ""}</div>
+     <div class="wst"><span>DANO <b>${esc(a.dano)}</b>${+a.bdano ? ` <b>${sgn(+a.bdano).trim()}${a.tdano ? " " + esc(a.tdano) : ""}</b>` : ""}</span><span>CRÍTICO <b>${esc(a.crit)}</b></span>${a.alc && a.alc !== "—" ? `<span>ALCANCE <b>${esc(a.alc)}</b></span>` : ""}${a.tipo ? `<span>TIPO <b>${esc(a.tipo)}</b></span>` : ""}<span>CATEGORIA <b>${esc(a.cat ?? "0")}</b></span><span>ESPAÇO <b>${a.esp ?? 1}</b></span><span>${esc(a.pericia)}${+a.bonus ? ` <b>${sgn(+a.bonus).trim()}</b>` : ""}</span>${(a.mods || []).length ? `<span>MODS <b>${esc(a.mods.join(", "))}</b></span>` : ""}${!ok ? `<span style="color:var(--red-hi)">SEM PROFICIÊNCIA −2d20</span>` : ""}</div>
      ${
        open
          ? `<div class="fields" style="margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">
@@ -248,6 +248,7 @@ function tabCombate(f, D, c) {
       <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3" ${nivel}></div>
       <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}" ${nivel}></div>
       <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}" ${nivel}></div>
+      <div class="field"><label class="label">Tipo do bônus</label><select data-arma="${i}" data-k="tdano" ${nivel}><option value="">Mesmo da arma</option>${TIPOS_DANO.map(t => `<option ${a.tdano === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
       <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}" ${nivel}></div>
       <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}" ${nivel}></div>
       <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""} ${nivel}> Arma ágil</label>

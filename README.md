@@ -173,7 +173,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 
 | Arquivo | O que faz |
 | --- | --- |
-| `livro.js` | Regras do Livro de Regras: atributos, perícias, classes, origens, armas, rituais, ameaças (só nomes e números) |
+| `livro.js` | Regras do Livro de Regras: atributos, perícias, classes, origens, armas, tipos de dano, rituais, ameaças (só nomes e números) |
 | `suplementos.js` | Suplementos: Sobrevivendo ao Horror e Arquivos Secretos (só nomes e números) |
 | `rituais-resumo.js` | Uma frase do que cada ritual faz (escrita para o site), mostrada no cartão do ritual e ao aprender |
 | `aba-regras.js` | Painel Regras: resumo das regras do livro em abas |
@@ -201,7 +201,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `sigilos.js` | Sigilos dos elementos (desenhos SVG usados na ficha) |
 | `ficha.js` | Ficha: números calculados (PV, PE, SAN, Defesa...), salvar e lista de Agentes |
 | `ficha-html.js` | Ficha: o que aparece em cada aba (Principal, Perícias, Combate...) |
-| `ficha-rolagens.js` | Ficha: testes de perícia, ataques e rituais |
+| `ficha-rolagens.js` | Ficha: testes de perícia, ataques (o bônus de dano mostra o tipo: `arma.tdano`) e rituais |
 | `ficha-eventos.js` | Ficha: o que cada botão e campo faz |
 | `subir-nex.js` | Subir de NEX guiado: o que o agente ganhou em cada nível e o aviso para o jogador |
 | `npcs-sincronia.js` | NPCs do mestre: receber do banco e onde cada ficha é salva |
