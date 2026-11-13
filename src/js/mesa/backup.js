@@ -104,6 +104,7 @@ async function exportarMesa() {
       desenhos: await g("desenhos"),
       mapas: await g("mapas"),
       docs: await g("docs"),
+      arteBest: await g("arteBest"),
       notas: await S.db.get(p + "/mestre/notas"),
       combate: await S.db.get(p + "/estado/combate"),
       musica: await S.db.get(p + "/estado/trilhas")
@@ -152,6 +153,7 @@ async function importarMesa() {
     await put("desenhos", d.desenhos);
     await put("mapas", d.mapas);
     await put("docs", d.docs);
+    await put("arteBest", d.arteBest);
     if (d.notas) await S.db.set(p + "/mestre/notas", d.notas);
     if (d.combate) await S.db.set(p + "/estado/combate", d.combate);
     if (d.musica) await S.db.set(p + "/estado/trilhas", d.musica);

@@ -24,7 +24,7 @@ function escudoHTML() {
   const pedHTML = peds.length
     ? `<div class="banner" style="border-color:var(--purple);color:var(--fg);background:var(--purple-soft)"><b>Pedidos de ficha:</b> ${peds.map(x => `${esc(x.quem || "Jogador")} pede <b>${esc(S.fichas[x.fichaId].nome)}</b> <button class="btn sm" data-sopen="${esc(x.fichaId)}">Ver</button>`).join(" · ")}</div>`
     : "";
-  const backup = `<details class="box"><summary style="cursor:pointer"><b>Backup da mesa</b></summary><div class="stack" style="margin-top:10px"><p class="muted small" style="margin:0">Baixa um arquivo com tudo: fichas, NPCs, cenas, tokens, névoa, desenhos, homebrew, anotações e trilhas. Para restaurar, use "Restaurar mesa de um backup" na página inicial.</p><button class="btn" id="btnBkp">Baixar backup da mesa</button></div></details>`;
+  const backup = `<details class="box"><summary style="cursor:pointer"><b>Backup da mesa</b></summary><div class="stack" style="margin-top:10px"><p class="muted small" style="margin:0">Baixa um arquivo com tudo: fichas, NPCs, cenas, tokens, névoa, desenhos, homebrew, artes do bestiário, anotações e trilhas. Para restaurar, use "Restaurar mesa de um backup" na página inicial.</p><button class="btn" id="btnBkp">Baixar backup da mesa</button></div></details>`;
   // capa da mesa (mesa/capa) em cima; apagar mesa (mestre/gestao) embaixo
   return (
     escudoCapaHTML() +

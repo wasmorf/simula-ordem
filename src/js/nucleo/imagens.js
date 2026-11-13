@@ -1,11 +1,13 @@
 "use strict";
 /* Imagens: carregar e comprimir no navegador antes de salvar. */
 /* ===================== IMAGENS (comprimidas no navegador) ===================== */
-function pickImage() {
+/* Escolher imagem. varias = true deixa escolher várias e devolve a lista. */
+function pickImage(varias = false) {
   return new Promise(res => {
     const inp = $("#fileIn");
     inp.value = "";
-    inp.onchange = () => res(inp.files[0] || null);
+    inp.multiple = !!varias;
+    inp.onchange = () => res(varias ? [...inp.files] : inp.files[0] || null);
     inp.click();
   });
 }

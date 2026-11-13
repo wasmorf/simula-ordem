@@ -105,7 +105,7 @@ const AJUDA = {
       ],
       [
         "Tokens e criaturas",
-        `Em ${AJ_I("Tokens")} você cria tokens com imagem e, na aba <b>Ameaças</b>, põe criaturas do bestiário direto na cena: cada uma ganha uma ficha (Agentes → Criaturas) e entra no combate. Em <b>Artes do bestiário</b> você sobe uma imagem sua para cada criatura e ela vira o token. Em Agentes → <b>Criar criatura</b> você faz uma do zero ou a partir do bestiário. Em uma pasta de NPCs ou criaturas, <b>Pôr na cena</b> coloca todos de uma vez. Marque um token como <b>oculto</b> para só você ver.`
+        `Em ${AJ_I("Tokens")} você cria tokens com imagem e, na aba <b>Ameaças</b>, põe criaturas do bestiário direto na cena: cada uma ganha uma ficha (Agentes → Criaturas) e entra no combate. Em <b>Artes do bestiário</b> você sobe uma imagem sua para cada criatura e ela vira o token; <b>Subir várias</b> manda muitas de uma vez, cada arquivo com o nome da criatura (ex.: <code>zumbi-de-sangue.webp</code>). As artes ficam só na sua mesa e vão junto no backup. Em Agentes → <b>Criar criatura</b> você faz uma do zero ou a partir do bestiário. Em uma pasta de NPCs ou criaturas, <b>Pôr na cena</b> coloca todos de uma vez. Marque um token como <b>oculto</b> para só você ver.`
       ],
       [
         "Combate",

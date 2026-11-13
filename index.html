@@ -6909,11 +6909,13 @@ function localDB() {
 "use strict";
 /* Imagens: carregar e comprimir no navegador antes de salvar. */
 /* ===================== IMAGENS (comprimidas no navegador) ===================== */
-function pickImage() {
+/* Escolher imagem. varias = true deixa escolher várias e devolve a lista. */
+function pickImage(varias = false) {
   return new Promise(res => {
     const inp = $("#fileIn");
     inp.value = "";
-    inp.onchange = () => res(inp.files[0] || null);
+    inp.multiple = !!varias;
+    inp.onchange = () => res(varias ? [...inp.files] : inp.files[0] || null);
     inp.click();
   });
 }
@@ -13827,7 +13829,7 @@ function escudoHTML() {
   const pedHTML = peds.length
     ? `<div class="banner" style="border-color:var(--purple);color:var(--fg);background:var(--purple-soft)"><b>Pedidos de ficha:</b> ${peds.map(x => `${esc(x.quem || "Jogador")} pede <b>${esc(S.fichas[x.fichaId].nome)}</b> <button class="btn sm" data-sopen="${esc(x.fichaId)}">Ver</button>`).join(" · ")}</div>`
     : "";
-  const backup = `<details class="box"><summary style="cursor:pointer"><b>Backup da mesa</b></summary><div class="stack" style="margin-top:10px"><p class="muted small" style="margin:0">Baixa um arquivo com tudo: fichas, NPCs, cenas, tokens, névoa, desenhos, homebrew, anotações e trilhas. Para restaurar, use "Restaurar mesa de um backup" na página inicial.</p><button class="btn" id="btnBkp">Baixar backup da mesa</button></div></details>`;
+  const backup = `<details class="box"><summary style="cursor:pointer"><b>Backup da mesa</b></summary><div class="stack" style="margin-top:10px"><p class="muted small" style="margin:0">Baixa um arquivo com tudo: fichas, NPCs, cenas, tokens, névoa, desenhos, homebrew, artes do bestiário, anotações e trilhas. Para restaurar, use "Restaurar mesa de um backup" na página inicial.</p><button class="btn" id="btnBkp">Baixar backup da mesa</button></div></details>`;
   // capa da mesa (mesa/capa) em cima; apagar mesa (mestre/gestao) embaixo
   return (
     escudoCapaHTML() +
@@ -14491,6 +14493,7 @@ async function exportarMesa() {
       desenhos: await g("desenhos"),
       mapas: await g("mapas"),
       docs: await g("docs"),
+      arteBest: await g("arteBest"),
       notas: await S.db.get(p + "/mestre/notas"),
       combate: await S.db.get(p + "/estado/combate"),
       musica: await S.db.get(p + "/estado/trilhas")
@@ -14539,6 +14542,7 @@ async function importarMesa() {
     await put("desenhos", d.desenhos);
     await put("mapas", d.mapas);
     await put("docs", d.docs);
+    await put("arteBest", d.arteBest);
     if (d.notas) await S.db.set(p + "/mestre/notas", d.notas);
     if (d.combate) await S.db.set(p + "/estado/combate", d.combate);
     if (d.musica) await S.db.set(p + "/estado/trilhas", d.musica);
@@ -26650,7 +26654,7 @@ const AJUDA = {
       ],
       [
         "Tokens e criaturas",
-        `Em ${AJ_I("Tokens")} você cria tokens com imagem e, na aba <b>Ameaças</b>, põe criaturas do bestiário direto na cena: cada uma ganha uma ficha (Agentes → Criaturas) e entra no combate. Em <b>Artes do bestiário</b> você sobe uma imagem sua para cada criatura e ela vira o token. Em Agentes → <b>Criar criatura</b> você faz uma do zero ou a partir do bestiário. Em uma pasta de NPCs ou criaturas, <b>Pôr na cena</b> coloca todos de uma vez. Marque um token como <b>oculto</b> para só você ver.`
+        `Em ${AJ_I("Tokens")} você cria tokens com imagem e, na aba <b>Ameaças</b>, põe criaturas do bestiário direto na cena: cada uma ganha uma ficha (Agentes → Criaturas) e entra no combate. Em <b>Artes do bestiário</b> você sobe uma imagem sua para cada criatura e ela vira o token; <b>Subir várias</b> manda muitas de uma vez, cada arquivo com o nome da criatura (ex.: <code>zumbi-de-sangue.webp</code>). As artes ficam só na sua mesa e vão junto no backup. Em Agentes → <b>Criar criatura</b> você faz uma do zero ou a partir do bestiário. Em uma pasta de NPCs ou criaturas, <b>Pôr na cena</b> coloca todos de uma vez. Marque um token como <b>oculto</b> para só você ver.`
       ],
       [
         "Combate",
@@ -28011,10 +28015,52 @@ async function galeriaArtes() {
   const h = $("#modalHost");
   h.innerHTML = `<div class="modal-back"><div class="modal wide" id="galBest" role="dialog" aria-label="Artes do bestiário"><div class="row between"><h3 style="margin:0">Artes do bestiário</h3><button class="btn sm" id="gbX">Fechar</button></div>
    <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela fica guardada só nesta mesa e vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>
-   <input type="search" id="gbQ" placeholder="Buscar criatura"><div class="gb-grid" id="gbGrid"></div></div></div>`;
+   <div class="row" style="flex-wrap:nowrap"><input type="search" id="gbQ" placeholder="Buscar criatura"><button class="btn sm" id="gbVarias" style="white-space:nowrap">Subir várias</button></div>
+   <p class="muted small" style="margin:0"><b>Subir várias:</b> escolha várias imagens de uma vez; cada uma vai para a criatura com o mesmo nome do arquivo (ex.: <code>zumbi-de-sangue.webp</code> ou <code>Zumbi de Sangue.png</code>).</p><div class="gb-grid" id="gbGrid"></div></div></div>`;
   $("#gbX").onclick = () => (h.innerHTML = "");
   $("#gbQ").oninput = galeriaRender;
+  $("#gbVarias").onclick = arteBestVarias;
   galeriaRender();
+}
+/* Imagem inteira, no máximo 360 px (a mesma da escolha "Usar a imagem inteira"). */
+async function arteInteira(file) {
+  const im = await loadImg(file);
+  const k = Math.min(1, 360 / Math.max(im.naturalWidth, im.naturalHeight));
+  return maToURL(drawTo(im, im.naturalWidth * k, im.naturalHeight * k));
+}
+/* Várias artes de uma vez: o nome do arquivo diz a criatura ("-profile"/"-perfil" no fim é ignorado). */
+async function arteBestVarias() {
+  const files = await pickImage(true);
+  if (!files || !files.length) return;
+  const porChave = new Map(allBest().map(b => [arteKey(b.n), b.n]));
+  const salvas = [],
+    sobra = [];
+  toast(`Subindo ${files.length} imagem(ns)…`);
+  for (const file of files) {
+    const chave = arteKey(file.name.replace(/\.[a-z0-9]+$/i, "")).replace(/-(profile|perfil)$/, "");
+    const n = porChave.get(chave);
+    if (!n) {
+      sobra.push(file.name);
+      continue;
+    }
+    try {
+      const url = await arteInteira(file);
+      await S.db.set(P() + "/arteBest/" + arteKey(n), { n, url, ts: Date.now() });
+      salvas.push(n);
+    } catch (e) {
+      sobra.push(file.name);
+    }
+  }
+  toast(`${salvas.length} arte(s) salva(s).`);
+  if (sobra.length)
+    await formBox(
+      "Algumas imagens ficaram de fora",
+      `<p style="margin:0">Estes arquivos não têm o nome de uma criatura do bestiário (ou não abriram). Renomeie o arquivo com o nome da criatura, ou crie a criatura em <b>Homebrew</b> e suba de novo:</p><p class="muted small" style="margin:0">${sobra.map(esc).join(", ")}</p>`,
+      "Ok"
+    );
+  if (sobra.length)
+    galeriaArtes(); // o aviso usa a mesma janela: abre a galeria de novo
+  else galeriaRender();
 }
 function galeriaRender() {
   const el = $("#gbGrid");
@@ -28061,12 +28107,7 @@ async function arteBestEscolher(n) {
           type: "image/webp",
           title: `Recortar ${n}`
         });
-      else {
-        const im = await loadImg(file);
-        const k = Math.min(1, 360 / Math.max(im.naturalWidth, im.naturalHeight));
-        const c = drawTo(im, im.naturalWidth * k, im.naturalHeight * k);
-        url = maToURL(c);
-      }
+      else url = await arteInteira(file);
     } catch (e) {
       toast("Não consegui usar essa imagem.");
     }
@@ -28075,6 +28116,7 @@ async function arteBestEscolher(n) {
   $("#gbX").onclick = () => (host.innerHTML = "");
   $("#gbQ").value = q;
   $("#gbQ").oninput = galeriaRender;
+  $("#gbVarias").onclick = arteBestVarias;
   galeriaRender();
   if (!url) return;
   try {
@@ -29896,7 +29938,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 13h2821";
+const VERSAO_SITE="13/11 13h4643";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

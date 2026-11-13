@@ -188,7 +188,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `lobby.js` | Tela inicial: criar mesa, entrar com código, Meus personagens, mesas públicas |
 | `mesa.js` | Entrar e sair de uma mesa: senha, aprovação, assinaturas do banco |
 | `navegacao.js` | Barra de ferramentas (trilho e barra de baixo) e o painel lateral |
-| `backup.js` | Backup: baixar e restaurar fichas e mesas inteiras (.json) |
+| `backup.js` | Backup: baixar e restaurar fichas e mesas inteiras (.json), com as artes do bestiário |
 | `ajuda.js` | Como usar o site (painel e janela de ajuda) |
 | `personagens.js` | Meus personagens: fichas fora de mesa, levar e trazer de mesas |
 | `capa.js` | Capa da mesa (lobby e tela de entrada) |
@@ -207,7 +207,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `npcs-sincronia.js` | NPCs do mestre: receber do banco e onde cada ficha é salva |
 | `npcs.js` | NPCs: ficha rápida, modelos prontos, duplicar e pastas |
 | `criaturas.js` | Criaturas: ficha de criatura, arte por elemento, pôr pasta inteira na cena |
-| `galeria-artes.js` | Galeria de artes do bestiário (imagens que o mestre sobe) |
+| `galeria-artes.js` | Galeria de artes do bestiário (imagens que o mestre sobe na mesa, uma por vez ou várias pelo nome do arquivo: `arteBestVarias`) |
 
 #### `js/mapa/` — Tabuleiro, cenas, tokens, portas, locais escondidos e o criador de mapas
 
