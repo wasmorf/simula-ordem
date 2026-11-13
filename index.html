@@ -9854,8 +9854,9 @@ function tokensHTML() {
      <div class="cards">${B.map((b, i) => `<div class="tokrow"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${i}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
      }`;
   }
-  const em = S.tokens.filter(t => inScene.has(t.id) && match(t));
-  let lib = S.tokens.filter(t => !inScene.has(t.id) && match(t));
+  // jogador: em cena só o que ele enxerga no mapa; na biblioteca só os tokens dele
+  const em = S.tokens.filter(t => inScene.has(t.id) && match(t) && tokVisivel(t, S.pos[t.id]));
+  let lib = S.tokens.filter(t => !inScene.has(t.id) && match(t) && (S.isM || canMove(t)));
   if (S.tokTab === "meus") lib = lib.filter(t => t.dono === S.uid);
   if (S.tokTab === "agentes") lib = lib.filter(t => t.fichaId);
   if (S.tokTab === "criaturas") lib = lib.filter(t => !t.fichaId);
@@ -11605,20 +11606,29 @@ function tabPrincipal(f, D, c, sel) {
   const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // NEX, prestígio e bônus
   const sobra = L.attr.total - L.attr.usados;
   const pode = (k, d) => permitido(f, x => (x.attr[k] += d)).ok;
+  // classe, origem e trilha travadas para o jogador depois da criação (regras/limites)
+  const trava = (campo, html) =>
+    motivoTroca(f, campo)
+      ? html.replace("<select ", `<select disabled title="${esc(motivoTroca(f, campo))}" `)
+      : html;
+  const avisoBase = [motivoTroca(f, "classe"), f.trilha ? motivoTroca(f, "trilha") : ""].filter(Boolean);
   const auto = condAuto(f);
   return `<div class="fields">
    <div class="field"><label class="label" for="s_jogador">Jogador</label><input type="text" id="s_jogador" data-f="jogador" value="${esc(f.jogador)}" maxlength="40"></div>
    <div class="field"><label class="label" for="s_idade">Idade</label><input type="text" id="s_idade" data-f="idade" value="${esc(f.idade || "")}" maxlength="20"></div>
-   <div class="field"><label class="label" for="s_origem">Origem</label>${sel(
+   <div class="field"><label class="label" for="s_origem">Origem</label>${trava(
      "origem",
-     Object.keys(ORIGENS).sort((a, b) => a.localeCompare(b, "pt")),
-     f.origem
+     sel(
+       "origem",
+       Object.keys(ORIGENS).sort((a, b) => a.localeCompare(b, "pt")),
+       f.origem
+     )
    )}</div>
-   <div class="field"><label class="label" for="s_classe">Classe</label>${sel("classe", Object.keys(CLASSES), f.classe)}</div>
+   <div class="field"><label class="label" for="s_classe">Classe</label>${trava("classe", sel("classe", Object.keys(CLASSES), f.classe))}</div>
    <div class="field"><label class="label" for="s_trilha">Trilha</label>${
      travas && !L.trilhaLiberada
        ? `<select id="s_trilha" disabled><option>Em ${sob ? "estágio 2" : "NEX 10%"}</option></select>`
-       : sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Escolha a trilha")
+       : trava("trilha", sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Escolha a trilha"))
    }</div>
    ${
      sob
@@ -11628,7 +11638,7 @@ function tabPrincipal(f, D, c, sel) {
    <div class="field"><label class="label" for="s_pat">Patente</label><select id="s_pat" data-patsel ${canEditFicha(f) && !nivel ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></div>`
    }
   </div>
-  ${travas && nivel ? `<p class="muted small" style="margin:0">${sob ? "Estágio" : "NEX, prestígio"} e bônus: quem muda é o mestre.</p>` : ""}
+  ${travas && nivel ? `<p class="muted small" style="margin:0">${sob ? "Estágio" : "NEX, prestígio"} e bônus: quem muda é o mestre.${avisoBase.length ? " " + avisoBase.join(" ") : ""}</p>` : ""}
   <p class="muted small" style="margin:0">Origem: <b style="color:var(--fg)">${esc(og[1])}</b> · perícias ${og[0].join(" e ") || "à escolha do mestre"}. Classe: ${c.fixasTxt ? esc(c.fixasTxt) + " + " : ""}${c.livres} + INT perícias à escolha. <button type="button" class="btn sm" id="btnAplicar">Marcar perícias da origem e classe</button></p>
   <div class="box stack"><div class="row between"><h3>Atributos</h3><span class="contador ${sobra < 0 ? "ruim" : sobra ? "falta" : ""}">${L.attr.usados} de ${L.attr.total} pontos${sobra > 0 ? ` · faltam ${sobra}` : sobra < 0 ? ` · ${-sobra} acima` : ""}</span></div>
    <div class="attrs">${ATTRS.map(k => `<div class="attr" title="${ATTR_NOME[k]}"><span class="k">${k}</span><span class="n">${f.attr[k]}</span><div class="pm"><button type="button" data-attr="${k}" data-d="-1" aria-label="Diminuir ${ATTR_NOME[k]}" ${pode(k, -1) && f.attr[k] > 0 ? "" : "disabled"}>−</button><button type="button" data-attr="${k}" data-d="1" aria-label="Aumentar ${ATTR_NOME[k]}" ${pode(k, 1) && f.attr[k] < 5 ? "" : "disabled"}>+</button></div></div>`).join("")}</div>
@@ -12285,10 +12295,11 @@ function bindFichaCompleta() {
   $$("#pbody [data-f]").forEach(el => {
     const k = el.dataset.f;
     const num = el.type === "number";
-    if (el.tagName === "SELECT" || num)
+    if (k === "classe" || k === "origem" || k === "trilha")
+      el.onchange = () => trocarEscolha(f, id, k, el.value); // confere a regra e avisa o que muda (regras/limites)
+    else if (el.tagName === "SELECT" || num)
       el.onchange = () => {
         f[k] = num ? +el.value || 0 : el.value;
-        if (k === "classe") f.trilha = "";
         sv();
         rr();
         renderBoard();
@@ -13057,12 +13068,14 @@ function combateHTML() {
   const L = c.lista || [];
   const B = allBest();
   const rows = L.map((x, i) => {
+    if (!entradaVisivel(x)) return ""; // escondido para o jogador (jogo/combate-no-mapa)
+    const escondido = S.isM && !entradaVisivelParaJogadores(x);
     const f = x.fichaId && S.fichas[x.fichaId];
     const pv = f ? cur(f, "pv") : (x.pv ?? "?");
     const pvMax = f ? derivados(migrar(f)).pvMax : (x.pvMax ?? "?");
     const def = f ? derivados(f).def : (x.def ?? "?");
     const tk = tokenDeEntrada(x);
-    return `<div class="cb ${x.tipo} ${i === c.turno ? "now" : ""} ${pv <= 0 ? "down" : ""}"><span class="iv">${x.ini ?? "–"}</span><div style="min-width:0"><div class="cn">${tk ? `<button class="lnk" data-foco="${esc(tk)}" title="Mostrar no mapa">${esc(f ? f.nome : x.nome)} ⌖</button>` : esc(f ? f.nome : x.nome)}${x.el ? ` <span class="tag el-${esc(x.el)}" style="border-color:var(--el);color:var(--el)">${esc(x.el)}</span>` : ""}</div><div class="cs">PV ${pv}/${pvMax} · DEF ${def}${x.vd ? ` · VD ${x.vd}` : ""}${x.atk ? ` · ${esc(x.atk[0])} ${x.atk[1]}d20+${x.atk[2]} · ${esc(x.atk[3])}` : ""}</div></div>
+    return `<div class="cb ${x.tipo} ${i === c.turno ? "now" : ""} ${pv <= 0 ? "down" : ""}"><span class="iv">${x.ini ?? "–"}</span><div style="min-width:0"><div class="cn">${tk ? `<button class="lnk" data-foco="${esc(tk)}" title="Mostrar no mapa">${esc(f ? f.nome : x.nome)} ⌖</button>` : esc(f ? f.nome : x.nome)}${escondido ? ' <span class="tag">oculto</span>' : ""}${x.el ? ` <span class="tag el-${esc(x.el)}" style="border-color:var(--el);color:var(--el)">${esc(x.el)}</span>` : ""}</div><div class="cs">PV ${pv}/${pvMax} · DEF ${def}${x.vd ? ` · VD ${x.vd}` : ""}${x.atk ? ` · ${esc(x.atk[0])} ${x.atk[1]}d20+${x.atk[2]} · ${esc(x.atk[3])}` : ""}</div></div>
      <div class="act">${f && f.npc && S.isM ? `<button class="btn sm" data-cfic="${esc(x.fichaId)}">Ficha</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="-5" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="5" aria-label="Dar 5 PV">+5</button>` : ""}${x.tipo === "npc" && S.isM ? `<button class="rollbtn" data-npcatk="${i}" ${x.atk ? "" : "disabled"}>Atacar</button><button class="btn sm" data-npcdmg="${i}" data-d="-1" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-npcdmg="${i}" data-d="1" aria-label="Dar 5 PV">+5</button>` : ""}${S.isM ? `<button class="btn sm ghost" data-rm="${i}" aria-label="Tirar do combate">✕</button>` : ""}</div></div>`;
   }).join("");
   return `<div class="row between"><h3>Rodada ${c.rodada || 1}</h3>${S.isM ? `<div class="row"><button class="btn sm" id="btnIni">Rolar iniciativa</button><button class="btn sm primary" id="btnProx" ${L.length ? "" : "disabled"}>Próximo turno</button></div>` : ""}</div>
@@ -13183,11 +13196,11 @@ function bindCombate() {
         const r = rollTest(f.attr.AGI, modPericia(f, "Iniciativa"));
         x.ini = r.total;
         x.nome = f.nome;
-        det.push(`${f.nome} ${r.total}`);
+        if (entradaVisivelParaJogadores(x)) det.push(`${f.nome} ${r.total}`); // o registro é de todos
       } else {
         const r = rollTest(Math.max(1, x.agi || 1), Math.round((x.vd || 20) / 10));
         x.ini = r.total;
-        det.push(`${x.nome} ${x.ini}`);
+        if (entradaVisivelParaJogadores(x)) det.push(`${x.nome} ${x.ini}`);
       }
     });
     c.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99));
@@ -13207,7 +13220,9 @@ function bindCombate() {
     saveCombate(c);
     const x = c.lista[c.turno];
     const f = x.fichaId && S.fichas[x.fichaId];
-    logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
+    // vez de alguém escondido: não avisa no registro (os jogadores não sabem que ele está ali)
+    if (entradaVisivelParaJogadores(x))
+      logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
   };
   $$("[data-rm]").forEach(
     b =>
@@ -13239,7 +13254,7 @@ function bindCombate() {
         const crit = r.kept === 20;
         const dm = rollExpr(x.atk[3], { critMult: crit ? 2 : 1 });
         logEntry({
-          quem: x.nome,
+          quem: entradaVisivelParaJogadores(x) ? x.nome : "???", // atacante escondido não diz o nome
           titulo: `${x.atk[0]} · dano ${dm ? dm.total : "?"}`,
           total: r.total,
           flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
@@ -14230,6 +14245,31 @@ function addTokensAoCombate() {
   }
   saveCombate(c);
   toast(`${n} entraram no combate. Agora role a iniciativa.`);
+}
+
+/* ---------- o que os jogadores não enxergam no combate ---------- */
+/* Token ligado a uma entrada do combate: o da cena atual ou, se não estiver nela, qualquer um. */
+function tokenLigado(x) {
+  const tid = tokenDeEntrada(x);
+  if (tid) return { t: S.tokens.find(y => y.id === tid), p: S.pos[tid] };
+  const t = S.tokens.find(y => (x.fichaId && y.fichaId === x.fichaId) || (y.combId && y.combId === x.id));
+  return t ? { t, p: null } : null;
+}
+/* Os jogadores enxergam esta entrada? Não, se o token dela está oculto ou num local escondido, nem se é
+   um NPC escondido sem token à vista. Vale para o painel Combate e para o que vai no registro. */
+function entradaVisivelParaJogadores(x) {
+  const k = tokenLigado(x);
+  if (k && k.t) return !k.t.oculto && !(k.p && hiddenAt(k.p.x, k.p.y));
+  if (!x.fichaId) return true; // inimigo do bestiário sem token: o mestre pôs no combate de propósito
+  const f = S.fichas[x.fichaId];
+  return !!f && !(f.npc && !f.visivel); // jogador nem recebe a ficha de NPC escondido
+}
+/* Para quem está olhando agora: o mestre vê tudo; o jogador vê o próprio agente e o que não está escondido. */
+function entradaVisivel(x) {
+  if (S.isM) return true;
+  const f = x.fichaId && S.fichas[x.fichaId];
+  if (f && !f.npc && f.dono === S.uid) return true;
+  return entradaVisivelParaJogadores(x);
 }
 </script>
 <script>
@@ -25963,7 +26003,7 @@ const AJUDA = {
       ],
       [
         "O que a ficha deixa escolher",
-        "A ficha segue as regras do seu NEX: mostra quantos pontos de atributo, perícias, poderes e rituais você tem (<b>2 de 4</b>) e trava o que passaria do limite. A caixa <b>Falta escolher</b> no topo diz o que ainda está livre; toque num item para ir à aba certa. Tirar sempre pode. O <b>NEX</b>, o prestígio e os bônus quem muda é o mestre; quando ele sobe o seu NEX, a ficha mostra o que você ganhou."
+        "A ficha segue as regras do seu NEX: mostra quantos pontos de atributo, perícias, poderes e rituais você tem (<b>2 de 4</b>) e trava o que passaria do limite. A caixa <b>Falta escolher</b> no topo diz o que ainda está livre; toque num item para ir à aba certa. Tirar sempre pode. <b>Classe e origem</b> você escolhe na criação (NEX 5%) e a <b>trilha</b> uma vez, em NEX 10%; antes de trocar, a ficha mostra o que muda. Depois disso, quem troca é o mestre, assim como o <b>NEX</b>, o prestígio e os bônus. Quando ele sobe o seu NEX, a ficha mostra o que você ganhou."
       ],
       [
         "Rolar dados",
@@ -29171,13 +29211,80 @@ function itemNaoCabe(f, L, cat, esp) {
   if (L.itens.usados + (+esp || 0) > L.itens.carga * 2) return "pesado demais";
   return "";
 }
+
+/* ---------- classe, origem e trilha ----------
+   Classe e origem: o jogador escolhe na criação (NEX 5%, ou estágio 1). Trilha: escolhe uma vez, a partir de
+   NEX 10%. Depois disso, só o mestre troca. Antes de trocar, o site mostra o que a troca muda na ficha. */
+const NOME_ESCOLHA = { classe: "a classe", origem: "a origem", trilha: "a trilha" };
+/* Por que esta escolha está travada para quem está olhando ("" = pode trocar). */
+function motivoTroca(f, campo) {
+  if (!regrasAtivas(f) || podeAjustarNivel(f)) return "";
+  if (campo === "trilha") {
+    if (+f.nex < 10) return `A trilha só é escolhida em ${ehSobrevivente(f) ? "estágio 2" : "NEX 10%"}.`;
+    if (f.trilha) return "A trilha já foi escolhida. Só o mestre troca.";
+    return "";
+  }
+  if (+f.nex > 5) return "Classe e origem só mudam na criação (NEX 5%). Depois, só o mestre troca.";
+  return "";
+}
+/* O que a troca muda na ficha: poderes de fora da classe, trilha que some, o que fica acima do limite. */
+function efeitosDaTroca(f, campo, valor) {
+  const { foto, ...resto } = f;
+  const c = JSON.parse(JSON.stringify(resto));
+  c[campo] = valor;
+  if (campo === "classe") c.trilha = "";
+  const out = [];
+  if (campo === "classe" && f.trilha) out.push(`A trilha ${f.trilha} sai (cada classe tem as suas).`);
+  const antes = problemas(f),
+    depois = problemas(c);
+  for (const k in depois) if (depois[k].n > ((antes[k] || {}).n || 0)) out.push(depois[k].texto + ".");
+  const L0 = limitesFicha(f),
+    L1 = limitesFicha(c);
+  const dif = (a, b, nome) => {
+    if (b > a) out.push(`+${b - a} ${nome}.`);
+  };
+  dif(L0.per.base, L1.per.base, "perícia(s) para treinar");
+  dif(L0.poderes.max, L1.poderes.max, "poder(es)");
+  dif(L0.rituais.max, L1.rituais.max, "ritual(is)");
+  return out;
+}
+/* Trocar classe, origem ou trilha: confere se pode, mostra o que muda e pede confirmação. */
+async function trocarEscolha(f, id, campo, valor) {
+  const motivo = motivoTroca(f, campo);
+  if (motivo) {
+    toast(motivo);
+    renderPanel();
+    return;
+  }
+  if (valor === (f[campo] || "")) return;
+  const efeitos = regrasAtivas(f) ? efeitosDaTroca(f, campo, valor) : [];
+  const definitiva = regrasAtivas(f) && !podeAjustarNivel(f) && campo === "trilha"; // o jogador não volta atrás
+  if (efeitos.length || definitiva) {
+    const texto = [...efeitos, definitiva ? "Depois de escolhida, só o mestre troca a trilha." : ""]
+      .filter(Boolean)
+      .join(" ");
+    const titulo = f[campo]
+      ? `Trocar ${NOME_ESCOLHA[campo]} para ${valor || "nenhuma"}?`
+      : `Escolher ${NOME_ESCOLHA[campo]} ${valor}?`;
+    const ok = await confirmBox(titulo, texto, f[campo] ? "Trocar" : "Escolher");
+    if (!ok) {
+      renderPanel();
+      return;
+    }
+  }
+  f[campo] = valor;
+  if (campo === "classe") f.trilha = "";
+  saveFicha(id);
+  renderPanel();
+  renderBoard();
+}
 </script>
 <script>
 "use strict";
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 08h4204";
+const VERSAO_SITE="13/11 09h0448";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

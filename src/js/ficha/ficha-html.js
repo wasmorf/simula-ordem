@@ -85,20 +85,29 @@ function tabPrincipal(f, D, c, sel) {
   const nivel = podeAjustarNivel(f) ? "" : 'disabled title="Só o mestre muda"'; // NEX, prestígio e bônus
   const sobra = L.attr.total - L.attr.usados;
   const pode = (k, d) => permitido(f, x => (x.attr[k] += d)).ok;
+  // classe, origem e trilha travadas para o jogador depois da criação (regras/limites)
+  const trava = (campo, html) =>
+    motivoTroca(f, campo)
+      ? html.replace("<select ", `<select disabled title="${esc(motivoTroca(f, campo))}" `)
+      : html;
+  const avisoBase = [motivoTroca(f, "classe"), f.trilha ? motivoTroca(f, "trilha") : ""].filter(Boolean);
   const auto = condAuto(f);
   return `<div class="fields">
    <div class="field"><label class="label" for="s_jogador">Jogador</label><input type="text" id="s_jogador" data-f="jogador" value="${esc(f.jogador)}" maxlength="40"></div>
    <div class="field"><label class="label" for="s_idade">Idade</label><input type="text" id="s_idade" data-f="idade" value="${esc(f.idade || "")}" maxlength="20"></div>
-   <div class="field"><label class="label" for="s_origem">Origem</label>${sel(
+   <div class="field"><label class="label" for="s_origem">Origem</label>${trava(
      "origem",
-     Object.keys(ORIGENS).sort((a, b) => a.localeCompare(b, "pt")),
-     f.origem
+     sel(
+       "origem",
+       Object.keys(ORIGENS).sort((a, b) => a.localeCompare(b, "pt")),
+       f.origem
+     )
    )}</div>
-   <div class="field"><label class="label" for="s_classe">Classe</label>${sel("classe", Object.keys(CLASSES), f.classe)}</div>
+   <div class="field"><label class="label" for="s_classe">Classe</label>${trava("classe", sel("classe", Object.keys(CLASSES), f.classe))}</div>
    <div class="field"><label class="label" for="s_trilha">Trilha</label>${
      travas && !L.trilhaLiberada
        ? `<select id="s_trilha" disabled><option>Em ${sob ? "estágio 2" : "NEX 10%"}</option></select>`
-       : sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Escolha a trilha")
+       : trava("trilha", sel("trilha", Object.keys(c.trilhas), f.trilha, "", "Escolha a trilha"))
    }</div>
    ${
      sob
@@ -108,7 +117,7 @@ function tabPrincipal(f, D, c, sel) {
    <div class="field"><label class="label" for="s_pat">Patente</label><select id="s_pat" data-patsel ${canEditFicha(f) && !nivel ? "" : "disabled"}>${PATENTES.map((p, i) => `<option value="${i}" ${patenteDe(f.pp) === p ? "selected" : ""}>${esc(p[1])}</option>`).join("")}</select></div>`
    }
   </div>
-  ${travas && nivel ? `<p class="muted small" style="margin:0">${sob ? "Estágio" : "NEX, prestígio"} e bônus: quem muda é o mestre.</p>` : ""}
+  ${travas && nivel ? `<p class="muted small" style="margin:0">${sob ? "Estágio" : "NEX, prestígio"} e bônus: quem muda é o mestre.${avisoBase.length ? " " + avisoBase.join(" ") : ""}</p>` : ""}
   <p class="muted small" style="margin:0">Origem: <b style="color:var(--fg)">${esc(og[1])}</b> · perícias ${og[0].join(" e ") || "à escolha do mestre"}. Classe: ${c.fixasTxt ? esc(c.fixasTxt) + " + " : ""}${c.livres} + INT perícias à escolha. <button type="button" class="btn sm" id="btnAplicar">Marcar perícias da origem e classe</button></p>
   <div class="box stack"><div class="row between"><h3>Atributos</h3><span class="contador ${sobra < 0 ? "ruim" : sobra ? "falta" : ""}">${L.attr.usados} de ${L.attr.total} pontos${sobra > 0 ? ` · faltam ${sobra}` : sobra < 0 ? ` · ${-sobra} acima` : ""}</span></div>
    <div class="attrs">${ATTRS.map(k => `<div class="attr" title="${ATTR_NOME[k]}"><span class="k">${k}</span><span class="n">${f.attr[k]}</span><div class="pm"><button type="button" data-attr="${k}" data-d="-1" aria-label="Diminuir ${ATTR_NOME[k]}" ${pode(k, -1) && f.attr[k] > 0 ? "" : "disabled"}>−</button><button type="button" data-attr="${k}" data-d="1" aria-label="Aumentar ${ATTR_NOME[k]}" ${pode(k, 1) && f.attr[k] < 5 ? "" : "disabled"}>+</button></div></div>`).join("")}</div>

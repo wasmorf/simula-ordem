@@ -6,12 +6,14 @@ function combateHTML() {
   const L = c.lista || [];
   const B = allBest();
   const rows = L.map((x, i) => {
+    if (!entradaVisivel(x)) return ""; // escondido para o jogador (jogo/combate-no-mapa)
+    const escondido = S.isM && !entradaVisivelParaJogadores(x);
     const f = x.fichaId && S.fichas[x.fichaId];
     const pv = f ? cur(f, "pv") : (x.pv ?? "?");
     const pvMax = f ? derivados(migrar(f)).pvMax : (x.pvMax ?? "?");
     const def = f ? derivados(f).def : (x.def ?? "?");
     const tk = tokenDeEntrada(x);
-    return `<div class="cb ${x.tipo} ${i === c.turno ? "now" : ""} ${pv <= 0 ? "down" : ""}"><span class="iv">${x.ini ?? "–"}</span><div style="min-width:0"><div class="cn">${tk ? `<button class="lnk" data-foco="${esc(tk)}" title="Mostrar no mapa">${esc(f ? f.nome : x.nome)} ⌖</button>` : esc(f ? f.nome : x.nome)}${x.el ? ` <span class="tag el-${esc(x.el)}" style="border-color:var(--el);color:var(--el)">${esc(x.el)}</span>` : ""}</div><div class="cs">PV ${pv}/${pvMax} · DEF ${def}${x.vd ? ` · VD ${x.vd}` : ""}${x.atk ? ` · ${esc(x.atk[0])} ${x.atk[1]}d20+${x.atk[2]} · ${esc(x.atk[3])}` : ""}</div></div>
+    return `<div class="cb ${x.tipo} ${i === c.turno ? "now" : ""} ${pv <= 0 ? "down" : ""}"><span class="iv">${x.ini ?? "–"}</span><div style="min-width:0"><div class="cn">${tk ? `<button class="lnk" data-foco="${esc(tk)}" title="Mostrar no mapa">${esc(f ? f.nome : x.nome)} ⌖</button>` : esc(f ? f.nome : x.nome)}${escondido ? ' <span class="tag">oculto</span>' : ""}${x.el ? ` <span class="tag el-${esc(x.el)}" style="border-color:var(--el);color:var(--el)">${esc(x.el)}</span>` : ""}</div><div class="cs">PV ${pv}/${pvMax} · DEF ${def}${x.vd ? ` · VD ${x.vd}` : ""}${x.atk ? ` · ${esc(x.atk[0])} ${x.atk[1]}d20+${x.atk[2]} · ${esc(x.atk[3])}` : ""}</div></div>
      <div class="act">${f && f.npc && S.isM ? `<button class="btn sm" data-cfic="${esc(x.fichaId)}">Ficha</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="-5" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="5" aria-label="Dar 5 PV">+5</button>` : ""}${x.tipo === "npc" && S.isM ? `<button class="rollbtn" data-npcatk="${i}" ${x.atk ? "" : "disabled"}>Atacar</button><button class="btn sm" data-npcdmg="${i}" data-d="-1" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-npcdmg="${i}" data-d="1" aria-label="Dar 5 PV">+5</button>` : ""}${S.isM ? `<button class="btn sm ghost" data-rm="${i}" aria-label="Tirar do combate">✕</button>` : ""}</div></div>`;
   }).join("");
   return `<div class="row between"><h3>Rodada ${c.rodada || 1}</h3>${S.isM ? `<div class="row"><button class="btn sm" id="btnIni">Rolar iniciativa</button><button class="btn sm primary" id="btnProx" ${L.length ? "" : "disabled"}>Próximo turno</button></div>` : ""}</div>
@@ -132,11 +134,11 @@ function bindCombate() {
         const r = rollTest(f.attr.AGI, modPericia(f, "Iniciativa"));
         x.ini = r.total;
         x.nome = f.nome;
-        det.push(`${f.nome} ${r.total}`);
+        if (entradaVisivelParaJogadores(x)) det.push(`${f.nome} ${r.total}`); // o registro é de todos
       } else {
         const r = rollTest(Math.max(1, x.agi || 1), Math.round((x.vd || 20) / 10));
         x.ini = r.total;
-        det.push(`${x.nome} ${x.ini}`);
+        if (entradaVisivelParaJogadores(x)) det.push(`${x.nome} ${x.ini}`);
       }
     });
     c.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99));
@@ -156,7 +158,9 @@ function bindCombate() {
     saveCombate(c);
     const x = c.lista[c.turno];
     const f = x.fichaId && S.fichas[x.fichaId];
-    logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
+    // vez de alguém escondido: não avisa no registro (os jogadores não sabem que ele está ali)
+    if (entradaVisivelParaJogadores(x))
+      logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
   };
   $$("[data-rm]").forEach(
     b =>
@@ -188,7 +192,7 @@ function bindCombate() {
         const crit = r.kept === 20;
         const dm = rollExpr(x.atk[3], { critMult: crit ? 2 : 1 });
         logEntry({
-          quem: x.nome,
+          quem: entradaVisivelParaJogadores(x) ? x.nome : "???", // atacante escondido não diz o nome
           titulo: `${x.atk[0]} · dano ${dm ? dm.total : "?"}`,
           total: r.total,
           flag: crit ? "crit" : r.kept === 1 ? "fail" : "",

@@ -146,10 +146,11 @@ function bindFichaCompleta() {
   $$("#pbody [data-f]").forEach(el => {
     const k = el.dataset.f;
     const num = el.type === "number";
-    if (el.tagName === "SELECT" || num)
+    if (k === "classe" || k === "origem" || k === "trilha")
+      el.onchange = () => trocarEscolha(f, id, k, el.value); // confere a regra e avisa o que muda (regras/limites)
+    else if (el.tagName === "SELECT" || num)
       el.onchange = () => {
         f[k] = num ? +el.value || 0 : el.value;
-        if (k === "classe") f.trilha = "";
         sv();
         rr();
         renderBoard();

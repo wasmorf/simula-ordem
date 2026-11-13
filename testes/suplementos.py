@@ -8,9 +8,13 @@ async def main():
       poderesClasse:Object.fromEntries(Object.entries(CLASSES).map(([k,c])=>[k,c.poderes.length])),gerais:PODERES_GERAIS.length,paranormais:PODERES_PARANORMAIS.length,
       rituais:RITUAIS_LIVRO.length,armas:ARMAS_LIVRO.length,itens:ITENS_GERAIS.length,amald:AMALDICOADOS.length})"""))
     await A.click("#btnNovoSolo");await A.wait_for_timeout(500)
-    await A.select_option("#s_classe","Ocultista");await A.wait_for_timeout(200)
-    await A.select_option("#s_origem","Exorcizado");await A.select_option("#s_nex","40");await A.wait_for_timeout(200);await A.click("#nvOk")
-    await A.select_option("#s_trilha","Exorcista");await A.wait_for_timeout(300)
+    async def confirma():  # trocar classe/origem/trilha mostra o que muda e pede confirmação
+      await A.wait_for_timeout(250)
+      if await A.locator("#mYes").count(): await A.click("#mYes");await A.wait_for_timeout(200)
+    await A.select_option("#s_classe","Ocultista");await confirma()
+    await A.select_option("#s_origem","Exorcizado");await confirma()
+    await A.select_option("#s_nex","40");await A.wait_for_timeout(200);await A.click("#nvOk")
+    await A.select_option("#s_trilha","Exorcista");await confirma()
     print("origem opt:",await A.evaluate("[...document.querySelectorAll('#s_origem option')].find(o=>o.value==='Exorcizado').textContent"))
     await A.click("[data-stab='habilidades']") if await A.locator("[data-stab='habilidades']").count() else None
     await A.wait_for_timeout(300)

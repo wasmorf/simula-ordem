@@ -17,6 +17,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | --- | --- |
 | `aviso-versao-nova` | O aviso "Saiu uma versão nova do site" |
 | `backup` | Baixar e restaurar fichas e mesa |
+| `classe-origem-trilha` | Classe e origem livres só na criação, trilha escolhida uma vez; aviso do que a troca muda |
 | `combate` | Painel de combate sem erros |
 | `copiar-cena` | Copiar cena e mapa para outra mesa do mesmo mestre |
 | `edicao-ao-mesmo-tempo` | Mestre e jogador mexendo na mesma ficha juntos: nenhum apaga o outro |
@@ -37,6 +38,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | `mural-no-celular` | Mural de pistas no celular |
 | `musicas-livres` | Músicas livres da trilha sonora |
 | `npcs` | NPCs: ficha rápida, pastas, duplicar, rolagens |
+| `ocultos-para-jogador` | NPCs, criaturas e tokens ocultos não aparecem para o jogador (mapa, Tokens, Combate, registro) |
 | `passagens` | Passagens entre cenas (andares) |
 | `portas` | Portas que abrem e fecham |
 | `portas-trancadas` | Trancar e destrancar portas |

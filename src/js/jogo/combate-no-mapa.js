@@ -77,3 +77,28 @@ function addTokensAoCombate() {
   saveCombate(c);
   toast(`${n} entraram no combate. Agora role a iniciativa.`);
 }
+
+/* ---------- o que os jogadores não enxergam no combate ---------- */
+/* Token ligado a uma entrada do combate: o da cena atual ou, se não estiver nela, qualquer um. */
+function tokenLigado(x) {
+  const tid = tokenDeEntrada(x);
+  if (tid) return { t: S.tokens.find(y => y.id === tid), p: S.pos[tid] };
+  const t = S.tokens.find(y => (x.fichaId && y.fichaId === x.fichaId) || (y.combId && y.combId === x.id));
+  return t ? { t, p: null } : null;
+}
+/* Os jogadores enxergam esta entrada? Não, se o token dela está oculto ou num local escondido, nem se é
+   um NPC escondido sem token à vista. Vale para o painel Combate e para o que vai no registro. */
+function entradaVisivelParaJogadores(x) {
+  const k = tokenLigado(x);
+  if (k && k.t) return !k.t.oculto && !(k.p && hiddenAt(k.p.x, k.p.y));
+  if (!x.fichaId) return true; // inimigo do bestiário sem token: o mestre pôs no combate de propósito
+  const f = S.fichas[x.fichaId];
+  return !!f && !(f.npc && !f.visivel); // jogador nem recebe a ficha de NPC escondido
+}
+/* Para quem está olhando agora: o mestre vê tudo; o jogador vê o próprio agente e o que não está escondido. */
+function entradaVisivel(x) {
+  if (S.isM) return true;
+  const f = x.fichaId && S.fichas[x.fichaId];
+  if (f && !f.npc && f.dono === S.uid) return true;
+  return entradaVisivelParaJogadores(x);
+}

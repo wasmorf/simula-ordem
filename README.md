@@ -84,6 +84,20 @@ Toda regra de limite fica em `js/regras/limites.js`:
 - Valem para agentes. NPCs, criaturas e fichas com **Regras livres** não travam. O mestre dá extras em
   `f.extra` (Principal → Regras da ficha).
 - NEX, prestígio, bônus e números de arma: só o mestre muda (`podeAjustarNivel`).
+- Classe e origem: o jogador escolhe na criação (NEX 5%); trilha: escolhe uma vez, a partir de NEX 10%.
+  Depois, só o mestre troca (`motivoTroca`). Antes de qualquer troca, `trocarEscolha` mostra o que muda
+  na ficha (poderes de fora da classe, trilha que sai, o que passa do limite) e pede confirmação.
+
+### O que o jogador não vê
+
+O que o mestre esconde não aparece para o jogador em lugar nenhum:
+
+- **Mapa:** token oculto ou dentro de local escondido/névoa não é desenhado (`tokVisivel`, em `mapa/tabuleiro.js`).
+- **Painel Tokens:** em cena, só o que ele enxerga no mapa; na biblioteca, só os tokens dele.
+- **Combate e registro:** `entradaVisivel` / `entradaVisivelParaJogadores` (`jogo/combate-no-mapa.js`). Criatura
+  com token oculto ou NPC escondido não aparece na ordem de iniciativa, não entra no texto da iniciativa nem no
+  "Vez de…", e um ataque dela aparece como "???". O mestre vê tudo, com a etiqueta "oculto".
+- **Agentes:** a ficha de NPC escondido nem chega ao jogador (regra `npcs` no `firestore.rules`).
 
 Para mudar uma regra (por exemplo, quantas perícias o grau de treinamento dá), o número está em
 `CLASSES` (`js/regras/livro.js`, campo `grauTreino`) ou na conta em `limitesFicha`.

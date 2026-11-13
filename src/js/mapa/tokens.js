@@ -69,8 +69,9 @@ function tokensHTML() {
      <div class="cards">${B.map((b, i) => `<div class="tokrow"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${i}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
      }`;
   }
-  const em = S.tokens.filter(t => inScene.has(t.id) && match(t));
-  let lib = S.tokens.filter(t => !inScene.has(t.id) && match(t));
+  // jogador: em cena só o que ele enxerga no mapa; na biblioteca só os tokens dele
+  const em = S.tokens.filter(t => inScene.has(t.id) && match(t) && tokVisivel(t, S.pos[t.id]));
+  let lib = S.tokens.filter(t => !inScene.has(t.id) && match(t) && (S.isM || canMove(t)));
   if (S.tokTab === "meus") lib = lib.filter(t => t.dono === S.uid);
   if (S.tokTab === "agentes") lib = lib.filter(t => t.fichaId);
   if (S.tokTab === "criaturas") lib = lib.filter(t => !t.fichaId);

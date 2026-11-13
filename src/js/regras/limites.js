@@ -298,3 +298,70 @@ function itemNaoCabe(f, L, cat, esp) {
   if (L.itens.usados + (+esp || 0) > L.itens.carga * 2) return "pesado demais";
   return "";
 }
+
+/* ---------- classe, origem e trilha ----------
+   Classe e origem: o jogador escolhe na criação (NEX 5%, ou estágio 1). Trilha: escolhe uma vez, a partir de
+   NEX 10%. Depois disso, só o mestre troca. Antes de trocar, o site mostra o que a troca muda na ficha. */
+const NOME_ESCOLHA = { classe: "a classe", origem: "a origem", trilha: "a trilha" };
+/* Por que esta escolha está travada para quem está olhando ("" = pode trocar). */
+function motivoTroca(f, campo) {
+  if (!regrasAtivas(f) || podeAjustarNivel(f)) return "";
+  if (campo === "trilha") {
+    if (+f.nex < 10) return `A trilha só é escolhida em ${ehSobrevivente(f) ? "estágio 2" : "NEX 10%"}.`;
+    if (f.trilha) return "A trilha já foi escolhida. Só o mestre troca.";
+    return "";
+  }
+  if (+f.nex > 5) return "Classe e origem só mudam na criação (NEX 5%). Depois, só o mestre troca.";
+  return "";
+}
+/* O que a troca muda na ficha: poderes de fora da classe, trilha que some, o que fica acima do limite. */
+function efeitosDaTroca(f, campo, valor) {
+  const { foto, ...resto } = f;
+  const c = JSON.parse(JSON.stringify(resto));
+  c[campo] = valor;
+  if (campo === "classe") c.trilha = "";
+  const out = [];
+  if (campo === "classe" && f.trilha) out.push(`A trilha ${f.trilha} sai (cada classe tem as suas).`);
+  const antes = problemas(f),
+    depois = problemas(c);
+  for (const k in depois) if (depois[k].n > ((antes[k] || {}).n || 0)) out.push(depois[k].texto + ".");
+  const L0 = limitesFicha(f),
+    L1 = limitesFicha(c);
+  const dif = (a, b, nome) => {
+    if (b > a) out.push(`+${b - a} ${nome}.`);
+  };
+  dif(L0.per.base, L1.per.base, "perícia(s) para treinar");
+  dif(L0.poderes.max, L1.poderes.max, "poder(es)");
+  dif(L0.rituais.max, L1.rituais.max, "ritual(is)");
+  return out;
+}
+/* Trocar classe, origem ou trilha: confere se pode, mostra o que muda e pede confirmação. */
+async function trocarEscolha(f, id, campo, valor) {
+  const motivo = motivoTroca(f, campo);
+  if (motivo) {
+    toast(motivo);
+    renderPanel();
+    return;
+  }
+  if (valor === (f[campo] || "")) return;
+  const efeitos = regrasAtivas(f) ? efeitosDaTroca(f, campo, valor) : [];
+  const definitiva = regrasAtivas(f) && !podeAjustarNivel(f) && campo === "trilha"; // o jogador não volta atrás
+  if (efeitos.length || definitiva) {
+    const texto = [...efeitos, definitiva ? "Depois de escolhida, só o mestre troca a trilha." : ""]
+      .filter(Boolean)
+      .join(" ");
+    const titulo = f[campo]
+      ? `Trocar ${NOME_ESCOLHA[campo]} para ${valor || "nenhuma"}?`
+      : `Escolher ${NOME_ESCOLHA[campo]} ${valor}?`;
+    const ok = await confirmBox(titulo, texto, f[campo] ? "Trocar" : "Escolher");
+    if (!ok) {
+      renderPanel();
+      return;
+    }
+  }
+  f[campo] = valor;
+  if (campo === "classe") f.trilha = "";
+  saveFicha(id);
+  renderPanel();
+  renderBoard();
+}

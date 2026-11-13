@@ -20,7 +20,7 @@ const AJUDA = {
       ],
       [
         "O que a ficha deixa escolher",
-        "A ficha segue as regras do seu NEX: mostra quantos pontos de atributo, perícias, poderes e rituais você tem (<b>2 de 4</b>) e trava o que passaria do limite. A caixa <b>Falta escolher</b> no topo diz o que ainda está livre; toque num item para ir à aba certa. Tirar sempre pode. O <b>NEX</b>, o prestígio e os bônus quem muda é o mestre; quando ele sobe o seu NEX, a ficha mostra o que você ganhou."
+        "A ficha segue as regras do seu NEX: mostra quantos pontos de atributo, perícias, poderes e rituais você tem (<b>2 de 4</b>) e trava o que passaria do limite. A caixa <b>Falta escolher</b> no topo diz o que ainda está livre; toque num item para ir à aba certa. Tirar sempre pode. <b>Classe e origem</b> você escolhe na criação (NEX 5%) e a <b>trilha</b> uma vez, em NEX 10%; antes de trocar, a ficha mostra o que muda. Depois disso, quem troca é o mestre, assim como o <b>NEX</b>, o prestígio e os bônus. Quando ele sobe o seu NEX, a ficha mostra o que você ganhou."
       ],
       [
         "Rolar dados",
