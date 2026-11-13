@@ -356,6 +356,11 @@ function bindFichaCompleta() {
         const i = +el.dataset.arma,
           k = el.dataset.k;
         if (k !== "nome" && k !== "pericia" && !podeAjustarNivel(f)) return; // números da arma: só o mestre
+        if (k === "bdano" && f.armas[i].tdano) {
+          // formato antigo: o bônus com tipo vira um dano extra, e este campo fica sem tipo
+          f.armas[i].extras = danosExtras(f.armas[i]);
+          delete f.armas[i].tdano;
+        }
         f.armas[i][k] = el.type === "number" ? +el.value || 0 : el.value;
         sv();
         rr();
@@ -401,6 +406,38 @@ function bindFichaCompleta() {
     sv();
     rr();
   });
+  // danos extras de outro tipo (ex.: +2 Energia, +1d6 Sangue): só o mestre, como os números da arma
+  const mexerExtras = (i, fn) => {
+    if (!podeAjustarNivel(f)) return;
+    const a = f.armas[i];
+    a.extras = danosExtras(a, true); // traz o formato antigo (bdano + tdano) para a lista
+    if (a.tdano) {
+      a.bdano = 0;
+      delete a.tdano;
+    }
+    fn(a.extras);
+    sv();
+    rr();
+  };
+  $$("[data-dexadd]").forEach(
+    b => (b.onclick = () => mexerExtras(+b.dataset.dexadd, l => l.push({ v: "", t: "Energia" })))
+  );
+  $$("[data-dexrm]").forEach(
+    b =>
+      (b.onclick = () => {
+        const [i, k] = b.dataset.dexrm.split(":").map(Number);
+        mexerExtras(i, l => l.splice(k, 1));
+      })
+  );
+  $$("[data-dex]").forEach(
+    el =>
+      (el.onchange = () => {
+        const [i, k] = el.dataset.dex.split(":").map(Number);
+        mexerExtras(i, l => {
+          if (l[k]) l[k][el.dataset.dk] = el.value.trim();
+        });
+      })
+  );
   $$("[data-modadd]").forEach(
     b =>
       (b.onclick = () => {

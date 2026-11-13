@@ -201,7 +201,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `sigilos.js` | Sigilos dos elementos (desenhos SVG usados na ficha) |
 | `ficha.js` | Ficha: números calculados (PV, PE, SAN, Defesa...), salvar e lista de Agentes |
 | `ficha-html.js` | Ficha: o que aparece em cada aba (Principal, Perícias, Combate...) |
-| `ficha-rolagens.js` | Ficha: testes de perícia, ataques (o bônus de dano mostra o tipo: `arma.tdano`) e rituais |
+| `ficha-rolagens.js` | Ficha: testes de perícia, ataques (danos extras com tipo: `arma.extras`, lidos por `danosExtras` em `ficha.js`) e rituais |
 | `ficha-eventos.js` | Ficha: o que cada botão e campo faz |
 | `subir-nex.js` | Subir de NEX guiado: o que o agente ganhou em cada nível e o aviso para o jogador |
 | `npcs-sincronia.js` | NPCs do mestre: receber do banco e onde cada ficha é salva |

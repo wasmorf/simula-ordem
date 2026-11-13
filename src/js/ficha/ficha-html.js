@@ -238,7 +238,13 @@ function tabCombate(f, D, c) {
          const open = S.openArma === i;
          const ok = profOK(f, a);
          return `<div class="wcard ${open ? "open" : ""}"><div class="wh"><span class="wi">${weaponIcon(a)}</span><button type="button" class="wn" data-wtog="${i}" aria-expanded="${open}">${esc(a.nome)}</button><button type="button" class="rollbtn" data-atk="${i}">Atacar</button><button type="button" class="chev" data-wtog="${i}" aria-label="${open ? "Fechar" : "Editar"} ${esc(a.nome)}">${open ? "▴" : "▾"}</button></div>
-     <div class="wst"><span>DANO <b>${esc(a.dano)}</b>${+a.bdano ? ` <b>${sgn(+a.bdano).trim()}${a.tdano ? " " + esc(a.tdano) : ""}</b>` : ""}</span><span>CRÍTICO <b>${esc(a.crit)}</b></span>${a.alc && a.alc !== "—" ? `<span>ALCANCE <b>${esc(a.alc)}</b></span>` : ""}${a.tipo ? `<span>TIPO <b>${esc(a.tipo)}</b></span>` : ""}<span>CATEGORIA <b>${esc(a.cat ?? "0")}</b></span><span>ESPAÇO <b>${a.esp ?? 1}</b></span><span>${esc(a.pericia)}${+a.bonus ? ` <b>${sgn(+a.bonus).trim()}</b>` : ""}</span>${(a.mods || []).length ? `<span>MODS <b>${esc(a.mods.join(", "))}</b></span>` : ""}${!ok ? `<span style="color:var(--red-hi)">SEM PROFICIÊNCIA −2d20</span>` : ""}</div>
+     <div class="wst"><span>DANO <b>${esc(a.dano)}</b>${bonusDanoSemTipo(a) ? ` <b>${sgn(bonusDanoSemTipo(a)).trim()}</b>` : ""}${danosExtras(
+       a
+     )
+       .map(x => ` <b>+${esc(x.v)} ${esc(x.t || "")}</b>`)
+       .join(
+         ""
+       )}</span><span>CRÍTICO <b>${esc(a.crit)}</b></span>${a.alc && a.alc !== "—" ? `<span>ALCANCE <b>${esc(a.alc)}</b></span>` : ""}${a.tipo ? `<span>TIPO <b>${esc(a.tipo)}</b></span>` : ""}<span>CATEGORIA <b>${esc(a.cat ?? "0")}</b></span><span>ESPAÇO <b>${a.esp ?? 1}</b></span><span>${esc(a.pericia)}${+a.bonus ? ` <b>${sgn(+a.bonus).trim()}</b>` : ""}</span>${(a.mods || []).length ? `<span>MODS <b>${esc(a.mods.join(", "))}</b></span>` : ""}${!ok ? `<span style="color:var(--red-hi)">SEM PROFICIÊNCIA −2d20</span>` : ""}</div>
      ${
        open
          ? `<div class="fields" style="margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">
@@ -247,11 +253,19 @@ function tabCombate(f, D, c) {
       <div class="field"><label class="label">Dano</label><input type="text" data-arma="${i}" data-k="dano" value="${esc(a.dano)}" ${nivel}></div>
       <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3" ${nivel}></div>
       <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}" ${nivel}></div>
-      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}" ${nivel}></div>
-      <div class="field"><label class="label">Tipo do bônus</label><select data-arma="${i}" data-k="tdano" ${nivel}><option value="">Mesmo da arma</option>${TIPOS_DANO.map(t => `<option ${a.tdano === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${bonusDanoSemTipo(a)}" ${nivel}></div>
       <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}" ${nivel}></div>
       <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}" ${nivel}></div>
       <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""} ${nivel}> Arma ágil</label>
+      <div class="field" style="grid-column:1/-1"><label class="label">Dano extra de outro tipo</label>
+       ${danosExtras(a, true)
+         .map(
+           (x, k) =>
+             `<div class="row dextra" style="flex-wrap:nowrap"><input type="text" data-dex="${i}:${k}" data-dk="v" value="${esc(x.v)}" placeholder="2 ou 1d6" maxlength="12" aria-label="Quanto" ${nivel}><select data-dex="${i}:${k}" data-dk="t" aria-label="Tipo" ${nivel}>${TIPOS_DANO.map(t => `<option ${x.t === t ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-dexrm="${i}:${k}" aria-label="Tirar" ${nivel}>✕</button></div>`
+         )
+         .join(
+           ""
+         )}<button type="button" class="btn sm" data-dexadd="${i}" style="align-self:flex-start;width:auto" ${nivel}>+ Dano extra</button></div>
       <div class="field" style="grid-column:1/-1"><label class="label">Modificações e maldições</label><div class="row" style="flex-wrap:nowrap"><select data-modsel="${i}">${MODIFICACOES.filter(
         m => /corpo|fogo|munição/.test(m[1])
       )

@@ -1369,7 +1369,7 @@ h3 .contador {
   position: fixed;
   bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   left: calc(var(--rail) + 12px + env(safe-area-inset-left, 0px));
-  z-index: 40;
+  z-index: 48; /* acima da tela de personagem sem mesa (.soloEd, 44) e abaixo das janelas (50) */
   display: flex;
   flex-direction: column-reverse;
   gap: 8px;
@@ -11467,6 +11467,16 @@ function grau(f, p) {
   const v = f.per[p] || {};
   return +v.g || 0;
 }
+/* Danos extras da arma, cada um com o seu tipo: [{v: "2" ou "1d6", t: "Energia"}].
+   Lê também o formato antigo (bônus de dano + um tipo só: a.bdano e a.tdano).
+   comVazios: o editor mostra também as linhas ainda sem valor. */
+function danosExtras(a, comVazios) {
+  const l = (a.extras || []).filter(x => x && (comVazios || String(x.v || "").trim()));
+  return a.tdano && +a.bdano ? [{ v: String(a.bdano), t: a.tdano }, ...l] : l;
+}
+function bonusDanoSemTipo(a) {
+  return a.tdano ? 0 : +a.bdano || 0;
+}
 function modPericia(f, p) {
   const v = f.per[p] || {};
   return (+v.g || 0) + (+v.b || 0);
@@ -11947,7 +11957,13 @@ function tabCombate(f, D, c) {
          const open = S.openArma === i;
          const ok = profOK(f, a);
          return `<div class="wcard ${open ? "open" : ""}"><div class="wh"><span class="wi">${weaponIcon(a)}</span><button type="button" class="wn" data-wtog="${i}" aria-expanded="${open}">${esc(a.nome)}</button><button type="button" class="rollbtn" data-atk="${i}">Atacar</button><button type="button" class="chev" data-wtog="${i}" aria-label="${open ? "Fechar" : "Editar"} ${esc(a.nome)}">${open ? "▴" : "▾"}</button></div>
-     <div class="wst"><span>DANO <b>${esc(a.dano)}</b>${+a.bdano ? ` <b>${sgn(+a.bdano).trim()}${a.tdano ? " " + esc(a.tdano) : ""}</b>` : ""}</span><span>CRÍTICO <b>${esc(a.crit)}</b></span>${a.alc && a.alc !== "—" ? `<span>ALCANCE <b>${esc(a.alc)}</b></span>` : ""}${a.tipo ? `<span>TIPO <b>${esc(a.tipo)}</b></span>` : ""}<span>CATEGORIA <b>${esc(a.cat ?? "0")}</b></span><span>ESPAÇO <b>${a.esp ?? 1}</b></span><span>${esc(a.pericia)}${+a.bonus ? ` <b>${sgn(+a.bonus).trim()}</b>` : ""}</span>${(a.mods || []).length ? `<span>MODS <b>${esc(a.mods.join(", "))}</b></span>` : ""}${!ok ? `<span style="color:var(--red-hi)">SEM PROFICIÊNCIA −2d20</span>` : ""}</div>
+     <div class="wst"><span>DANO <b>${esc(a.dano)}</b>${bonusDanoSemTipo(a) ? ` <b>${sgn(bonusDanoSemTipo(a)).trim()}</b>` : ""}${danosExtras(
+       a
+     )
+       .map(x => ` <b>+${esc(x.v)} ${esc(x.t || "")}</b>`)
+       .join(
+         ""
+       )}</span><span>CRÍTICO <b>${esc(a.crit)}</b></span>${a.alc && a.alc !== "—" ? `<span>ALCANCE <b>${esc(a.alc)}</b></span>` : ""}${a.tipo ? `<span>TIPO <b>${esc(a.tipo)}</b></span>` : ""}<span>CATEGORIA <b>${esc(a.cat ?? "0")}</b></span><span>ESPAÇO <b>${a.esp ?? 1}</b></span><span>${esc(a.pericia)}${+a.bonus ? ` <b>${sgn(+a.bonus).trim()}</b>` : ""}</span>${(a.mods || []).length ? `<span>MODS <b>${esc(a.mods.join(", "))}</b></span>` : ""}${!ok ? `<span style="color:var(--red-hi)">SEM PROFICIÊNCIA −2d20</span>` : ""}</div>
      ${
        open
          ? `<div class="fields" style="margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">
@@ -11956,11 +11972,19 @@ function tabCombate(f, D, c) {
       <div class="field"><label class="label">Dano</label><input type="text" data-arma="${i}" data-k="dano" value="${esc(a.dano)}" ${nivel}></div>
       <div class="field"><label class="label">Crítico</label><input type="text" data-arma="${i}" data-k="crit" value="${esc(a.crit)}" placeholder="19/x3" ${nivel}></div>
       <div class="field"><label class="label">Bônus ataque</label><input type="number" data-arma="${i}" data-k="bonus" value="${a.bonus || 0}" ${nivel}></div>
-      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${a.bdano || 0}" ${nivel}></div>
-      <div class="field"><label class="label">Tipo do bônus</label><select data-arma="${i}" data-k="tdano" ${nivel}><option value="">Mesmo da arma</option>${TIPOS_DANO.map(t => `<option ${a.tdano === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label class="label">Bônus dano</label><input type="number" data-arma="${i}" data-k="bdano" value="${bonusDanoSemTipo(a)}" ${nivel}></div>
       <div class="field"><label class="label">Categoria</label><input type="text" data-arma="${i}" data-k="cat" value="${esc(a.cat ?? "0")}" ${nivel}></div>
       <div class="field"><label class="label">Espaço</label><input type="number" data-arma="${i}" data-k="esp" value="${a.esp ?? 1}" ${nivel}></div>
       <label class="check"><input type="checkbox" data-armaagil="${i}" ${a.agil ? "checked" : ""} ${nivel}> Arma ágil</label>
+      <div class="field" style="grid-column:1/-1"><label class="label">Dano extra de outro tipo</label>
+       ${danosExtras(a, true)
+         .map(
+           (x, k) =>
+             `<div class="row dextra" style="flex-wrap:nowrap"><input type="text" data-dex="${i}:${k}" data-dk="v" value="${esc(x.v)}" placeholder="2 ou 1d6" maxlength="12" aria-label="Quanto" ${nivel}><select data-dex="${i}:${k}" data-dk="t" aria-label="Tipo" ${nivel}>${TIPOS_DANO.map(t => `<option ${x.t === t ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-dexrm="${i}:${k}" aria-label="Tirar" ${nivel}>✕</button></div>`
+         )
+         .join(
+           ""
+         )}<button type="button" class="btn sm" data-dexadd="${i}" style="align-self:flex-start;width:auto" ${nivel}>+ Dano extra</button></div>
       <div class="field" style="grid-column:1/-1"><label class="label">Modificações e maldições</label><div class="row" style="flex-wrap:nowrap"><select data-modsel="${i}">${MODIFICACOES.filter(
         m => /corpo|fogo|munição/.test(m[1])
       )
@@ -12228,8 +12252,7 @@ function atacar(i) {
   const attrK = corpo ? (w.agil && f.attr.AGI > f.attr.FOR ? "AGI" : "FOR") : "AGI";
   let mod = modPericia(f, w.pericia) + (+w.bonus || 0);
   let dmgB = corpo ? f.attr[attrK === "AGI" ? "AGI" : "FOR"] : 0;
-  const bd = +w.bdano || 0; // bônus de dano da arma, com o tipo dele (w.tdano: Energia, Fogo…)
-  const bdTxt = bd ? `${sgn(bd)}${w.tdano ? " " + w.tdano : ""}` : "";
+  dmgB += bonusDanoSemTipo(w);
   const notes = [];
   let pen = 0;
   if (!profOK(f, w)) {
@@ -12275,7 +12298,14 @@ function atacar(i) {
     toast("Dano inválido. Use algo como 2d6+2.");
     return;
   }
-  let tot = dm.total + dmgB + bd;
+  let tot = dm.total + dmgB;
+  // danos extras de outro tipo: somam no total e aparecem separados (não multiplicam no crítico)
+  const extras = danosExtras(w)
+    .map(x => ({ t: x.t || "", r: rollExpr(String(x.v)) }))
+    .filter(x => x.r);
+  extras.forEach(x => (tot += x.r.total));
+  const exTipos = extras.map(x => `${x.r.total} de ${x.t}`).join(", ");
+  const exDet = extras.map(x => ` +${/d/i.test(x.r.detail) ? x.r.detail : x.r.total} ${x.t}`).join("");
   let exTxt = "";
   if (extraDmg) {
     const e = rollExpr(extraDmg);
@@ -12284,11 +12314,11 @@ function atacar(i) {
   }
   logEntry({
     quem: f.nome,
-    titulo: `${w.nome} · dano ${tot}${bd && w.tdano ? ` (${bd} de ${w.tdano})` : ""}`,
+    titulo: `${w.nome} · dano ${tot}${exTipos ? ` (${exTipos})` : ""}`,
     total: r.total,
     flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
     para: S.paraRolagem || "",
-    det: `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${bdTxt}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`
+    det: `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${exDet}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`
   });
   if (useEsp) {
     saveFicha(S.openFicha, true);
@@ -12697,6 +12727,11 @@ function bindFichaCompleta() {
         const i = +el.dataset.arma,
           k = el.dataset.k;
         if (k !== "nome" && k !== "pericia" && !podeAjustarNivel(f)) return; // números da arma: só o mestre
+        if (k === "bdano" && f.armas[i].tdano) {
+          // formato antigo: o bônus com tipo vira um dano extra, e este campo fica sem tipo
+          f.armas[i].extras = danosExtras(f.armas[i]);
+          delete f.armas[i].tdano;
+        }
         f.armas[i][k] = el.type === "number" ? +el.value || 0 : el.value;
         sv();
         rr();
@@ -12742,6 +12777,38 @@ function bindFichaCompleta() {
     sv();
     rr();
   });
+  // danos extras de outro tipo (ex.: +2 Energia, +1d6 Sangue): só o mestre, como os números da arma
+  const mexerExtras = (i, fn) => {
+    if (!podeAjustarNivel(f)) return;
+    const a = f.armas[i];
+    a.extras = danosExtras(a, true); // traz o formato antigo (bdano + tdano) para a lista
+    if (a.tdano) {
+      a.bdano = 0;
+      delete a.tdano;
+    }
+    fn(a.extras);
+    sv();
+    rr();
+  };
+  $$("[data-dexadd]").forEach(
+    b => (b.onclick = () => mexerExtras(+b.dataset.dexadd, l => l.push({ v: "", t: "Energia" })))
+  );
+  $$("[data-dexrm]").forEach(
+    b =>
+      (b.onclick = () => {
+        const [i, k] = b.dataset.dexrm.split(":").map(Number);
+        mexerExtras(i, l => l.splice(k, 1));
+      })
+  );
+  $$("[data-dex]").forEach(
+    el =>
+      (el.onchange = () => {
+        const [i, k] = el.dataset.dex.split(":").map(Number);
+        mexerExtras(i, l => {
+          if (l[k]) l[k][el.dataset.dk] = el.value.trim();
+        });
+      })
+  );
   $$("[data-modadd]").forEach(
     b =>
       (b.onclick = () => {
@@ -29557,7 +29624,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 12h0324";
+const VERSAO_SITE="13/11 12h2407";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

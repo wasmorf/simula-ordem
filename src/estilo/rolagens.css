@@ -74,7 +74,7 @@
   position: fixed;
   bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   left: calc(var(--rail) + 12px + env(safe-area-inset-left, 0px));
-  z-index: 40;
+  z-index: 48; /* acima da tela de personagem sem mesa (.soloEd, 44) e abaixo das janelas (50) */
   display: flex;
   flex-direction: column-reverse;
   gap: 8px;

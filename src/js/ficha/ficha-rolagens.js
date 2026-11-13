@@ -45,8 +45,7 @@ function atacar(i) {
   const attrK = corpo ? (w.agil && f.attr.AGI > f.attr.FOR ? "AGI" : "FOR") : "AGI";
   let mod = modPericia(f, w.pericia) + (+w.bonus || 0);
   let dmgB = corpo ? f.attr[attrK === "AGI" ? "AGI" : "FOR"] : 0;
-  const bd = +w.bdano || 0; // bônus de dano da arma, com o tipo dele (w.tdano: Energia, Fogo…)
-  const bdTxt = bd ? `${sgn(bd)}${w.tdano ? " " + w.tdano : ""}` : "";
+  dmgB += bonusDanoSemTipo(w);
   const notes = [];
   let pen = 0;
   if (!profOK(f, w)) {
@@ -92,7 +91,14 @@ function atacar(i) {
     toast("Dano inválido. Use algo como 2d6+2.");
     return;
   }
-  let tot = dm.total + dmgB + bd;
+  let tot = dm.total + dmgB;
+  // danos extras de outro tipo: somam no total e aparecem separados (não multiplicam no crítico)
+  const extras = danosExtras(w)
+    .map(x => ({ t: x.t || "", r: rollExpr(String(x.v)) }))
+    .filter(x => x.r);
+  extras.forEach(x => (tot += x.r.total));
+  const exTipos = extras.map(x => `${x.r.total} de ${x.t}`).join(", ");
+  const exDet = extras.map(x => ` +${/d/i.test(x.r.detail) ? x.r.detail : x.r.total} ${x.t}`).join("");
   let exTxt = "";
   if (extraDmg) {
     const e = rollExpr(extraDmg);
@@ -101,11 +107,11 @@ function atacar(i) {
   }
   logEntry({
     quem: f.nome,
-    titulo: `${w.nome} · dano ${tot}${bd && w.tdano ? ` (${bd} de ${w.tdano})` : ""}`,
+    titulo: `${w.nome} · dano ${tot}${exTipos ? ` (${exTipos})` : ""}`,
     total: r.total,
     flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
     para: S.paraRolagem || "",
-    det: `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${bdTxt}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`
+    det: `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${exDet}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`
   });
   if (useEsp) {
     saveFicha(S.openFicha, true);

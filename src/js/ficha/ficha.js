@@ -94,6 +94,16 @@ function grau(f, p) {
   const v = f.per[p] || {};
   return +v.g || 0;
 }
+/* Danos extras da arma, cada um com o seu tipo: [{v: "2" ou "1d6", t: "Energia"}].
+   Lê também o formato antigo (bônus de dano + um tipo só: a.bdano e a.tdano).
+   comVazios: o editor mostra também as linhas ainda sem valor. */
+function danosExtras(a, comVazios) {
+  const l = (a.extras || []).filter(x => x && (comVazios || String(x.v || "").trim()));
+  return a.tdano && +a.bdano ? [{ v: String(a.bdano), t: a.tdano }, ...l] : l;
+}
+function bonusDanoSemTipo(a) {
+  return a.tdano ? 0 : +a.bdano || 0;
+}
 function modPericia(f, p) {
   const v = f.per[p] || {};
   return (+v.g || 0) + (+v.b || 0);

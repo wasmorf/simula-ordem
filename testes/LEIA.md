@@ -45,7 +45,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | `portas` | Portas que abrem e fecham |
 | `portas-trancadas` | Trancar e destrancar portas |
 | `rituais-resumo` | Todo ritual tem resumo; aparece no cartão e ao escolher para aprender |
-| `dano-bonus-tipo` | Bônus de dano da arma com tipo (ex.: +2 Energia) na linha da arma e na rolagem |
+| `dano-bonus-tipo` | Danos extras da arma, vários tipos (ex.: +2 Energia, +1d6 Sangue), na linha e na rolagem; dado aparece fora de mesa |
 | `regras-da-ficha` | Travas da ficha (atributos, perícias, poderes, rituais, itens), extras do mestre e subir de NEX |
 | `sobrevivente` | Classe Sobrevivente e ameaças dos suplementos |
 | `suplementos` | Origens, poderes e rituais dos suplementos |
