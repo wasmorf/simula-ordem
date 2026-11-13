@@ -104,9 +104,11 @@ function danosExtras(a, comVazios) {
 function bonusDanoSemTipo(a) {
   return a.tdano ? 0 : +a.bdano || 0;
 }
+const RESISTENCIAS = ["Fortitude", "Reflexos", "Vontade"];
 function modPericia(f, p) {
   const v = f.per[p] || {};
-  return (+v.g || 0) + (+v.b || 0);
+  const refl = RESISTENCIAS.includes(p) && (f.poderes || []).includes("Reflexos Defensivos") ? 2 : 0;
+  return (+v.g || 0) + (+v.b || 0) + refl;
 }
 function derivados(f) {
   const c = CLASSES[f.classe] || CLASSES.Combatente;
@@ -119,11 +121,14 @@ function derivados(f) {
   let pvMax = c.pv + A.VIG + inc * (c.pvN + A.VIG) + (+f.bonusPV || 0);
   if (f.origem === "Desgarrado") pvMax += n; // Calejado
   if (temTrilha("Casca Grossa", 0)) pvMax += n; // Tropa de Choque
+  const paranormal = nome => (f.paranormais || []).includes(nome);
+  if (paranormal("Sangue de Ferro")) pvMax += 2 * n; // +2 PV por NEX
   let peMax = c.pe + A.PRE + inc * (c.peN + A.PRE) + (+f.bonusPE || 0);
   if (f.origem === "Universitário") {
     peMax += 1;
     for (let k = 15; k <= Math.min(95, nex); k += 10) peMax += 1;
   } // Dedicação
+  if (paranormal("Potencial Aprimorado")) peMax += n; // +1 PE por NEX
   let sanMax = c.san + inc * c.sanN + (+f.bonusSAN || 0);
   if (f.origem === "Vítima") sanMax += n; // Cicatrizes Psicológicas
   const transc = (f.poderes || []).filter(p => p === "Transcender").length;
@@ -136,12 +141,13 @@ function derivados(f) {
     rd = Math.max(rd, +p.rd || 0);
   });
   if (f.origem === "Policial") def += 2; // Patrulha
+  if ((f.poderes || []).includes("Reflexos Defensivos")) def += 2; // e +2 nas resistências (modPericia)
   def -= (f.cond || []).reduce(
     (m, c) => Math.max(m, (typeof DEF_COND !== "undefined" && DEF_COND[c]) || 0),
     0
   ); // condições (a mais severa)
   const limPE = n;
-  const dtRit = 10 + limPE + A.PRE;
+  const dtRit = 10 + limPE + A.PRE + (temTrilha("Rituais Eficientes", 2) ? 5 : 0); // Graduado
   const mochila = (f.itens || []).some(i => i.nome === "Mochila militar") ? 2 : 0;
   const carga =
     (temTrilha("Inventário Otimizado", 0) ? (A.FOR + A.INT) * 5 : A.FOR > 0 ? A.FOR * 5 : 2) +
@@ -269,9 +275,37 @@ const fA = () => {
   const f = S.fichas[S.openFicha];
   return f ? migrar(f) : f;
 };
+/* Fotos por estado (aba História): machucado, morrendo, perturbado e enlouquecido trocam a foto sozinhas. */
+const FOTOS_ESTADO = [
+  ["machucado", "Machucado", "Vida pela metade ou menos"],
+  ["morrendo", "Morrendo", "Vida zerada"],
+  ["perturbado", "Perturbado", "Sanidade pela metade ou menos"],
+  ["enlouquecido", "Enlouquecendo", "Sanidade zerada"]
+];
+function fotoAtual(f) {
+  if (!f) return "";
+  const fs = f.fotos || {};
+  if (f.npc || !Object.keys(fs).length) return f.foto || "";
+  const D = derivados(f);
+  const pv = cur(f, "pv"),
+    san = cur(f, "san");
+  const estado =
+    (pv <= 0 && fs.morrendo) ||
+    (san <= 0 && fs.enlouquecido) ||
+    (pv <= D.pvMax / 2 && fs.machucado) ||
+    (san <= D.sanMax / 2 && fs.perturbado);
+  return estado || f.foto || "";
+}
+/* Barra com metade ou menos fica mais escura (CSS .baixa). */
+const metadeOuMenos = (v, max) => (max && v <= max / 2 ? " baixa" : "");
+/* "9m" → "9m · 6 quadrados" (cada quadrado tem 1,5 m) */
+function deslQuad(desl) {
+  const m = parseFloat(String(desl || "9").replace(",", "."));
+  return `${desl || "9m"}${m > 0 ? ` · ${Math.floor(m / 1.5)} ▢` : ""}`;
+}
 function avatar(f, size = 52) {
-  return f && f.foto
-    ? `<img class="avatar" src="${f.foto}" alt="" style="width:${size}px;height:${Math.round((size * 4) / 3)}px;object-fit:cover;object-position:50% 15%">`
+  return f && fotoAtual(f)
+    ? `<img class="avatar" src="${fotoAtual(f)}" alt="" style="width:${size}px;height:${Math.round((size * 4) / 3)}px;object-fit:cover;object-position:50% 15%">`
     : `<div class="avatar ph" style="width:${size}px;height:${size}px">${esc(((f && f.nome) || "?").trim().charAt(0).toUpperCase())}</div>`;
 }
 function bars(f) {

@@ -258,7 +258,7 @@ function startMesa(id) {
   u.push(
     S.db.listenCol(
       p + "/log",
-      { orderBy: "ts", dir: "desc", limit: 80 },
+      { orderBy: "ts", dir: "desc", limit: 200 },
       list => {
         S.loaded.log = true;
         if (S.logPrimed)

@@ -378,3 +378,29 @@
   white-space: pre-wrap;
   line-height: 1.6;
 }
+
+/* ---------- bestiário (aba Ameaças dos tokens): cor do elemento na borda ---------- */
+.tokrow.ame {
+  border-left: 3px solid var(--el, var(--line));
+}
+.tokrow.ame.el-Sangue {
+  --el: #b12122;
+}
+.tokrow.ame.el-Morte {
+  --el: #6b6b6b;
+}
+.tokrow.ame.el-Conhecimento {
+  --el: #be7d00;
+}
+.tokrow.ame.el-Energia {
+  --el: #a347ff;
+}
+.tokrow.ame.el-Medo {
+  --el: #3a32d6;
+}
+.tokrow.ame.el-Realidade {
+  --el: #696969;
+}
+.ame-els {
+  flex-wrap: wrap;
+}

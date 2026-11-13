@@ -17,6 +17,7 @@ function rolagensHTML() {
      .join("")}</select></div>
    <form class="row" id="fChat" style="flex-wrap:nowrap"><input type="text" id="chatIn" maxlength="300" placeholder="${S.paraRolagem ? "Mensagem privada…" : "Falar na mesa…"}" aria-label="Mensagem"><button class="btn">Enviar</button></form>
    <p class="muted small" style="margin:0">O "Para" vale para o chat, para as rolagens daqui e para os testes feitos na ficha.</p>
+   <div class="row" style="flex-wrap:nowrap"><label class="label" for="skinSel" style="white-space:nowrap;margin:0">Seu dado</label><select id="skinSel">${SKINS_DADO.map(([k, n]) => `<option value="${k}" ${skinDado() === k ? "selected" : ""}>${n}</option>`).join("")}</select><button type="button" class="btn sm" id="btnMudo" style="white-space:nowrap" aria-pressed="${somMudo()}">${somMudo() ? "Som desligado" : "Som ligado"}</button></div>
    ${S.isM ? `<button class="btn" id="btnDoc">Enviar documento ou pista</button>` : ""}
    <div class="row between"><span class="sub">Registro da mesa</span>${S.isM ? `<button class="btn sm ghost" id="btnLimparLog">Limpar registro</button>` : ""}</div>
    <div class="log" id="log"></div>`;
@@ -30,7 +31,7 @@ function renderLog() {
   }
   const all = [...S.log.map(x => ({ ...x, _p: 0 })), ...(S.priv || []).map(x => ({ ...x, _p: 1 }))]
     .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-    .slice(0, 150);
+    .slice(0, 200);
   el.innerHTML = all.map(x => (x._p ? privRow(x) : logRow(x))).join("");
   el.querySelectorAll("[data-doc]").forEach(
     b =>
@@ -40,11 +41,18 @@ function renderLog() {
       })
   );
 }
+/* Hora da rolagem: só a hora se foi hoje; senão dd/mm/aa hh:mm. */
+function quandoRolou(ts) {
+  const d = new Date(ts || 0);
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === new Date().toDateString()) return hora;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) + " " + hora;
+}
 function logRow(e) {
-  const t = new Date(e.ts || 0).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const t = quandoRolou(e.ts);
   if (e.tipo === "chat")
     return `<div class="entry chat"><span class="wh"><b>${esc(e.quem || "Jogador")}</b> · ${t}</span><span class="wt">${esc(e.titulo)}</span></div>`;
-  return `<div class="entry ${esc(e.flag)}${e.secreto ? " secret" : ""}"><span class="wh"><b>${esc(e.quem || "Mestre")}</b> · ${t}</span><span class="wt">${esc(e.titulo)}${e.flag === "crit" ? " · crítico" : ""}</span><span class="det">${esc(e.det)}</span><span class="tot">${e.total ?? "✦"}</span></div>`;
+  return `<div class="entry ${esc(e.flag)}${e.secreto ? " secret" : ""}${skinClasse(e.skin)}"><span class="wh"><b>${esc(e.quem || "Mestre")}</b> · ${t}</span><span class="wt">${esc(e.titulo)}${e.flag === "crit" ? " · crítico" : ""}</span><span class="det">${esc(e.det)}</span><span class="tot">${e.total ?? "✦"}</span></div>`;
 }
 function quemNome() {
   const id = $("#rollQuem") && $("#rollQuem").value;
@@ -62,6 +70,21 @@ function bindRolagens() {
     const bd = $("#btnDoc");
     if (bd) bd.onclick = novoDocumento;
   }
+  $("#skinSel").onchange = () => {
+    lsSet("ms_skin", $("#skinSel").value);
+    dicePop({
+      quem: quemNome(),
+      titulo: "Assim fica o seu dado",
+      total: 20,
+      det: "",
+      flag: "crit",
+      skin: skinDado()
+    });
+  };
+  $("#btnMudo").onclick = () => {
+    lsSet("ms_mudo", !somMudo());
+    renderPanel();
+  };
   $$("[data-quick]").forEach(
     b =>
       (b.onclick = () => {
@@ -77,13 +100,14 @@ function bindRolagens() {
       toast("Expressão inválida. Use algo como 2d6+3.");
       return;
     }
-    const n20 = /^1d20\[20\]/.test(r.detail);
+    const n20 = /^1d20\[20\]/.test(r.detail),
+      n1 = /^1d20\[1\]/.test(r.detail);
     logEntry({
       quem: quemNome(),
       titulo: `Rolagem ${ex}`,
       total: r.total,
       det: r.detail,
-      flag: n20 ? "crit" : "",
+      flag: n20 ? "crit" : n1 ? "fail" : "",
       para: para()
     });
   };

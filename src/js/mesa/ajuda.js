@@ -26,7 +26,11 @@ const AJUDA = {
         "Rolar dados",
         "Na ficha, aba <b>Perícias</b>, toque no botão de dados ao lado da perícia. Na aba <b>Combate</b>, toque em <b>Atacar</b> na arma; na aba <b>Rituais</b>, toque na forma do ritual para conjurar. Condições marcadas na ficha já tiram dados sozinhas. Em " +
           AJ_I("Rolagens") +
-          " você rola qualquer dado (ex.: 2d6+3)."
+          " você rola qualquer dado (ex.: 2d6+3), escolhe o <b>visual do seu dado</b> (todos veem a cor) e liga ou desliga o som. 20 natural aparece em verde e 1 natural em vermelho."
+      ],
+      [
+        "Fotos por estado",
+        "Na ficha, aba <b>História</b>, suba fotos de <b>machucado</b>, <b>morrendo</b>, <b>perturbado</b> e <b>enlouquecendo</b>. A foto da ficha e do token troca sozinha quando a vida ou a sanidade cai pela metade ou zera. As barras também escurecem com metade ou menos."
       ],
       [
         "Falar só com o mestre",

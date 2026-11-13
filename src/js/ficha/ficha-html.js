@@ -45,7 +45,7 @@ function sheetHTML() {
         }</div></details>`
       : "";
   const head = `<div class="row between"><button class="btn sm ghost" data-back>← Agentes</button><span class="row" style="gap:6px">${fichaAcoesHTML(f)}<span class="muted small" id="saveState">${ed ? "Salvo" : "Só leitura"}</span></span></div>${claim}${npcBar}${transf}
-  <div class="sheet-top"><button type="button" class="photo" id="foto" aria-label="Trocar foto" ${ed ? "" : "disabled"}>${f.foto ? `<img src="${f.foto}" alt="">` : `<span>Toque para pôr a arte do agente</span>`}</button>
+  <div class="sheet-top"><button type="button" class="photo" id="foto" aria-label="Trocar foto" ${ed ? "" : "disabled"}>${fotoAtual(f) ? `<img src="${fotoAtual(f)}" alt="">` : `<span>Toque para pôr a arte do agente</span>`}</button>
    <div class="stack" style="gap:6px;min-width:0"><input class="nmin" type="text" id="s_nome" data-f="nome" value="${esc(f.nome)}" maxlength="50" aria-label="Nome do agente" ${ed ? "" : "disabled"}>
     <div class="muted small">${esc(f.classe)}${f.trilha ? " · " + esc(f.trilha) : ""} · ${esc(f.origem)} · ${nivelDe(f)}${ehSobrevivente(f) ? "" : " · " + esc(D.pat[1])}</div>
     ${rbarMini(f, D)}</div></div>
@@ -68,13 +68,13 @@ function sheetHTML() {
 function rbarMini(f, D) {
   const b = (k, max) => {
     const v = cur(f, k);
-    return `<div class="mbar ${k}"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${k.toUpperCase()} ${v}/${max}</span></div>`;
+    return `<div class="mbar ${k}${metadeOuMenos(v, max)}"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${k.toUpperCase()} ${v}/${max}</span></div>`;
   };
   return `<div class="mbars">${b("pv", D.pvMax)}${b("san", D.sanMax)}${b("pe", D.peMax)}</div>`;
 }
 function rbar(k, lab, v, max) {
   const p = Math.max(0, Math.min(100, max ? (v / max) * 100 : 0));
-  return `<div class="rbar ${k}"><span class="ric">${RIC[k]}</span><div style="flex:1;min-width:0"><div class="label">${lab}</div><div class="rtr"><i style="width:${p}%"></i><button type="button" data-res="${k}" data-d="-5" aria-label="${lab} −5">«</button><button type="button" data-res="${k}" data-d="-1" aria-label="${lab} −1">‹</button><span>${v}/${max}</span><button type="button" data-res="${k}" data-d="1" aria-label="${lab} +1">›</button><button type="button" data-res="${k}" data-d="5" aria-label="${lab} +5">»</button></div></div></div>`;
+  return `<div class="rbar ${k}${metadeOuMenos(v, max)}"><span class="ric">${RIC[k]}</span><div style="flex:1;min-width:0"><div class="label">${lab}</div><div class="rtr"><i style="width:${p}%"></i><button type="button" data-res="${k}" data-d="-5" aria-label="${lab} −5">«</button><button type="button" data-res="${k}" data-d="-1" aria-label="${lab} −1">‹</button><span>${v}/${max}</span><button type="button" data-res="${k}" data-d="1" aria-label="${lab} +1">›</button><button type="button" data-res="${k}" data-d="5" aria-label="${lab} +5">»</button></div></div></div>`;
 }
 
 function tabPrincipal(f, D, c, sel) {
@@ -130,7 +130,7 @@ function tabPrincipal(f, D, c, sel) {
      ["Defesa", D.def],
      ["Resist. dano", D.rd],
      ["Limite PE/turno", D.limPE],
-     ["Desloc.", esc(f.desl || "9m")],
+     ["Desloc.", esc(deslQuad(f.desl))],
      ["DT rituais", D.dtRit],
      ["Carga", `${D.usados}/${D.carga}`]
    ]
@@ -179,7 +179,7 @@ function tabPericias(f, D) {
      const v = f.per[p] || { g: 0, b: 0 };
      const g = +v.g || 0;
      return `<div class="per2 ${g ? "tr" : ""}"><span class="pn">${esc(p)}${r ? ` <span class="only">${esc(r)}</span>` : ""}</span><span class="a">${a}</span>
-     <select data-perg="${esc(p)}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""} ${pode(p, g, n) ? "" : "disabled"}>${l}</option>`).join("")}</select>
+     <select data-perg="${esc(p)}" class="grau g${g}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""} ${pode(p, g, n) ? "" : "disabled"}>${l}</option>`).join("")}</select>
      <input type="number" data-perb="${esc(p)}" value="${+v.b || 0}" aria-label="Outros bônus em ${esc(p)}" ${podeAjustarNivel(f) ? "" : 'disabled title="Bônus: quem dá é o mestre"'}>
      <button type="button" class="rollbtn" data-roll="${esc(p)}" ${/só treinada/.test(r) && !g ? 'title="Só pode ser usada treinada"' : ""}>${rollLabel(f, p, a)}</button></div>`;
    }).join("")}</div>
@@ -481,6 +481,11 @@ function tabHistoria(f) {
    <div class="field"><label class="label" for="s_personalidade">Personalidade</label><textarea id="s_personalidade" data-f="personalidade" style="min-height:90px" placeholder="Traços marcantes, opiniões, ideais…">${esc(f.personalidade || "")}</textarea></div>
    <div class="field"><label class="label" for="s_historico">Histórico</label><textarea id="s_historico" data-f="historico" style="min-height:110px" placeholder="Infância, relação com a família, contato com o Paranormal, eventos bons e ruins…">${esc(f.historico || "")}</textarea></div>
    <div class="field"><label class="label" for="s_objetivo">Objetivo</label><textarea id="s_objetivo" data-f="objetivo" style="min-height:80px" placeholder="Por que ele faz parte da Ordem? Por que luta contra o Outro Lado?">${esc(f.objetivo || "")}</textarea></div>
+   <div class="field"><span class="label">Fotos por estado</span><p class="muted small" style="margin:0 0 6px">Opcional: a foto da ficha e do token troca sozinha quando o agente se machuca ou perde a sanidade.</p>
+    <div class="fotos-estado">${FOTOS_ESTADO.map(
+      ([k, n, q]) =>
+        `<div class="fe"><button type="button" class="photo" data-fotoest="${k}" aria-label="Foto: ${n}">${(f.fotos || {})[k] ? `<img src="${f.fotos[k]}" alt="">` : `<span>+</span>`}</button><b class="small">${n}</b><span class="muted small">${q}</span>${(f.fotos || {})[k] ? `<button type="button" class="btn sm ghost" data-fotoestx="${k}">Tirar</button>` : ""}</div>`
+    ).join("")}</div></div>
    <div class="field"><label class="label" for="s_notas">Anotações (pistas, vínculos, lembretes)</label><textarea id="s_notas" data-f="notas" style="min-height:110px" placeholder="O que o agente descobriu nas missões, pessoas que conhece…">${esc(f.notas || "")}</textarea></div>
    <div class="row between"><span class="row"><button type="button" class="btn sm" id="btnTokFicha">Criar token deste agente</button><button type="button" class="btn sm" id="btnBaixar">Baixar ficha (backup)</button>${!S.solo && !f.npc && f.dono === S.uid ? `<button type="button" class="btn sm" id="btnGuardarConta">Salvar em Meus personagens</button>` : ""}</span><button type="button" class="btn sm danger" id="btnDelFicha">Apagar ficha</button></div></div>`;
 }

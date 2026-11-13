@@ -134,3 +134,52 @@
     }
   }
 }
+
+/* ---------- natural 20 e 1, visual do dado (jogo/popup-dados.js: SKINS_DADO) ---------- */
+.dpop.crit .n,
+.entry.crit .tot {
+  color: #5fd27a; /* 20 natural / crítico em verde */
+}
+.dpop.fail .n,
+.entry.fail .tot {
+  color: var(--red-hi); /* 1 natural em vermelho */
+}
+.dpop[class*="skin-"],
+.entry[class*="skin-"] {
+  border-color: var(--skin);
+}
+.dpop[class*="skin-"] > span:first-child {
+  color: var(--skin) !important;
+}
+.dpop[class*="skin-"].crit {
+  box-shadow:
+    0 0 0 1px var(--skin),
+    0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.skin-sangue {
+  --skin: #c42a2b;
+}
+.skin-morte {
+  --skin: #8c8c8c;
+}
+.skin-conhecimento {
+  --skin: #d08e0e;
+}
+.skin-energia {
+  --skin: #a347ff;
+}
+.skin-medo {
+  --skin: #4d43ff;
+}
+.skin-ametista {
+  --skin: #a77bdb;
+}
+.skin-rubi {
+  --skin: #e0115f;
+}
+.skin-esmeralda {
+  --skin: #2ecc71;
+}
+.skin-obsidiana {
+  --skin: #5b5b6e;
+}

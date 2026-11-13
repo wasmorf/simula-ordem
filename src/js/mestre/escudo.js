@@ -6,7 +6,7 @@ function escudoHTML() {
   const ids = Object.keys(S.fichas).sort((a, b) => (S.fichas[a].criada || 0) - (S.fichas[b].criada || 0));
   const sb = (f, id, k, lab, max) => {
     const v = cur(f, k);
-    return `<div class="label" style="text-align:center;margin-top:2px">${lab}</div><div class="sbar ${k}"><button data-sb="${esc(id)}" data-k="${k}" data-d="-1" aria-label="Diminuir ${lab}">‹</button><div class="t"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${v} / ${max}</span></div><button data-sb="${esc(id)}" data-k="${k}" data-d="1" aria-label="Aumentar ${lab}">›</button></div>`;
+    return `<div class="label" style="text-align:center;margin-top:2px">${lab}</div><div class="sbar ${k}${metadeOuMenos(v, max)}"><button data-sb="${esc(id)}" data-k="${k}" data-d="-1" aria-label="Diminuir ${lab}">‹</button><div class="t"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${v} / ${max}</span></div><button data-sb="${esc(id)}" data-k="${k}" data-d="1" aria-label="Aumentar ${lab}">›</button></div>`;
   };
   const cards = ids
     .map(id => {
@@ -15,7 +15,7 @@ function escudoHTML() {
       return `<div class="scard"><div class="top">${avatar(f)}<div style="min-width:0"><div class="nm">${esc(f.nome)}</div><div class="muted small">${esc(f.classe)} · ${esc(f.origem)} · NEX ${f.nex}%</div></div></div>
     <div class="mini">${ATTRS.map(k => `<div><b>${f.attr[k]}</b><span>${k}</span></div>`).join("")}</div>
     <div>${sb(f, id, "pv", "Vida", D.pvMax)}${sb(f, id, "san", "Sanidade", D.sanMax)}${sb(f, id, "pe", "Esforço", D.peMax)}</div>
-    <div class="muted small" style="font-family:var(--f-mono)">DEF ${D.def} · RD ${D.rd} · PE/turno ${D.limPE} · DESL ${esc(f.desl || "9m")} · DT ritual ${D.dtRit} · ${esc(D.pat[1])}</div>
+    <div class="muted small" style="font-family:var(--f-mono)">DEF ${D.def} · RD ${D.rd} · PE/turno ${D.limPE} · DESL ${esc(deslQuad(f.desl))} · DT ritual ${D.dtRit} · ${esc(D.pat[1])}</div>
     ${[...condAuto(f), ...(f.cond || [])].length ? `<div class="conds">${[...condAuto(f), ...(f.cond || [])].map(c => `<span class="tag red" title="${esc(CONDICOES_LIVRO[c] || "")}">${esc(c)}</span>`).join("")}</div>` : ""}
     <div class="row"><button class="btn sm" data-sopen="${esc(id)}">Abrir ficha</button><button class="btn sm" data-svont="${esc(id)}">Vontade</button><button class="btn sm" data-sperc="${esc(id)}">Percepção</button></div></div>`;
     })

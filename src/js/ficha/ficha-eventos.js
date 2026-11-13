@@ -219,6 +219,37 @@ function bindFichaCompleta() {
     rr();
     renderBoard();
   });
+  // fotos por estado (aba História): mesmo recorte da foto principal
+  $$("[data-fotoest]").forEach(
+    b =>
+      (b.onclick = async () => {
+        const file = await pickImage();
+        if (!file) return;
+        const url = await cropImage(file, {
+          size: 300,
+          ratio: 4 / 3,
+          radius: 0.06,
+          type: "image/jpeg",
+          title: "Ajustar a foto"
+        });
+        if (!url) return;
+        f.fotos = { ...(f.fotos || {}), [b.dataset.fotoest]: url };
+        sv(true);
+        rr();
+        renderBoard();
+      })
+  );
+  $$("[data-fotoestx]").forEach(
+    b =>
+      (b.onclick = () => {
+        const fs = { ...(f.fotos || {}) };
+        delete fs[b.dataset.fotoestx];
+        f.fotos = fs;
+        sv(true);
+        rr();
+        renderBoard();
+      })
+  );
   $$("[data-attr]").forEach(
     b =>
       (b.onclick = () => {

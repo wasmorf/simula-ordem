@@ -199,7 +199,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | --- | --- |
 | `catalogos.js` | Catálogos da ficha (rituais, armas, itens) somando o homebrew da mesa |
 | `sigilos.js` | Sigilos dos elementos (desenhos SVG usados na ficha) |
-| `ficha.js` | Ficha: números calculados (PV, PE, SAN, Defesa...), salvar e lista de Agentes |
+| `ficha.js` | Ficha: números calculados (PV, PE, SAN, Defesa... com os poderes que mudam números), fotos por estado (`fotoAtual`), salvar e lista de Agentes |
 | `ficha-html.js` | Ficha: o que aparece em cada aba (Principal, Perícias, Combate...) |
 | `ficha-rolagens.js` | Ficha: testes de perícia, ataques (danos extras com tipo: `arma.extras`, lidos por `danosExtras` em `ficha.js`) e rituais |
 | `ficha-eventos.js` | Ficha: o que cada botão e campo faz |
@@ -214,7 +214,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | Arquivo | O que faz |
 | --- | --- |
 | `cenas.js` | Cenas: criar, exibir para os jogadores, trocar de cena |
-| `tokens.js` | Tokens: criar, mover, imagem, cor |
+| `tokens.js` | Tokens: criar, mover, imagem, cor; aba Ameaças com filtro por elemento |
 | `tabuleiro.js` | Tabuleiro: zoom, névoa, desenhos, régua, ferramentas do mapa e desenho da cena |
 | `arte.js` | Criador de mapas: pisos, paredes, portas e acabamento desenhados por código |
 | `objetos.js` | Criador de mapas: todos os objetos (móveis, carros, árvores...) |
@@ -228,8 +228,8 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 
 | Arquivo | O que faz |
 | --- | --- |
-| `popup-dados.js` | Resultado de dado que aparece na tela de todos e registro da mesa |
-| `rolagens.js` | Painel Rolagens: rolar dados, teste de Ordem, chat |
+| `popup-dados.js` | Resultado de dado que aparece na tela de todos e registro da mesa; visual do dado (`SKINS_DADO`) e som com mudo |
+| `rolagens.js` | Painel Rolagens: rolar dados, teste de Ordem, chat, escolher o visual do dado; registro com data (`quandoRolou`) |
 | `combate.js` | Painel Combate: iniciativa, turnos, ataques do bestiário |
 | `privado.js` | Privado: sussurros, rolagens só para o mestre e entrega de documentos |
 | `combate-no-mapa.js` | Combate no mapa: de quem é a vez, centrar no token, pôr tokens no combate |

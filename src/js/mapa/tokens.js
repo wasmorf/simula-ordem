@@ -17,7 +17,7 @@ function tokUrl(t) {
 /* Imagem que o mestre vê: foto da ficha, senão arte do bestiário, senão a imagem do token. */
 function tokUrlMestre(t) {
   const f = t.fichaId && S.fichas[t.fichaId];
-  if (t.usaFoto && f && f.foto) return f.foto;
+  if (t.usaFoto && f && f.foto) return fotoAtual(f); // foto por estado (ficha/ficha)
   const arte = arteDaBase((f && f.base) || t.ameaca); // arte que o mestre subiu (ficha/criaturas)
   if (arte) return arte;
   return t.url || "";
@@ -58,15 +58,26 @@ function tokensHTML() {
     <div class="row" style="flex-direction:column;gap:4px">${S.isM ? `<button class="btn sm ghost" data-fav="${esc(t.id)}" aria-label="Favoritar" style="color:${t.fav ? "var(--purple-hi)" : "var(--muted)"}">${t.fav ? "★" : "☆"}</button>` : ""}${mine ? `<button class="btn sm ghost" data-deltok="${esc(t.id)}" aria-label="Apagar token">🗑</button>` : ""}</div></div>`;
   };
   if (S.tokTab === "ameacas") {
-    const B = allBest().filter(b => !q || b.n.toLowerCase().includes(q));
-    return `<input type="search" id="tokQ" placeholder="Pesquisar" value="${esc(S.tokQ || "")}">${tabsTok()}${S.isM ? `<button class="btn sm ghost" id="galArtes2">Artes do bestiário (imagens suas)</button>` : ""}
+    // filtro por elemento e ordem por VD; "Realidade" = sem elemento (pessoas e animais)
+    const elDe = b => b.el || "Realidade";
+    const B = allBest()
+      .filter(b => !q || b.n.toLowerCase().includes(q))
+      .filter(b => !S.ameEl || elDe(b) === S.ameEl)
+      .sort((a, b) => (+a.vd || 0) - (+b.vd || 0));
+    const chips = ["", "Sangue", "Morte", "Conhecimento", "Energia", "Medo", "Realidade"]
+      .map(
+        e =>
+          `<button type="button" data-ameel="${e}" aria-pressed="${(S.ameEl || "") === e}">${e || "Todos"}</button>`
+      )
+      .join("");
+    return `<input type="search" id="tokQ" placeholder="Pesquisar" value="${esc(S.tokQ || "")}">${tabsTok()}<div class="tabs2 ame-els">${chips}</div>${S.isM ? `<button class="btn sm ghost" id="galArtes2">Artes do bestiário (imagens suas)</button>` : ""}
      ${
        !S.isM
          ? `<div class="empty">Só o mestre coloca ameaças no mapa.</div>`
          : `${!S.viewSid ? `<div class="banner">Abra uma cena para colocar ameaças nela.</div>` : ""}
      <label class="check"><input type="checkbox" id="ameCombate" ${S.ameCombate !== false ? "checked" : ""}> Também colocar no combate (a vida aparece no token)</label>
      <label class="check"><input type="checkbox" id="ameOculto" ${S.ameOculto ? "checked" : ""}> Entrar oculto para os jogadores</label>
-     <div class="cards">${B.map((b, i) => `<div class="tokrow"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${i}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
+     <div class="cards">${B.map(b => `<div class="tokrow ame el-${esc(elDe(b))}"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${esc(b.n)}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
      }`;
   }
   // jogador: em cena só o que ele enxerga no mapa; na biblioteca só os tokens dele
@@ -156,7 +167,14 @@ function bindTokens() {
   if (ac) ac.onchange = () => (S.ameCombate = ac.checked);
   const ao = $("#ameOculto");
   if (ao) ao.onchange = () => (S.ameOculto = ao.checked);
-  $$("[data-ame]").forEach(b => (b.onclick = () => ameacaEmCena(allBest()[+b.dataset.ame])));
+  $$("[data-ame]").forEach(b => (b.onclick = () => ameacaEmCena(allBest().find(x => x.n === b.dataset.ame))));
+  $$("[data-ameel]").forEach(
+    b =>
+      (b.onclick = () => {
+        S.ameEl = b.dataset.ameel;
+        renderPanel();
+      })
+  );
 }
 function porEmCena(tid, at) {
   if (!S.viewSid) {

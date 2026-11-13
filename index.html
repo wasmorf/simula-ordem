@@ -1429,6 +1429,55 @@ h3 .contador {
     }
   }
 }
+
+/* ---------- natural 20 e 1, visual do dado (jogo/popup-dados.js: SKINS_DADO) ---------- */
+.dpop.crit .n,
+.entry.crit .tot {
+  color: #5fd27a; /* 20 natural / crítico em verde */
+}
+.dpop.fail .n,
+.entry.fail .tot {
+  color: var(--red-hi); /* 1 natural em vermelho */
+}
+.dpop[class*="skin-"],
+.entry[class*="skin-"] {
+  border-color: var(--skin);
+}
+.dpop[class*="skin-"] > span:first-child {
+  color: var(--skin) !important;
+}
+.dpop[class*="skin-"].crit {
+  box-shadow:
+    0 0 0 1px var(--skin),
+    0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.skin-sangue {
+  --skin: #c42a2b;
+}
+.skin-morte {
+  --skin: #8c8c8c;
+}
+.skin-conhecimento {
+  --skin: #d08e0e;
+}
+.skin-energia {
+  --skin: #a347ff;
+}
+.skin-medo {
+  --skin: #4d43ff;
+}
+.skin-ametista {
+  --skin: #a77bdb;
+}
+.skin-rubi {
+  --skin: #e0115f;
+}
+.skin-esmeralda {
+  --skin: #2ecc71;
+}
+.skin-obsidiana {
+  --skin: #5b5b6e;
+}
 /* Combate, escudo do mestre e homebrew. */
 /* ---------- combate / escudo ---------- */
 .cb {
@@ -2120,6 +2169,43 @@ details.more summary {
   background: var(--panel);
   padding-block: 6px;
 }
+
+/* ---------- barras pela metade, graus de treino, fotos por estado (ficha/ficha.js) ---------- */
+.baixa i,
+.baixa .rtr i {
+  filter: brightness(0.55) saturate(0.85); /* metade ou menos: a barra escurece */
+}
+select.grau.g5 {
+  color: #6cc26f;
+  border-color: rgba(108, 194, 111, 0.45);
+}
+select.grau.g10 {
+  color: #5aa9f0;
+  border-color: rgba(90, 169, 240, 0.45);
+}
+select.grau.g15 {
+  color: #f0a23c;
+  border-color: rgba(240, 162, 60, 0.5);
+}
+.fotos-estado {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 120px));
+  gap: 10px;
+}
+.fotos-estado .fe {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+.fotos-estado .photo {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: auto;
+}
+.fotos-estado .photo span {
+  font-size: 26px;
+}
 /* Mapa: camadas, ferramentas, tokens, NPCs e vez no combate. */
 /* ---------- mapa: camadas, ferramentas, tokens redondos ---------- */
 .viewport .layer {
@@ -2499,6 +2585,32 @@ details.more summary {
 .modal.docm .doctx {
   white-space: pre-wrap;
   line-height: 1.6;
+}
+
+/* ---------- bestiário (aba Ameaças dos tokens): cor do elemento na borda ---------- */
+.tokrow.ame {
+  border-left: 3px solid var(--el, var(--line));
+}
+.tokrow.ame.el-Sangue {
+  --el: #b12122;
+}
+.tokrow.ame.el-Morte {
+  --el: #6b6b6b;
+}
+.tokrow.ame.el-Conhecimento {
+  --el: #be7d00;
+}
+.tokrow.ame.el-Energia {
+  --el: #a347ff;
+}
+.tokrow.ame.el-Medo {
+  --el: #3a32d6;
+}
+.tokrow.ame.el-Realidade {
+  --el: #696969;
+}
+.ame-els {
+  flex-wrap: wrap;
 }
 /* Criador de mapas. */
 /* ===== criador de mapas ===== */
@@ -9293,7 +9405,7 @@ function startMesa(id) {
   u.push(
     S.db.listenCol(
       p + "/log",
-      { orderBy: "ts", dir: "desc", limit: 80 },
+      { orderBy: "ts", dir: "desc", limit: 200 },
       list => {
         S.loaded.log = true;
         if (S.logPrimed)
@@ -9804,6 +9916,46 @@ async function editarCena(sid) {
 "use strict";
 /* Resultado de dado que aparece na tela de todos e registro da mesa. */
 /* ===================== POPUP DE DADOS ===================== */
+/* Visual do dado: cada um escolhe (painel Rolagens) e todos veem a cor de quem rolou. */
+const SKINS_DADO = [
+  ["", "Padrão (roxo)"],
+  ["sangue", "Sangue"],
+  ["morte", "Morte"],
+  ["conhecimento", "Conhecimento"],
+  ["energia", "Energia"],
+  ["medo", "Medo"],
+  ["ametista", "Ametista"],
+  ["rubi", "Rubi"],
+  ["esmeralda", "Esmeralda"],
+  ["obsidiana", "Obsidiana"]
+];
+const skinDado = () => lsGet("ms_skin", "");
+const skinClasse = s => (SKINS_DADO.some(([k]) => k && k === s) ? " skin-" + s : "");
+/* Som de dado: feito na hora (sem arquivo), com botão de mudo no painel Rolagens. */
+const somMudo = () => !!lsGet("ms_mudo", false);
+function somDado() {
+  if (somMudo()) return;
+  try {
+    const A = (somDado.ctx = somDado.ctx || new (window.AudioContext || window.webkitAudioContext)());
+    if (A.state === "suspended") A.resume();
+    // três batidinhas curtas de "dado na mesa", cada uma um pouco mais fraca
+    [0, 0.07, 0.15].forEach((t, i) => {
+      const n = A.createBufferSource();
+      const len = Math.floor(A.sampleRate * 0.05);
+      const buf = A.createBuffer(1, len, A.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let k = 0; k < len; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / len, 4);
+      n.buffer = buf;
+      const flt = A.createBiquadFilter();
+      flt.type = "bandpass";
+      flt.frequency.value = 1800 + i * 400;
+      const g = A.createGain();
+      g.gain.value = 0.35 / (i + 1);
+      n.connect(flt).connect(g).connect(A.destination);
+      n.start(A.currentTime + t);
+    });
+  } catch (e) {}
+}
 function dicePop(e) {
   if (e.tipo === "chat") {
     if (e.autor !== S.uid) toast(`${e.quem || "Alguém"}: ${e.titulo}`);
@@ -9811,12 +9963,14 @@ function dicePop(e) {
   }
   const h = $("#dicePops");
   const el = document.createElement("div");
-  el.className = "dpop " + (e.flag || "");
+  el.className = "dpop " + (e.flag || "") + skinClasse(e.skin);
+  el.title = e.det || ""; // passar o mouse mostra o detalhe inteiro
   el.innerHTML = `<span style="color:var(--purple-hi)">${I.dado}</span><div style="min-width:0"><div class="t">${esc(e.quem || "Mestre")} · ${esc(e.titulo)}</div><div class="s">${esc(e.det)}</div></div><div class="n">${e.total ?? "✦"}</div>`;
   h.prepend(el);
   while (h.children.length > 3) h.lastChild.remove();
   el.onclick = () => el.remove();
   setTimeout(() => el.remove(), 6500);
+  if (e.tipo !== "chat") somDado();
 }
 async function logEntry(e) {
   if (S.solo) {
@@ -9829,7 +9983,8 @@ async function logEntry(e) {
         total: e.total ?? null,
         det: e.det || "",
         flag: e.flag || "",
-        tipo: e.tipo || "roll"
+        tipo: e.tipo || "roll",
+        skin: skinDado()
       });
     return;
   }
@@ -9842,7 +9997,8 @@ async function logEntry(e) {
     total: e.total ?? null,
     det: String(e.det || "").slice(0, 600),
     tipo: e.tipo || "roll",
-    flag: e.flag || ""
+    flag: e.flag || "",
+    ...(skinDado() ? { skin: skinDado() } : {})
   };
   if (e.para && e.para !== "__eu") {
     return enviarPrivado({ ...e, tipo: e.tipo || "roll" });
@@ -9990,7 +10146,7 @@ function tokUrl(t) {
 /* Imagem que o mestre vê: foto da ficha, senão arte do bestiário, senão a imagem do token. */
 function tokUrlMestre(t) {
   const f = t.fichaId && S.fichas[t.fichaId];
-  if (t.usaFoto && f && f.foto) return f.foto;
+  if (t.usaFoto && f && f.foto) return fotoAtual(f); // foto por estado (ficha/ficha)
   const arte = arteDaBase((f && f.base) || t.ameaca); // arte que o mestre subiu (ficha/criaturas)
   if (arte) return arte;
   return t.url || "";
@@ -10031,15 +10187,26 @@ function tokensHTML() {
     <div class="row" style="flex-direction:column;gap:4px">${S.isM ? `<button class="btn sm ghost" data-fav="${esc(t.id)}" aria-label="Favoritar" style="color:${t.fav ? "var(--purple-hi)" : "var(--muted)"}">${t.fav ? "★" : "☆"}</button>` : ""}${mine ? `<button class="btn sm ghost" data-deltok="${esc(t.id)}" aria-label="Apagar token">🗑</button>` : ""}</div></div>`;
   };
   if (S.tokTab === "ameacas") {
-    const B = allBest().filter(b => !q || b.n.toLowerCase().includes(q));
-    return `<input type="search" id="tokQ" placeholder="Pesquisar" value="${esc(S.tokQ || "")}">${tabsTok()}${S.isM ? `<button class="btn sm ghost" id="galArtes2">Artes do bestiário (imagens suas)</button>` : ""}
+    // filtro por elemento e ordem por VD; "Realidade" = sem elemento (pessoas e animais)
+    const elDe = b => b.el || "Realidade";
+    const B = allBest()
+      .filter(b => !q || b.n.toLowerCase().includes(q))
+      .filter(b => !S.ameEl || elDe(b) === S.ameEl)
+      .sort((a, b) => (+a.vd || 0) - (+b.vd || 0));
+    const chips = ["", "Sangue", "Morte", "Conhecimento", "Energia", "Medo", "Realidade"]
+      .map(
+        e =>
+          `<button type="button" data-ameel="${e}" aria-pressed="${(S.ameEl || "") === e}">${e || "Todos"}</button>`
+      )
+      .join("");
+    return `<input type="search" id="tokQ" placeholder="Pesquisar" value="${esc(S.tokQ || "")}">${tabsTok()}<div class="tabs2 ame-els">${chips}</div>${S.isM ? `<button class="btn sm ghost" id="galArtes2">Artes do bestiário (imagens suas)</button>` : ""}
      ${
        !S.isM
          ? `<div class="empty">Só o mestre coloca ameaças no mapa.</div>`
          : `${!S.viewSid ? `<div class="banner">Abra uma cena para colocar ameaças nela.</div>` : ""}
      <label class="check"><input type="checkbox" id="ameCombate" ${S.ameCombate !== false ? "checked" : ""}> Também colocar no combate (a vida aparece no token)</label>
      <label class="check"><input type="checkbox" id="ameOculto" ${S.ameOculto ? "checked" : ""}> Entrar oculto para os jogadores</label>
-     <div class="cards">${B.map((b, i) => `<div class="tokrow"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${i}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
+     <div class="cards">${B.map(b => `<div class="tokrow ame el-${esc(elDe(b))}"><img src="${(typeof arteDaBase === "function" && arteDaBase(b.n)) || arteThumbEl(b.el)}" alt="" style="width:52px;height:52px;object-fit:contain;border-radius:6px;background:#2a2c2e"><div style="min-width:0"><div style="font-weight:600">${esc(b.n)}${b.hb ? " (homebrew)" : ""}</div><div class="muted small">${esc(b.el || "Realidade")} · VD ${b.vd} · PV ${b.pv} · DEF ${b.def}</div></div><button class="btn sm primary" data-ame="${esc(b.n)}" ${S.viewSid ? "" : "disabled"}>Pôr em cena</button></div>`).join("")}</div>`
      }`;
   }
   // jogador: em cena só o que ele enxerga no mapa; na biblioteca só os tokens dele
@@ -10129,7 +10296,14 @@ function bindTokens() {
   if (ac) ac.onchange = () => (S.ameCombate = ac.checked);
   const ao = $("#ameOculto");
   if (ao) ao.onchange = () => (S.ameOculto = ao.checked);
-  $$("[data-ame]").forEach(b => (b.onclick = () => ameacaEmCena(allBest()[+b.dataset.ame])));
+  $$("[data-ame]").forEach(b => (b.onclick = () => ameacaEmCena(allBest().find(x => x.n === b.dataset.ame))));
+  $$("[data-ameel]").forEach(
+    b =>
+      (b.onclick = () => {
+        S.ameEl = b.dataset.ameel;
+        renderPanel();
+      })
+  );
 }
 function porEmCena(tid, at) {
   if (!S.viewSid) {
@@ -11477,9 +11651,11 @@ function danosExtras(a, comVazios) {
 function bonusDanoSemTipo(a) {
   return a.tdano ? 0 : +a.bdano || 0;
 }
+const RESISTENCIAS = ["Fortitude", "Reflexos", "Vontade"];
 function modPericia(f, p) {
   const v = f.per[p] || {};
-  return (+v.g || 0) + (+v.b || 0);
+  const refl = RESISTENCIAS.includes(p) && (f.poderes || []).includes("Reflexos Defensivos") ? 2 : 0;
+  return (+v.g || 0) + (+v.b || 0) + refl;
 }
 function derivados(f) {
   const c = CLASSES[f.classe] || CLASSES.Combatente;
@@ -11492,11 +11668,14 @@ function derivados(f) {
   let pvMax = c.pv + A.VIG + inc * (c.pvN + A.VIG) + (+f.bonusPV || 0);
   if (f.origem === "Desgarrado") pvMax += n; // Calejado
   if (temTrilha("Casca Grossa", 0)) pvMax += n; // Tropa de Choque
+  const paranormal = nome => (f.paranormais || []).includes(nome);
+  if (paranormal("Sangue de Ferro")) pvMax += 2 * n; // +2 PV por NEX
   let peMax = c.pe + A.PRE + inc * (c.peN + A.PRE) + (+f.bonusPE || 0);
   if (f.origem === "Universitário") {
     peMax += 1;
     for (let k = 15; k <= Math.min(95, nex); k += 10) peMax += 1;
   } // Dedicação
+  if (paranormal("Potencial Aprimorado")) peMax += n; // +1 PE por NEX
   let sanMax = c.san + inc * c.sanN + (+f.bonusSAN || 0);
   if (f.origem === "Vítima") sanMax += n; // Cicatrizes Psicológicas
   const transc = (f.poderes || []).filter(p => p === "Transcender").length;
@@ -11509,12 +11688,13 @@ function derivados(f) {
     rd = Math.max(rd, +p.rd || 0);
   });
   if (f.origem === "Policial") def += 2; // Patrulha
+  if ((f.poderes || []).includes("Reflexos Defensivos")) def += 2; // e +2 nas resistências (modPericia)
   def -= (f.cond || []).reduce(
     (m, c) => Math.max(m, (typeof DEF_COND !== "undefined" && DEF_COND[c]) || 0),
     0
   ); // condições (a mais severa)
   const limPE = n;
-  const dtRit = 10 + limPE + A.PRE;
+  const dtRit = 10 + limPE + A.PRE + (temTrilha("Rituais Eficientes", 2) ? 5 : 0); // Graduado
   const mochila = (f.itens || []).some(i => i.nome === "Mochila militar") ? 2 : 0;
   const carga =
     (temTrilha("Inventário Otimizado", 0) ? (A.FOR + A.INT) * 5 : A.FOR > 0 ? A.FOR * 5 : 2) +
@@ -11642,9 +11822,37 @@ const fA = () => {
   const f = S.fichas[S.openFicha];
   return f ? migrar(f) : f;
 };
+/* Fotos por estado (aba História): machucado, morrendo, perturbado e enlouquecido trocam a foto sozinhas. */
+const FOTOS_ESTADO = [
+  ["machucado", "Machucado", "Vida pela metade ou menos"],
+  ["morrendo", "Morrendo", "Vida zerada"],
+  ["perturbado", "Perturbado", "Sanidade pela metade ou menos"],
+  ["enlouquecido", "Enlouquecendo", "Sanidade zerada"]
+];
+function fotoAtual(f) {
+  if (!f) return "";
+  const fs = f.fotos || {};
+  if (f.npc || !Object.keys(fs).length) return f.foto || "";
+  const D = derivados(f);
+  const pv = cur(f, "pv"),
+    san = cur(f, "san");
+  const estado =
+    (pv <= 0 && fs.morrendo) ||
+    (san <= 0 && fs.enlouquecido) ||
+    (pv <= D.pvMax / 2 && fs.machucado) ||
+    (san <= D.sanMax / 2 && fs.perturbado);
+  return estado || f.foto || "";
+}
+/* Barra com metade ou menos fica mais escura (CSS .baixa). */
+const metadeOuMenos = (v, max) => (max && v <= max / 2 ? " baixa" : "");
+/* "9m" → "9m · 6 quadrados" (cada quadrado tem 1,5 m) */
+function deslQuad(desl) {
+  const m = parseFloat(String(desl || "9").replace(",", "."));
+  return `${desl || "9m"}${m > 0 ? ` · ${Math.floor(m / 1.5)} ▢` : ""}`;
+}
 function avatar(f, size = 52) {
-  return f && f.foto
-    ? `<img class="avatar" src="${f.foto}" alt="" style="width:${size}px;height:${Math.round((size * 4) / 3)}px;object-fit:cover;object-position:50% 15%">`
+  return f && fotoAtual(f)
+    ? `<img class="avatar" src="${fotoAtual(f)}" alt="" style="width:${size}px;height:${Math.round((size * 4) / 3)}px;object-fit:cover;object-position:50% 15%">`
     : `<div class="avatar ph" style="width:${size}px;height:${size}px">${esc(((f && f.nome) || "?").trim().charAt(0).toUpperCase())}</div>`;
 }
 function bars(f) {
@@ -11764,7 +11972,7 @@ function sheetHTML() {
         }</div></details>`
       : "";
   const head = `<div class="row between"><button class="btn sm ghost" data-back>← Agentes</button><span class="row" style="gap:6px">${fichaAcoesHTML(f)}<span class="muted small" id="saveState">${ed ? "Salvo" : "Só leitura"}</span></span></div>${claim}${npcBar}${transf}
-  <div class="sheet-top"><button type="button" class="photo" id="foto" aria-label="Trocar foto" ${ed ? "" : "disabled"}>${f.foto ? `<img src="${f.foto}" alt="">` : `<span>Toque para pôr a arte do agente</span>`}</button>
+  <div class="sheet-top"><button type="button" class="photo" id="foto" aria-label="Trocar foto" ${ed ? "" : "disabled"}>${fotoAtual(f) ? `<img src="${fotoAtual(f)}" alt="">` : `<span>Toque para pôr a arte do agente</span>`}</button>
    <div class="stack" style="gap:6px;min-width:0"><input class="nmin" type="text" id="s_nome" data-f="nome" value="${esc(f.nome)}" maxlength="50" aria-label="Nome do agente" ${ed ? "" : "disabled"}>
     <div class="muted small">${esc(f.classe)}${f.trilha ? " · " + esc(f.trilha) : ""} · ${esc(f.origem)} · ${nivelDe(f)}${ehSobrevivente(f) ? "" : " · " + esc(D.pat[1])}</div>
     ${rbarMini(f, D)}</div></div>
@@ -11787,13 +11995,13 @@ function sheetHTML() {
 function rbarMini(f, D) {
   const b = (k, max) => {
     const v = cur(f, k);
-    return `<div class="mbar ${k}"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${k.toUpperCase()} ${v}/${max}</span></div>`;
+    return `<div class="mbar ${k}${metadeOuMenos(v, max)}"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${k.toUpperCase()} ${v}/${max}</span></div>`;
   };
   return `<div class="mbars">${b("pv", D.pvMax)}${b("san", D.sanMax)}${b("pe", D.peMax)}</div>`;
 }
 function rbar(k, lab, v, max) {
   const p = Math.max(0, Math.min(100, max ? (v / max) * 100 : 0));
-  return `<div class="rbar ${k}"><span class="ric">${RIC[k]}</span><div style="flex:1;min-width:0"><div class="label">${lab}</div><div class="rtr"><i style="width:${p}%"></i><button type="button" data-res="${k}" data-d="-5" aria-label="${lab} −5">«</button><button type="button" data-res="${k}" data-d="-1" aria-label="${lab} −1">‹</button><span>${v}/${max}</span><button type="button" data-res="${k}" data-d="1" aria-label="${lab} +1">›</button><button type="button" data-res="${k}" data-d="5" aria-label="${lab} +5">»</button></div></div></div>`;
+  return `<div class="rbar ${k}${metadeOuMenos(v, max)}"><span class="ric">${RIC[k]}</span><div style="flex:1;min-width:0"><div class="label">${lab}</div><div class="rtr"><i style="width:${p}%"></i><button type="button" data-res="${k}" data-d="-5" aria-label="${lab} −5">«</button><button type="button" data-res="${k}" data-d="-1" aria-label="${lab} −1">‹</button><span>${v}/${max}</span><button type="button" data-res="${k}" data-d="1" aria-label="${lab} +1">›</button><button type="button" data-res="${k}" data-d="5" aria-label="${lab} +5">»</button></div></div></div>`;
 }
 
 function tabPrincipal(f, D, c, sel) {
@@ -11849,7 +12057,7 @@ function tabPrincipal(f, D, c, sel) {
      ["Defesa", D.def],
      ["Resist. dano", D.rd],
      ["Limite PE/turno", D.limPE],
-     ["Desloc.", esc(f.desl || "9m")],
+     ["Desloc.", esc(deslQuad(f.desl))],
      ["DT rituais", D.dtRit],
      ["Carga", `${D.usados}/${D.carga}`]
    ]
@@ -11898,7 +12106,7 @@ function tabPericias(f, D) {
      const v = f.per[p] || { g: 0, b: 0 };
      const g = +v.g || 0;
      return `<div class="per2 ${g ? "tr" : ""}"><span class="pn">${esc(p)}${r ? ` <span class="only">${esc(r)}</span>` : ""}</span><span class="a">${a}</span>
-     <select data-perg="${esc(p)}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""} ${pode(p, g, n) ? "" : "disabled"}>${l}</option>`).join("")}</select>
+     <select data-perg="${esc(p)}" class="grau g${g}" aria-label="Grau em ${esc(p)}">${GRAUS.map(([n, l]) => `<option value="${n}" ${g === n ? "selected" : ""} ${pode(p, g, n) ? "" : "disabled"}>${l}</option>`).join("")}</select>
      <input type="number" data-perb="${esc(p)}" value="${+v.b || 0}" aria-label="Outros bônus em ${esc(p)}" ${podeAjustarNivel(f) ? "" : 'disabled title="Bônus: quem dá é o mestre"'}>
      <button type="button" class="rollbtn" data-roll="${esc(p)}" ${/só treinada/.test(r) && !g ? 'title="Só pode ser usada treinada"' : ""}>${rollLabel(f, p, a)}</button></div>`;
    }).join("")}</div>
@@ -12200,6 +12408,11 @@ function tabHistoria(f) {
    <div class="field"><label class="label" for="s_personalidade">Personalidade</label><textarea id="s_personalidade" data-f="personalidade" style="min-height:90px" placeholder="Traços marcantes, opiniões, ideais…">${esc(f.personalidade || "")}</textarea></div>
    <div class="field"><label class="label" for="s_historico">Histórico</label><textarea id="s_historico" data-f="historico" style="min-height:110px" placeholder="Infância, relação com a família, contato com o Paranormal, eventos bons e ruins…">${esc(f.historico || "")}</textarea></div>
    <div class="field"><label class="label" for="s_objetivo">Objetivo</label><textarea id="s_objetivo" data-f="objetivo" style="min-height:80px" placeholder="Por que ele faz parte da Ordem? Por que luta contra o Outro Lado?">${esc(f.objetivo || "")}</textarea></div>
+   <div class="field"><span class="label">Fotos por estado</span><p class="muted small" style="margin:0 0 6px">Opcional: a foto da ficha e do token troca sozinha quando o agente se machuca ou perde a sanidade.</p>
+    <div class="fotos-estado">${FOTOS_ESTADO.map(
+      ([k, n, q]) =>
+        `<div class="fe"><button type="button" class="photo" data-fotoest="${k}" aria-label="Foto: ${n}">${(f.fotos || {})[k] ? `<img src="${f.fotos[k]}" alt="">` : `<span>+</span>`}</button><b class="small">${n}</b><span class="muted small">${q}</span>${(f.fotos || {})[k] ? `<button type="button" class="btn sm ghost" data-fotoestx="${k}">Tirar</button>` : ""}</div>`
+    ).join("")}</div></div>
    <div class="field"><label class="label" for="s_notas">Anotações (pistas, vínculos, lembretes)</label><textarea id="s_notas" data-f="notas" style="min-height:110px" placeholder="O que o agente descobriu nas missões, pessoas que conhece…">${esc(f.notas || "")}</textarea></div>
    <div class="row between"><span class="row"><button type="button" class="btn sm" id="btnTokFicha">Criar token deste agente</button><button type="button" class="btn sm" id="btnBaixar">Baixar ficha (backup)</button>${!S.solo && !f.npc && f.dono === S.uid ? `<button type="button" class="btn sm" id="btnGuardarConta">Salvar em Meus personagens</button>` : ""}</span><button type="button" class="btn sm danger" id="btnDelFicha">Apagar ficha</button></div></div>`;
 }
@@ -12590,6 +12803,37 @@ function bindFichaCompleta() {
     rr();
     renderBoard();
   });
+  // fotos por estado (aba História): mesmo recorte da foto principal
+  $$("[data-fotoest]").forEach(
+    b =>
+      (b.onclick = async () => {
+        const file = await pickImage();
+        if (!file) return;
+        const url = await cropImage(file, {
+          size: 300,
+          ratio: 4 / 3,
+          radius: 0.06,
+          type: "image/jpeg",
+          title: "Ajustar a foto"
+        });
+        if (!url) return;
+        f.fotos = { ...(f.fotos || {}), [b.dataset.fotoest]: url };
+        sv(true);
+        rr();
+        renderBoard();
+      })
+  );
+  $$("[data-fotoestx]").forEach(
+    b =>
+      (b.onclick = () => {
+        const fs = { ...(f.fotos || {}) };
+        delete fs[b.dataset.fotoestx];
+        f.fotos = fs;
+        sv(true);
+        rr();
+        renderBoard();
+      })
+  );
   $$("[data-attr]").forEach(
     b =>
       (b.onclick = () => {
@@ -13217,6 +13461,7 @@ function rolagensHTML() {
      .join("")}</select></div>
    <form class="row" id="fChat" style="flex-wrap:nowrap"><input type="text" id="chatIn" maxlength="300" placeholder="${S.paraRolagem ? "Mensagem privada…" : "Falar na mesa…"}" aria-label="Mensagem"><button class="btn">Enviar</button></form>
    <p class="muted small" style="margin:0">O "Para" vale para o chat, para as rolagens daqui e para os testes feitos na ficha.</p>
+   <div class="row" style="flex-wrap:nowrap"><label class="label" for="skinSel" style="white-space:nowrap;margin:0">Seu dado</label><select id="skinSel">${SKINS_DADO.map(([k, n]) => `<option value="${k}" ${skinDado() === k ? "selected" : ""}>${n}</option>`).join("")}</select><button type="button" class="btn sm" id="btnMudo" style="white-space:nowrap" aria-pressed="${somMudo()}">${somMudo() ? "Som desligado" : "Som ligado"}</button></div>
    ${S.isM ? `<button class="btn" id="btnDoc">Enviar documento ou pista</button>` : ""}
    <div class="row between"><span class="sub">Registro da mesa</span>${S.isM ? `<button class="btn sm ghost" id="btnLimparLog">Limpar registro</button>` : ""}</div>
    <div class="log" id="log"></div>`;
@@ -13230,7 +13475,7 @@ function renderLog() {
   }
   const all = [...S.log.map(x => ({ ...x, _p: 0 })), ...(S.priv || []).map(x => ({ ...x, _p: 1 }))]
     .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-    .slice(0, 150);
+    .slice(0, 200);
   el.innerHTML = all.map(x => (x._p ? privRow(x) : logRow(x))).join("");
   el.querySelectorAll("[data-doc]").forEach(
     b =>
@@ -13240,11 +13485,18 @@ function renderLog() {
       })
   );
 }
+/* Hora da rolagem: só a hora se foi hoje; senão dd/mm/aa hh:mm. */
+function quandoRolou(ts) {
+  const d = new Date(ts || 0);
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === new Date().toDateString()) return hora;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) + " " + hora;
+}
 function logRow(e) {
-  const t = new Date(e.ts || 0).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const t = quandoRolou(e.ts);
   if (e.tipo === "chat")
     return `<div class="entry chat"><span class="wh"><b>${esc(e.quem || "Jogador")}</b> · ${t}</span><span class="wt">${esc(e.titulo)}</span></div>`;
-  return `<div class="entry ${esc(e.flag)}${e.secreto ? " secret" : ""}"><span class="wh"><b>${esc(e.quem || "Mestre")}</b> · ${t}</span><span class="wt">${esc(e.titulo)}${e.flag === "crit" ? " · crítico" : ""}</span><span class="det">${esc(e.det)}</span><span class="tot">${e.total ?? "✦"}</span></div>`;
+  return `<div class="entry ${esc(e.flag)}${e.secreto ? " secret" : ""}${skinClasse(e.skin)}"><span class="wh"><b>${esc(e.quem || "Mestre")}</b> · ${t}</span><span class="wt">${esc(e.titulo)}${e.flag === "crit" ? " · crítico" : ""}</span><span class="det">${esc(e.det)}</span><span class="tot">${e.total ?? "✦"}</span></div>`;
 }
 function quemNome() {
   const id = $("#rollQuem") && $("#rollQuem").value;
@@ -13262,6 +13514,21 @@ function bindRolagens() {
     const bd = $("#btnDoc");
     if (bd) bd.onclick = novoDocumento;
   }
+  $("#skinSel").onchange = () => {
+    lsSet("ms_skin", $("#skinSel").value);
+    dicePop({
+      quem: quemNome(),
+      titulo: "Assim fica o seu dado",
+      total: 20,
+      det: "",
+      flag: "crit",
+      skin: skinDado()
+    });
+  };
+  $("#btnMudo").onclick = () => {
+    lsSet("ms_mudo", !somMudo());
+    renderPanel();
+  };
   $$("[data-quick]").forEach(
     b =>
       (b.onclick = () => {
@@ -13277,13 +13544,14 @@ function bindRolagens() {
       toast("Expressão inválida. Use algo como 2d6+3.");
       return;
     }
-    const n20 = /^1d20\[20\]/.test(r.detail);
+    const n20 = /^1d20\[20\]/.test(r.detail),
+      n1 = /^1d20\[1\]/.test(r.detail);
     logEntry({
       quem: quemNome(),
       titulo: `Rolagem ${ex}`,
       total: r.total,
       det: r.detail,
-      flag: n20 ? "crit" : "",
+      flag: n20 ? "crit" : n1 ? "fail" : "",
       para: para()
     });
   };
@@ -13541,7 +13809,7 @@ function escudoHTML() {
   const ids = Object.keys(S.fichas).sort((a, b) => (S.fichas[a].criada || 0) - (S.fichas[b].criada || 0));
   const sb = (f, id, k, lab, max) => {
     const v = cur(f, k);
-    return `<div class="label" style="text-align:center;margin-top:2px">${lab}</div><div class="sbar ${k}"><button data-sb="${esc(id)}" data-k="${k}" data-d="-1" aria-label="Diminuir ${lab}">‹</button><div class="t"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${v} / ${max}</span></div><button data-sb="${esc(id)}" data-k="${k}" data-d="1" aria-label="Aumentar ${lab}">›</button></div>`;
+    return `<div class="label" style="text-align:center;margin-top:2px">${lab}</div><div class="sbar ${k}${metadeOuMenos(v, max)}"><button data-sb="${esc(id)}" data-k="${k}" data-d="-1" aria-label="Diminuir ${lab}">‹</button><div class="t"><i style="width:${Math.max(0, Math.min(100, (v / max) * 100))}%"></i><span>${v} / ${max}</span></div><button data-sb="${esc(id)}" data-k="${k}" data-d="1" aria-label="Aumentar ${lab}">›</button></div>`;
   };
   const cards = ids
     .map(id => {
@@ -13550,7 +13818,7 @@ function escudoHTML() {
       return `<div class="scard"><div class="top">${avatar(f)}<div style="min-width:0"><div class="nm">${esc(f.nome)}</div><div class="muted small">${esc(f.classe)} · ${esc(f.origem)} · NEX ${f.nex}%</div></div></div>
     <div class="mini">${ATTRS.map(k => `<div><b>${f.attr[k]}</b><span>${k}</span></div>`).join("")}</div>
     <div>${sb(f, id, "pv", "Vida", D.pvMax)}${sb(f, id, "san", "Sanidade", D.sanMax)}${sb(f, id, "pe", "Esforço", D.peMax)}</div>
-    <div class="muted small" style="font-family:var(--f-mono)">DEF ${D.def} · RD ${D.rd} · PE/turno ${D.limPE} · DESL ${esc(f.desl || "9m")} · DT ritual ${D.dtRit} · ${esc(D.pat[1])}</div>
+    <div class="muted small" style="font-family:var(--f-mono)">DEF ${D.def} · RD ${D.rd} · PE/turno ${D.limPE} · DESL ${esc(deslQuad(f.desl))} · DT ritual ${D.dtRit} · ${esc(D.pat[1])}</div>
     ${[...condAuto(f), ...(f.cond || [])].length ? `<div class="conds">${[...condAuto(f), ...(f.cond || [])].map(c => `<span class="tag red" title="${esc(CONDICOES_LIVRO[c] || "")}">${esc(c)}</span>`).join("")}</div>` : ""}
     <div class="row"><button class="btn sm" data-sopen="${esc(id)}">Abrir ficha</button><button class="btn sm" data-svont="${esc(id)}">Vontade</button><button class="btn sm" data-sperc="${esc(id)}">Percepção</button></div></div>`;
     })
@@ -26303,7 +26571,11 @@ const AJUDA = {
         "Rolar dados",
         "Na ficha, aba <b>Perícias</b>, toque no botão de dados ao lado da perícia. Na aba <b>Combate</b>, toque em <b>Atacar</b> na arma; na aba <b>Rituais</b>, toque na forma do ritual para conjurar. Condições marcadas na ficha já tiram dados sozinhas. Em " +
           AJ_I("Rolagens") +
-          " você rola qualquer dado (ex.: 2d6+3)."
+          " você rola qualquer dado (ex.: 2d6+3), escolhe o <b>visual do seu dado</b> (todos veem a cor) e liga ou desliga o som. 20 natural aparece em verde e 1 natural em vermelho."
+      ],
+      [
+        "Fotos por estado",
+        "Na ficha, aba <b>História</b>, suba fotos de <b>machucado</b>, <b>morrendo</b>, <b>perturbado</b> e <b>enlouquecendo</b>. A foto da ficha e do token troca sozinha quando a vida ou a sanidade cai pela metade ou zera. As barras também escurecem com metade ou menos."
       ],
       [
         "Falar só com o mestre",
@@ -29624,7 +29896,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 12h2407";
+const VERSAO_SITE="13/11 13h2821";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;

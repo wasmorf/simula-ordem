@@ -375,3 +375,40 @@ details.more summary {
   background: var(--panel);
   padding-block: 6px;
 }
+
+/* ---------- barras pela metade, graus de treino, fotos por estado (ficha/ficha.js) ---------- */
+.baixa i,
+.baixa .rtr i {
+  filter: brightness(0.55) saturate(0.85); /* metade ou menos: a barra escurece */
+}
+select.grau.g5 {
+  color: #6cc26f;
+  border-color: rgba(108, 194, 111, 0.45);
+}
+select.grau.g10 {
+  color: #5aa9f0;
+  border-color: rgba(90, 169, 240, 0.45);
+}
+select.grau.g15 {
+  color: #f0a23c;
+  border-color: rgba(240, 162, 60, 0.5);
+}
+.fotos-estado {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 120px));
+  gap: 10px;
+}
+.fotos-estado .fe {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+.fotos-estado .photo {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: auto;
+}
+.fotos-estado .photo span {
+  font-size: 26px;
+}
