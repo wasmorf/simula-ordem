@@ -2770,7 +2770,8 @@ body.me-open {
 .nomes {
   pointer-events: none;
 }
-.nomes span {
+.nomes > span {
+  /* só os nomes do mapa; os papéis (.mdoc) da mesma camada têm o próprio estilo */
   position: absolute;
   transform: translate(-50%, -50%);
   white-space: nowrap;
@@ -2785,7 +2786,7 @@ body.me-open {
     -1px 1px 0 #000;
   transition: opacity 0.2s;
 }
-.nomes span.off {
+.nomes > span.off {
   opacity: 0.35;
   font-style: italic;
 }
@@ -3656,6 +3657,39 @@ body.me-open {
   color: var(--red);
   border-color: var(--red);
 }
+
+/* ---------- carimbo escolhido e anotação de caneta (documentos.js: carimboHTML, docFmt) ---------- */
+.carimbo.livre {
+  z-index: 3;
+  max-width: 70%;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 20px;
+  line-height: 1.1;
+  pointer-events: none;
+}
+.carimbo.c-azul {
+  border-color: rgba(30, 60, 160, 0.82);
+  color: rgba(30, 60, 160, 0.82);
+}
+.carimbo.c-preto {
+  border-color: rgba(25, 22, 20, 0.85);
+  color: rgba(25, 22, 20, 0.85);
+}
+.caneta {
+  font-family: "Caveat", cursive;
+  font-size: 1.35em;
+  line-height: 1.15;
+  color: #c2252e;
+  font-weight: 700;
+}
+.m-celular .caneta,
+.m-email .caneta {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  font-weight: 600;
+}
 /* Ajustes de toque e de celular, capa, aviso de versão nova e documentos no mapa. */
 /* sem zoom de toque duplo e sem seleção azul ao clicar 2x na interface */
 html,
@@ -3788,63 +3822,74 @@ textarea,
   left: 6px;
   width: 1px;
 }
+/* ---------- documento no mapa: o papel jogado na mesa (documentos/no-mapa) ---------- */
 .mdoc {
   position: absolute;
-  transform: translate(-50%, -50%) scale(var(--mk, 1));
+  transform: translate(-50%, -50%) rotate(var(--giro, 0deg));
   pointer-events: auto;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: #fff;
   touch-action: none;
+  transition:
+    transform 0.15s,
+    filter 0.15s;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
-.mdoc .mdi {
-  width: 34px;
-  height: 44px;
-  border-radius: 3px;
-  background: #efe9dc;
-  box-shadow:
-    0 0 0 2px var(--purple, #8b5cf6),
-    0 4px 12px rgba(0, 0, 0, 0.7);
+.mdoc:hover,
+.mdoc:focus-visible {
+  transform: translate(-50%, -52%) rotate(var(--giro, 0deg)) scale(1.03);
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.6)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  outline: none;
+}
+.mdoc-papel {
   position: relative;
-  transition: transform 0.12s;
-}
-.mdoc .mdi::before {
-  content: "";
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 9px;
-  height: 2px;
-  background: #9a8f7a;
-  box-shadow:
-    0 6px 0 #9a8f7a,
-    0 12px 0 #9a8f7a,
-    0 18px 0 #9a8f7a;
-}
-.mdoc:hover .mdi,
-.mdoc:focus-visible .mdi {
-  transform: scale(1.12);
-}
-.mdoc .mdn {
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  text-shadow:
-    0 0 3px #000,
-    0 0 3px #000,
-    1px 1px 0 #000;
-  max-width: 180px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  pointer-events: none; /* a altura vem de medirPapel (documentos/no-mapa) */
+}
+.mdoc-papel .docp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--nat);
+  max-width: none;
+  margin: 0;
+  transform: scale(var(--zoom));
+  transform-origin: 0 0;
+  box-shadow: none;
+}
+.mdoc-papel .docp.m-bilhete {
+  transform: scale(var(--zoom)); /* sem o giro próprio do bilhete: o papel inteiro já gira */
+}
+.mdoc-ctl {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%) rotate(calc(var(--giro, 0deg) * -1));
+  display: none;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(14, 12, 18, 0.92);
+  border: 1px solid var(--line);
+}
+.mdoc:hover .mdoc-ctl,
+.mdoc:focus-within .mdoc-ctl {
+  display: flex;
+}
+.mdoc-ctl button {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--panel2);
+  color: var(--fg);
+  font-size: 15px;
+  cursor: pointer;
+}
+.mdoc-ctl button:hover {
+  background: var(--purple);
 }
 .mdoc.dim {
-  opacity: 0.45;
+  opacity: 0.5;
 }
 /* Estilos de tarja dos documentos. */
 /* ---------- estilos de tarja ---------- */
@@ -25279,10 +25324,19 @@ function docPartesEnvio(texto, revelados = []) {
     return revelados.includes(i) ? { t: p.t, r: 1 } : { h: 1, n: p.t.length, i, ...(p.e ? { e: p.e } : {}) };
   });
 }
+/* **negrito** e ((anotação à mão, de caneta vermelha)) */
 function docFmt(s) {
   return esc(s)
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/\(\(([\s\S]+?)\)\)/g, '<span class="caneta">$1</span>')
     .replace(/\n/g, "<br>");
+}
+/* Carimbo escolhido no editor (Aparência): vai por cima do papel, meio torto. */
+const CARIMBO_CORES = { vermelho: "Vermelho", azul: "Azul", preto: "Preto" };
+function carimboHTML(d) {
+  if (!d.carimbo) return "";
+  const R = maRng(maH(d.carimbo.length, (d.titulo || "").length + 11, 5));
+  return `<div class="carimbo livre c-${CARIMBO_CORES[d.carimboCor] ? d.carimboCor : "vermelho"}" style="top:${18 + Math.round(R() * 46)}%;right:${6 + Math.round(R() * 14)}%;transform:rotate(${-16 + Math.round(R() * 10)}deg)">${esc(d.carimbo)}</div>`;
 }
 function docTextoHTML(partes, mestre, modelo) {
   let k = 0;
@@ -25368,7 +25422,7 @@ function docHtml(d, { mestre = false } = {}) {
       .filter(([, k]) => c[k])
       .map(([n, k]) => `<tr><th>${n}</th><td>${v(k)}</td></tr>`)
       .join("")}</table>
-    <div class="carimbo">CONFIDENCIAL</div>${img}<div class="d-txt">${txt}</div><div class="d-ass">_______________________<br>${v("agente") || "Agente responsável"}</div>`;
+    ${d.carimbo ? "" : `<div class="carimbo">CONFIDENCIAL</div>`}${img}<div class="d-txt">${txt}</div><div class="d-ass">_______________________<br>${v("agente") || "Agente responsável"}</div>`;
   else if (M.id === "carta")
     body = `<div class="d-data">${v("data")}</div>${tit ? `<div class="d-saud">${tit}</div>` : ""}<div class="d-txt">${txt}</div><div class="d-ass">${v("assinatura")}</div>`;
   else if (M.id === "jornal")
@@ -25454,7 +25508,7 @@ function docHtml(d, { mestre = false } = {}) {
     const temTxt = partes.some(p => (p.t || "").trim());
     body = `<div class="f-foto">${d.img ? `<img src="${d.img}" alt="${tit}">` : `<div class="f-vazia">Suba a imagem da foto</div>`}${c.data ? `<span class="f-data">${v("data")}</span>` : ""}</div>${tit ? `<div class="f-leg">${tit}</div>` : ""}${temTxt ? `<div class="f-verso"><span class="f-vl">Anotado no verso</span><div class="d-txt">${txt}</div></div>` : ""}`;
   } else body = `${tit ? `<h2>${tit}</h2>` : ""}${img}<div class="d-txt">${txt}</div>`;
-  return `<div class="${cls}">${body}${sangue}</div>`;
+  return `<div class="${cls}">${body}${carimboHTML(d)}${sangue}</div>`;
 }
 
 /* ---------- biblioteca do mestre ---------- */
@@ -25615,6 +25669,7 @@ function docSnapshot(d) {
     idade: d.idade || 0,
     sangue: !!d.sangue,
     queimado: !!d.queimado,
+    ...(d.carimbo ? { carimbo: d.carimbo, carimboCor: d.carimboCor || "vermelho" } : {}),
     partes: docPartesEnvio(d.texto, d.revelados || []),
     ...(d.img ? { img: d.img } : {}),
     ...(d.audio ? { audio: d.audio } : {}),
@@ -25729,7 +25784,7 @@ async function docEditor(d0) {
      <p class="muted small" style="margin:0">${esc(M.desc)}</p>
      <div class="field"><label class="label" for="deT">${M.id === "carta" || M.id === "bilhete" || M.id === "diario" ? "Primeira linha (opcional)" : "Título"}</label><input type="text" id="deT" maxlength="120" value="${esc(d.titulo || "")}" placeholder="${M.id === "jornal" ? "Manchete" : M.id === "carta" ? "Querida Ana," : ""}"></div>
      ${M.campos.map(([k, n, def]) => `<div class="field"><label class="label" for="dc_${k}">${esc(n)}</label><input type="text" id="dc_${k}" data-ck="${k}" maxlength="120" value="${esc(d.campos[k] ?? "")}" placeholder="${esc(def)}"></div>`).join("")}
-     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><select id="deTj" aria-label="Estilo da tarja" title="Estilo da tarja">${(DOC_TARJAS[M.id] || DOC_TARJAS.simples).map(e => `<option value="${e}">${esc(TARJA_ESTILOS[e])}</option>`).join("")}</select><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button></span></div>
+     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><select id="deTj" aria-label="Estilo da tarja" title="Estilo da tarja">${(DOC_TARJAS[M.id] || DOC_TARJAS.simples).map(e => `<option value="${e}">${esc(TARJA_ESTILOS[e])}</option>`).join("")}</select><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button><button type="button" class="btn sm" id="deCaneta" title="Escolha um trecho: ele vira anotação à mão, de caneta vermelha"><span style="font-family:Caveat,cursive;color:#c2252e;font-size:17px;line-height:1">caneta</span></button></span></div>
       <textarea id="deTx" rows="12" maxlength="6000" placeholder="${M.id === "celular" ? "Ana: você viu aquilo?\nEu: vi. não conta pra ninguém\nAna: [[eles estão no porão]]" : "Escreva aqui. Use [[ e ]] em volta do que deve chegar tarjado."}">${esc(d.texto || "")}</textarea></div>
      ${
        M.id === "audio"
@@ -25740,6 +25795,14 @@ async function docEditor(d0) {
      ${M.img || d.img ? `<div class="row"><button type="button" class="btn sm" id="deImg">${d.img ? (d.modelo === "foto" ? "Trocar a foto" : "Trocar imagem") : d.modelo === "foto" ? "Subir a foto" : "Pôr uma imagem"}</button>${d.img ? `<button type="button" class="btn sm ghost" id="deImgX">Tirar imagem</button>` : ""}</div>` : ""}
      <div class="sub" style="margin:0">Aparência</div>
      <div class="row" style="flex-wrap:nowrap"><label class="label" for="deI" style="white-space:nowrap;margin:0">Papel</label><select id="deI">${["Novo", "Usado", "Velho e manchado"].map((n, i) => `<option value="${i}" ${(+d.idade || 0) === i ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+     <div class="row" style="flex-wrap:nowrap"><label class="label" for="deCb" style="white-space:nowrap;margin:0">Carimbo</label><input type="text" id="deCb" maxlength="30" placeholder="Ex.: CONFIDENCIAL, ARQUIVADO" value="${esc(d.carimbo || "")}"><select id="deCbC" aria-label="Cor do carimbo" style="width:auto">${Object.entries(
+       CARIMBO_CORES
+     )
+       .map(
+         ([k, n]) =>
+           `<option value="${k}" ${(d.carimboCor || "vermelho") === k ? "selected" : ""}>${n}</option>`
+       )
+       .join("")}</select></div>
      <label class="check"><input type="checkbox" id="deS" ${d.sangue ? "checked" : ""}> Manchas de sangue</label><label class="check"><input type="checkbox" id="deQ" ${d.queimado ? "checked" : ""}> Bordas queimadas</label>`;
     $$("[data-dm]", form).forEach(
       b =>
@@ -25873,6 +25936,15 @@ async function docEditor(d0) {
         draw();
       };
     $("#deBold").onclick = () => wrap("**", "**");
+    $("#deCaneta").onclick = () => wrap("((", "))"); // anotação à mão, de caneta vermelha
+    $("#deCb").oninput = e => {
+      d.carimbo = e.target.value.trim();
+      draw();
+    };
+    $("#deCbC").onchange = e => {
+      d.carimboCor = e.target.value;
+      draw();
+    };
     const im = $("#deImg");
     if (im)
       im.onclick = async () => {
@@ -26029,7 +26101,7 @@ const AJUDA = {
       ],
       [
         "Documentos e pistas",
-        `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer como pinos no mapa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
+        `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer jogados em cima do mapa, como papéis numa mesa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
       ],
       [
         "Grifar, anotar e montar o mural",
@@ -26096,7 +26168,7 @@ const AJUDA = {
       ],
       [
         "Documentos",
-        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda; <b>Cartaz</b>, <b>E-mail</b> e <b>Áudio</b> (grave pelo microfone; o texto vira a transcrição) também existem. Ao lado de <b>Tarjar trecho</b>, escolha o estilo da tarja: tarja preta, rabisco, mancha de sangue, pedaço rasgado, queimado, mensagem apagada, chiado... cada modelo mostra só os que fazem sentido nele. <b>Pôr no mapa</b> deixa o documento como um pino na cena, e <b>Mural</b> prega no Mural de pistas do grupo.`
+        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda; <b>Cartaz</b>, <b>E-mail</b> e <b>Áudio</b> (grave pelo microfone; o texto vira a transcrição) também existem. Ao lado de <b>Tarjar trecho</b>, escolha o estilo da tarja: tarja preta, rabisco, mancha de sangue, pedaço rasgado, queimado, mensagem apagada, chiado... cada modelo mostra só os que fazem sentido nele. Em <b>Aparência</b>, ponha um <b>carimbo</b> (texto e cor), e o botão <b>Caneta</b> escreve anotações à mão em vermelho (entre (( e ))). <b>Pôr no mapa</b> joga o papel na cena, meio torto, por cima dos outros; arraste para mover e, passando o mouse, use ↺ ↻ para girar e − + para mudar o tamanho; e <b>Mural</b> prega no Mural de pistas do grupo.`
       ],
       [
         "Trilha sonora",
@@ -29330,7 +29402,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="13/11 09h2110";
+const VERSAO_SITE="13/11 09h4805";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;
@@ -29557,9 +29629,14 @@ async function porNoMapa(d) {
     toast("Abra uma cena no mapa primeiro: o documento vai para a cena que está na tela.");
     return;
   }
+  // centro da tela, em coordenadas do mapa (se o mapa ainda não terminou de abrir, o centro da cena)
   const r = board.getBoundingClientRect();
-  const x = Math.round((r.width / 2 - V.x) / V.z),
+  let x = Math.round((r.width / 2 - V.x) / V.z),
     y = Math.round((r.height / 2 - V.y) / V.z);
+  if (!isFinite(x) || !isFinite(y)) {
+    x = Math.round((sc.w || 1000) / 2);
+    y = Math.round((sc.h || 700) / 2);
+  }
   const doc = docSnapshot(d);
   try {
     await S.db.set(P() + "/estado/md" + rid(8), {
@@ -29571,6 +29648,9 @@ async function porNoMapa(d) {
       docId: d.id || null,
       doc,
       rev: 0,
+      rot: Math.round(Math.random() * 14 - 7), // papel jogado na mesa: meio torto
+      esc: 1,
+      z: Date.now(),
       ts: Date.now()
     });
     toast(`"${docNome(d)}" está no mapa, no centro da tela. Arraste para mudar de lugar.`);
@@ -29579,19 +29659,73 @@ async function porNoMapa(d) {
   }
 }
 
-/* Documentos postos no mapa: ícone clicável (o mestre arrasta para mudar de lugar). */
+/* ---------- o papel em cima do mapa ----------
+   Cada documento aparece como o próprio papel em miniatura, meio girado e com sombra, como papéis jogados
+   numa mesa. O último que o mestre mexeu fica por cima. Campos no estado: x, y (centro), rot (graus),
+   esc (tamanho, 1 = normal) e z (ordem: maior fica por cima). */
+// largura natural de cada modelo de papel (a mesma do leitor), em px
+const PAPEL_NAT = { cartaz: 480, email: 620, audio: 460, foto: 460, bilhete: 400, celular: 380 };
+const papelNat = m => PAPEL_NAT[(m.doc || {}).modelo] || 640;
+/* Largura no mapa: um papel de 640px ocupa 3,5 quadrados da grade, vezes a escala escolhida. */
+const papelLargura = m => Math.round(tokenBase() * 3.5 * (papelNat(m) / 640) * (m.esc || 1));
+/* Giro: o que o mestre escolheu ou, em documento antigo, um giro fixo tirado do id (−6° a 6°). */
+function papelGiro(m) {
+  if (m.rot != null) return m.rot;
+  let h = 0;
+  for (const ch of m.id || "") h = (h * 31 + ch.charCodeAt(0)) % 997;
+  return (h % 13) - 6;
+}
+function papelHTML(m, z) {
+  const w = papelLargura(m),
+    nat = papelNat(m);
+  const dim = S.isM && hiddenAt(m.x, m.y) ? "dim" : "";
+  const ctl = S.isM
+    ? `<div class="mdoc-ctl" aria-label="Ajustar o papel"><button type="button" data-mdg="-1" title="Girar para a esquerda">↺</button><button type="button" data-mdg="1" title="Girar para a direita">↻</button><button type="button" data-mde="-1" title="Diminuir">−</button><button type="button" data-mde="1" title="Aumentar">+</button></div>`
+    : "";
+  return `<div class="mdoc ${dim}" data-mdoc="${esc(m.id)}" role="button" tabindex="0" aria-label="Ler documento: ${esc(m.nome)}" title="${esc(m.nome)}" style="left:${m.x}px;top:${m.y}px;width:${w}px;z-index:${z};--giro:${papelGiro(m)}deg"><div class="mdoc-papel" style="--nat:${nat}px;--zoom:${(w / nat).toFixed(4)}">${docHtml(m.doc || {})}</div>${ctl}</div>`;
+}
+/* O papel é desenhado no tamanho de leitura e encolhido (scale). A altura do quadro vem da altura real
+   do papel; papel comprido é cortado como uma folha A4. Mede de novo quando uma imagem termina de carregar. */
+function medirPapel(caixa) {
+  const p = caixa.querySelector(".docp");
+  if (!p) return;
+  const z = parseFloat(caixa.style.getPropertyValue("--zoom")) || 1;
+  const nat = parseFloat(caixa.style.getPropertyValue("--nat")) || 640;
+  caixa.style.height = Math.round(Math.min(p.offsetHeight, nat * 1.45) * z) + "px";
+}
 function renderMapDocs(el) {
-  const L = (S.mapDocs || []).filter(m => m.cena === S.viewSid && (S.isM || !hiddenAt(m.x, m.y)));
-  el.insertAdjacentHTML(
-    "beforeend",
-    L.map(
-      m =>
-        `<button class="mdoc ${S.isM && hiddenAt(m.x, m.y) ? "dim" : ""}" data-mdoc="${esc(m.id)}" style="left:${m.x}px;top:${m.y}px" aria-label="Ler documento: ${esc(m.nome)}" title="${esc(m.nome)}"><span class="mdi"></span><span class="mdn">${esc(m.nome)}</span></button>`
-    ).join("")
-  );
+  const L = (S.mapDocs || [])
+    .filter(m => m.cena === S.viewSid && (S.isM || !hiddenAt(m.x, m.y)))
+    .sort((a, b) => (a.z || a.ts || 0) - (b.z || b.ts || 0));
+  el.insertAdjacentHTML("beforeend", L.map((m, i) => papelHTML(m, i + 1)).join(""));
+  $$(".mdoc-papel", el).forEach(c => {
+    medirPapel(c);
+    $$("img", c).forEach(im => {
+      if (!im.complete) im.onload = () => medirPapel(c);
+    });
+  });
   $$("[data-mdoc]", el).forEach(b => {
     const m = (S.mapDocs || []).find(x => x.id === b.dataset.mdoc);
     if (!m) return;
+    const salvar = dados => S.db.merge(P() + "/estado/" + m.id, dados).catch(fail);
+    // mestre: girar e mudar o tamanho
+    $$("[data-mdg]", b).forEach(
+      c =>
+        (c.onclick = e => {
+          e.stopPropagation();
+          salvar({ rot: papelGiro(m) + 7 * c.dataset.mdg, z: Date.now() });
+        })
+    );
+    $$("[data-mde]", b).forEach(
+      c =>
+        (c.onclick = e => {
+          e.stopPropagation();
+          const esc2 = Math.max(0.5, Math.min(3, (m.esc || 1) * (c.dataset.mde > 0 ? 1.25 : 0.8)));
+          salvar({ esc: Math.round(esc2 * 100) / 100, z: Date.now() });
+        })
+    );
+    $$(".mdoc-ctl button", b).forEach(c => (c.onpointerdown = e => e.stopPropagation()));
+    // tocar abre para ler; o mestre também arrasta
     b.onpointerdown = e => {
       e.stopPropagation();
       if (!S.isM) return;
@@ -29605,22 +29739,18 @@ function renderMapDocs(el) {
         const dx = (ev.clientX - st.x) / V.z,
           dy = (ev.clientY - st.y) / V.z;
         if (!moved && Math.hypot(dx, dy) * V.z < 5) return;
+        if (!moved) b.style.zIndex = 9999; // por cima enquanto arrasta
         moved = true;
         m.x = Math.round(st.mx + dx);
         m.y = Math.round(st.my + dy);
         b.style.left = m.x + "px";
         b.style.top = m.y + "px";
       };
-      b.onpointerup = async () => {
+      b.onpointerup = () => {
         b.onpointermove = null;
         b.onpointerup = null;
-        if (moved) {
-          try {
-            await S.db.merge(P() + "/estado/" + m.id, { x: m.x, y: m.y });
-          } catch (err) {
-            fail(err);
-          }
-        } else abrirMapDoc(m);
+        if (moved) salvar({ x: m.x, y: m.y, z: Date.now() });
+        else abrirMapDoc(m);
       };
     };
     b.onclick = e => {
@@ -29649,7 +29779,7 @@ function docsNoMapaHTML() {
     const s = (S.cenas || []).find(x => x.id === c);
     return s ? s.nome : "cena apagada";
   };
-  return `<div class="sub" style="margin-top:14px">Documentos no mapa (${L.length})</div><p class="muted small" style="margin:0">Quem vê a cena toca no documento e lê. Arraste no mapa para mudar de lugar.</p>
+  return `<div class="sub" style="margin-top:14px">Documentos no mapa (${L.length})</div><p class="muted small" style="margin:0">Quem vê a cena toca no papel e lê. No mapa, arraste para mudar de lugar e use ↺ ↻ − + para girar e mudar o tamanho; o último que você mexer fica por cima.</p>
  <div class="stack" style="gap:6px">${L.map(m => `<div class="row" style="gap:6px;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:8px 10px"><div style="flex:1;min-width:160px"><b>${esc(m.nome)}</b><div class="muted small">Na cena: ${esc(nomeCena(m.cena))}</div></div><button class="btn sm ghost" data-mdtir="${esc(m.id)}">Tirar do mapa</button></div>`).join("")}</div>`;
 }
 function bindDocsMapa() {

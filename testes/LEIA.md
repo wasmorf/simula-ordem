@@ -24,6 +24,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | `edicao-ao-mesmo-tempo` | Mestre e jogador mexendo na mesma ficha juntos: nenhum apaga o outro |
 | `dar-ficha` | Dar uma ficha a um jogador e tirar; o token acompanha |
 | `documentos-no-mapa` | Pôr documento no mapa, ler, arrastar e tirar |
+| `documentos-na-mesa` | Papéis no mapa: girados, por cima um do outro, carimbo, caneta, controles só do mestre |
 | `documentos-passar` | Jogador passa documento adiante; mestre recolhe |
 | `documentos-renomear` | Renomear documento da biblioteca |
 | `documentos-tarjas-mural` | Estilos de tarja, áudio, grifos, anotações e mural de pistas |

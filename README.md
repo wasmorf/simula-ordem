@@ -248,9 +248,9 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 
 | Arquivo | O que faz |
 | --- | --- |
-| `documentos.js` | Documentos: modelos, tarjas, biblioteca do mestre, leitura e editor |
+| `documentos.js` | Documentos: modelos, tarjas, carimbo (`carimboHTML`), caneta `((…))` (`docFmt`), biblioteca do mestre, leitura e editor |
 | `passar.js` | Documentos: passar de mão em mão, recolher, mover |
-| `no-mapa.js` | Documentos postos no mapa |
+| `no-mapa.js` | Documentos jogados no mapa como papéis numa mesa: girados (`rot`), tamanho (`esc`), o último mexido por cima (`z`); `papelHTML` desenha, `medirPapel` acerta a altura |
 | `mural-notas.js` | Anotações e grifos do jogador e o mural de pistas |
 
 `js/iniciar.js` chama `boot()` e é sempre o último arquivo.

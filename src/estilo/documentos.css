@@ -865,3 +865,36 @@
   color: var(--red);
   border-color: var(--red);
 }
+
+/* ---------- carimbo escolhido e anotação de caneta (documentos.js: carimboHTML, docFmt) ---------- */
+.carimbo.livre {
+  z-index: 3;
+  max-width: 70%;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 20px;
+  line-height: 1.1;
+  pointer-events: none;
+}
+.carimbo.c-azul {
+  border-color: rgba(30, 60, 160, 0.82);
+  color: rgba(30, 60, 160, 0.82);
+}
+.carimbo.c-preto {
+  border-color: rgba(25, 22, 20, 0.85);
+  color: rgba(25, 22, 20, 0.85);
+}
+.caneta {
+  font-family: "Caveat", cursive;
+  font-size: 1.35em;
+  line-height: 1.15;
+  color: #c2252e;
+  font-weight: 700;
+}
+.m-celular .caneta,
+.m-email .caneta {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  font-weight: 600;
+}

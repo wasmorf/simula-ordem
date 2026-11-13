@@ -274,7 +274,8 @@ body.me-open {
 .nomes {
   pointer-events: none;
 }
-.nomes span {
+.nomes > span {
+  /* só os nomes do mapa; os papéis (.mdoc) da mesma camada têm o próprio estilo */
   position: absolute;
   transform: translate(-50%, -50%);
   white-space: nowrap;
@@ -289,7 +290,7 @@ body.me-open {
     -1px 1px 0 #000;
   transition: opacity 0.2s;
 }
-.nomes span.off {
+.nomes > span.off {
   opacity: 0.35;
   font-style: italic;
 }

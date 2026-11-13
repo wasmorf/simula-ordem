@@ -130,61 +130,72 @@ textarea,
   left: 6px;
   width: 1px;
 }
+/* ---------- documento no mapa: o papel jogado na mesa (documentos/no-mapa) ---------- */
 .mdoc {
   position: absolute;
-  transform: translate(-50%, -50%) scale(var(--mk, 1));
+  transform: translate(-50%, -50%) rotate(var(--giro, 0deg));
   pointer-events: auto;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: #fff;
   touch-action: none;
+  transition:
+    transform 0.15s,
+    filter 0.15s;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
-.mdoc .mdi {
-  width: 34px;
-  height: 44px;
-  border-radius: 3px;
-  background: #efe9dc;
-  box-shadow:
-    0 0 0 2px var(--purple, #8b5cf6),
-    0 4px 12px rgba(0, 0, 0, 0.7);
+.mdoc:hover,
+.mdoc:focus-visible {
+  transform: translate(-50%, -52%) rotate(var(--giro, 0deg)) scale(1.03);
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.6)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  outline: none;
+}
+.mdoc-papel {
   position: relative;
-  transition: transform 0.12s;
-}
-.mdoc .mdi::before {
-  content: "";
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 9px;
-  height: 2px;
-  background: #9a8f7a;
-  box-shadow:
-    0 6px 0 #9a8f7a,
-    0 12px 0 #9a8f7a,
-    0 18px 0 #9a8f7a;
-}
-.mdoc:hover .mdi,
-.mdoc:focus-visible .mdi {
-  transform: scale(1.12);
-}
-.mdoc .mdn {
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  text-shadow:
-    0 0 3px #000,
-    0 0 3px #000,
-    1px 1px 0 #000;
-  max-width: 180px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  pointer-events: none; /* a altura vem de medirPapel (documentos/no-mapa) */
+}
+.mdoc-papel .docp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--nat);
+  max-width: none;
+  margin: 0;
+  transform: scale(var(--zoom));
+  transform-origin: 0 0;
+  box-shadow: none;
+}
+.mdoc-papel .docp.m-bilhete {
+  transform: scale(var(--zoom)); /* sem o giro próprio do bilhete: o papel inteiro já gira */
+}
+.mdoc-ctl {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%) rotate(calc(var(--giro, 0deg) * -1));
+  display: none;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(14, 12, 18, 0.92);
+  border: 1px solid var(--line);
+}
+.mdoc:hover .mdoc-ctl,
+.mdoc:focus-within .mdoc-ctl {
+  display: flex;
+}
+.mdoc-ctl button {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--panel2);
+  color: var(--fg);
+  font-size: 15px;
+  cursor: pointer;
+}
+.mdoc-ctl button:hover {
+  background: var(--purple);
 }
 .mdoc.dim {
-  opacity: 0.45;
+  opacity: 0.5;
 }

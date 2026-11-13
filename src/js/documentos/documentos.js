@@ -232,10 +232,19 @@ function docPartesEnvio(texto, revelados = []) {
     return revelados.includes(i) ? { t: p.t, r: 1 } : { h: 1, n: p.t.length, i, ...(p.e ? { e: p.e } : {}) };
   });
 }
+/* **negrito** e ((anotação à mão, de caneta vermelha)) */
 function docFmt(s) {
   return esc(s)
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/\(\(([\s\S]+?)\)\)/g, '<span class="caneta">$1</span>')
     .replace(/\n/g, "<br>");
+}
+/* Carimbo escolhido no editor (Aparência): vai por cima do papel, meio torto. */
+const CARIMBO_CORES = { vermelho: "Vermelho", azul: "Azul", preto: "Preto" };
+function carimboHTML(d) {
+  if (!d.carimbo) return "";
+  const R = maRng(maH(d.carimbo.length, (d.titulo || "").length + 11, 5));
+  return `<div class="carimbo livre c-${CARIMBO_CORES[d.carimboCor] ? d.carimboCor : "vermelho"}" style="top:${18 + Math.round(R() * 46)}%;right:${6 + Math.round(R() * 14)}%;transform:rotate(${-16 + Math.round(R() * 10)}deg)">${esc(d.carimbo)}</div>`;
 }
 function docTextoHTML(partes, mestre, modelo) {
   let k = 0;
@@ -321,7 +330,7 @@ function docHtml(d, { mestre = false } = {}) {
       .filter(([, k]) => c[k])
       .map(([n, k]) => `<tr><th>${n}</th><td>${v(k)}</td></tr>`)
       .join("")}</table>
-    <div class="carimbo">CONFIDENCIAL</div>${img}<div class="d-txt">${txt}</div><div class="d-ass">_______________________<br>${v("agente") || "Agente responsável"}</div>`;
+    ${d.carimbo ? "" : `<div class="carimbo">CONFIDENCIAL</div>`}${img}<div class="d-txt">${txt}</div><div class="d-ass">_______________________<br>${v("agente") || "Agente responsável"}</div>`;
   else if (M.id === "carta")
     body = `<div class="d-data">${v("data")}</div>${tit ? `<div class="d-saud">${tit}</div>` : ""}<div class="d-txt">${txt}</div><div class="d-ass">${v("assinatura")}</div>`;
   else if (M.id === "jornal")
@@ -407,7 +416,7 @@ function docHtml(d, { mestre = false } = {}) {
     const temTxt = partes.some(p => (p.t || "").trim());
     body = `<div class="f-foto">${d.img ? `<img src="${d.img}" alt="${tit}">` : `<div class="f-vazia">Suba a imagem da foto</div>`}${c.data ? `<span class="f-data">${v("data")}</span>` : ""}</div>${tit ? `<div class="f-leg">${tit}</div>` : ""}${temTxt ? `<div class="f-verso"><span class="f-vl">Anotado no verso</span><div class="d-txt">${txt}</div></div>` : ""}`;
   } else body = `${tit ? `<h2>${tit}</h2>` : ""}${img}<div class="d-txt">${txt}</div>`;
-  return `<div class="${cls}">${body}${sangue}</div>`;
+  return `<div class="${cls}">${body}${carimboHTML(d)}${sangue}</div>`;
 }
 
 /* ---------- biblioteca do mestre ---------- */
@@ -568,6 +577,7 @@ function docSnapshot(d) {
     idade: d.idade || 0,
     sangue: !!d.sangue,
     queimado: !!d.queimado,
+    ...(d.carimbo ? { carimbo: d.carimbo, carimboCor: d.carimboCor || "vermelho" } : {}),
     partes: docPartesEnvio(d.texto, d.revelados || []),
     ...(d.img ? { img: d.img } : {}),
     ...(d.audio ? { audio: d.audio } : {}),
@@ -682,7 +692,7 @@ async function docEditor(d0) {
      <p class="muted small" style="margin:0">${esc(M.desc)}</p>
      <div class="field"><label class="label" for="deT">${M.id === "carta" || M.id === "bilhete" || M.id === "diario" ? "Primeira linha (opcional)" : "Título"}</label><input type="text" id="deT" maxlength="120" value="${esc(d.titulo || "")}" placeholder="${M.id === "jornal" ? "Manchete" : M.id === "carta" ? "Querida Ana," : ""}"></div>
      ${M.campos.map(([k, n, def]) => `<div class="field"><label class="label" for="dc_${k}">${esc(n)}</label><input type="text" id="dc_${k}" data-ck="${k}" maxlength="120" value="${esc(d.campos[k] ?? "")}" placeholder="${esc(def)}"></div>`).join("")}
-     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><select id="deTj" aria-label="Estilo da tarja" title="Estilo da tarja">${(DOC_TARJAS[M.id] || DOC_TARJAS.simples).map(e => `<option value="${e}">${esc(TARJA_ESTILOS[e])}</option>`).join("")}</select><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button></span></div>
+     <div class="field"><div class="row between"><label class="label" for="deTx">Texto</label><span class="row" style="gap:4px"><select id="deTj" aria-label="Estilo da tarja" title="Estilo da tarja">${(DOC_TARJAS[M.id] || DOC_TARJAS.simples).map(e => `<option value="${e}">${esc(TARJA_ESTILOS[e])}</option>`).join("")}</select><button type="button" class="btn sm" id="deHide" title="Escolha um trecho do texto e toque aqui">Tarjar trecho</button><button type="button" class="btn sm" id="deBold"><b>N</b></button><button type="button" class="btn sm" id="deCaneta" title="Escolha um trecho: ele vira anotação à mão, de caneta vermelha"><span style="font-family:Caveat,cursive;color:#c2252e;font-size:17px;line-height:1">caneta</span></button></span></div>
       <textarea id="deTx" rows="12" maxlength="6000" placeholder="${M.id === "celular" ? "Ana: você viu aquilo?\nEu: vi. não conta pra ninguém\nAna: [[eles estão no porão]]" : "Escreva aqui. Use [[ e ]] em volta do que deve chegar tarjado."}">${esc(d.texto || "")}</textarea></div>
      ${
        M.id === "audio"
@@ -693,6 +703,14 @@ async function docEditor(d0) {
      ${M.img || d.img ? `<div class="row"><button type="button" class="btn sm" id="deImg">${d.img ? (d.modelo === "foto" ? "Trocar a foto" : "Trocar imagem") : d.modelo === "foto" ? "Subir a foto" : "Pôr uma imagem"}</button>${d.img ? `<button type="button" class="btn sm ghost" id="deImgX">Tirar imagem</button>` : ""}</div>` : ""}
      <div class="sub" style="margin:0">Aparência</div>
      <div class="row" style="flex-wrap:nowrap"><label class="label" for="deI" style="white-space:nowrap;margin:0">Papel</label><select id="deI">${["Novo", "Usado", "Velho e manchado"].map((n, i) => `<option value="${i}" ${(+d.idade || 0) === i ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+     <div class="row" style="flex-wrap:nowrap"><label class="label" for="deCb" style="white-space:nowrap;margin:0">Carimbo</label><input type="text" id="deCb" maxlength="30" placeholder="Ex.: CONFIDENCIAL, ARQUIVADO" value="${esc(d.carimbo || "")}"><select id="deCbC" aria-label="Cor do carimbo" style="width:auto">${Object.entries(
+       CARIMBO_CORES
+     )
+       .map(
+         ([k, n]) =>
+           `<option value="${k}" ${(d.carimboCor || "vermelho") === k ? "selected" : ""}>${n}</option>`
+       )
+       .join("")}</select></div>
      <label class="check"><input type="checkbox" id="deS" ${d.sangue ? "checked" : ""}> Manchas de sangue</label><label class="check"><input type="checkbox" id="deQ" ${d.queimado ? "checked" : ""}> Bordas queimadas</label>`;
     $$("[data-dm]", form).forEach(
       b =>
@@ -826,6 +844,15 @@ async function docEditor(d0) {
         draw();
       };
     $("#deBold").onclick = () => wrap("**", "**");
+    $("#deCaneta").onclick = () => wrap("((", "))"); // anotação à mão, de caneta vermelha
+    $("#deCb").oninput = e => {
+      d.carimbo = e.target.value.trim();
+      draw();
+    };
+    $("#deCbC").onchange = e => {
+      d.carimboCor = e.target.value;
+      draw();
+    };
     const im = $("#deImg");
     if (im)
       im.onclick = async () => {

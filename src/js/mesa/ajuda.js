@@ -46,7 +46,7 @@ const AJUDA = {
       ],
       [
         "Documentos e pistas",
-        `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer como pinos no mapa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
+        `O que o mestre te entrega abre sozinho na tela e fica guardado em ${AJ_I("Documentos")}. Partes pretas são trechos que você ainda não descobriu: o mestre pode revelar depois. Documentos também podem aparecer jogados em cima do mapa, como papéis numa mesa: toque para ler. Os seus você pode <b>passar</b> para outro jogador.`
       ],
       [
         "Grifar, anotar e montar o mural",
@@ -113,7 +113,7 @@ const AJUDA = {
       ],
       [
         "Documentos",
-        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda; <b>Cartaz</b>, <b>E-mail</b> e <b>Áudio</b> (grave pelo microfone; o texto vira a transcrição) também existem. Ao lado de <b>Tarjar trecho</b>, escolha o estilo da tarja: tarja preta, rabisco, mancha de sangue, pedaço rasgado, queimado, mensagem apagada, chiado... cada modelo mostra só os que fazem sentido nele. <b>Pôr no mapa</b> deixa o documento como um pino na cena, e <b>Mural</b> prega no Mural de pistas do grupo.`
+        `Em ${AJ_I("Documentos")} → <b>Criar documento</b>. Escolha o modelo (relatório, carta, jornal, B.O., laudo, diário, celular…). Escreva entre [[ e ]] o que deve chegar tarjado. Guarde na biblioteca e toque em <b>Entregar</b> na hora certa (para um jogador ou para todos); depois, <b>Revelar trechos</b>. O modelo <b>Foto</b> vira uma foto com legenda; <b>Cartaz</b>, <b>E-mail</b> e <b>Áudio</b> (grave pelo microfone; o texto vira a transcrição) também existem. Ao lado de <b>Tarjar trecho</b>, escolha o estilo da tarja: tarja preta, rabisco, mancha de sangue, pedaço rasgado, queimado, mensagem apagada, chiado... cada modelo mostra só os que fazem sentido nele. Em <b>Aparência</b>, ponha um <b>carimbo</b> (texto e cor), e o botão <b>Caneta</b> escreve anotações à mão em vermelho (entre (( e ))). <b>Pôr no mapa</b> joga o papel na cena, meio torto, por cima dos outros; arraste para mover e, passando o mouse, use ↺ ↻ para girar e − + para mudar o tamanho; e <b>Mural</b> prega no Mural de pistas do grupo.`
       ],
       [
         "Trilha sonora",
