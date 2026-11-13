@@ -47,7 +47,7 @@ Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin
 | `rituais-resumo` | Todo ritual tem resumo; aparece no cartão e ao escolher para aprender |
 | `dano-bonus-tipo` | Danos extras da arma, vários tipos (ex.: +2 Energia, +1d6 Sangue), na linha e na rolagem; dado aparece fora de mesa |
 | `melhorias-ficha-dados` | Poderes que mudam números, barra pela metade, fotos por estado, graus, deslocamento, visual/som do dado, data no registro, bestiário por elemento |
-| `artes-em-lote` | Artes do bestiário: várias de uma vez pelo nome do arquivo; o backup leva as artes |
+| `artes-em-lote` | Artes do bestiário: várias de uma vez pelo nome do arquivo; o backup leva as artes; mesa nova do mestre já começa com elas |
 | `regras-da-ficha` | Travas da ficha (atributos, perícias, poderes, rituais, itens), extras do mestre e subir de NEX |
 | `sobrevivente` | Classe Sobrevivente e ameaças dos suplementos |
 | `suplementos` | Origens, poderes e rituais dos suplementos |

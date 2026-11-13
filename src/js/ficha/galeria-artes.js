@@ -24,6 +24,7 @@ function subscribeArteBest() {
         if (x.n && x.url) m[x.n] = x.url;
       });
       S.arteBest = m;
+      arteContaNaMesa(); // artes padrão da conta do mestre entram nesta mesa
       renderBoard();
       if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
       const g = $("#galBest");
@@ -31,6 +32,36 @@ function subscribeArteBest() {
     },
     () => {}
   );
+}
+/* Artes padrão: o mestre guarda as artes na própria conta (usuarios/<uid>/artes) e elas entram
+   sozinhas em toda mesa em que ele é mestre. Na mesa ficam em arteBest, que os jogadores leem. */
+const contaArtes = () => "usuarios/" + S.uid + "/artes";
+async function arteContaNaMesa(tentativa = 0) {
+  if (!S.mesaId || S.arteContaMesa === S.mesaId) return;
+  if (!S.isM) {
+    // quem é mestre só fica sabendo depois de carregar a mesa: tenta de novo daqui a pouco
+    if (tentativa < 5) setTimeout(() => arteContaNaMesa(tentativa + 1), 1500);
+    return;
+  }
+  S.arteContaMesa = S.mesaId;
+  try {
+    const conta = await S.db.getCol(contaArtes());
+    const falta = conta.filter(a => a.n && a.url && !(S.arteBest || {})[a.n]);
+    for (const a of falta)
+      await S.db.set(P() + "/arteBest/" + arteKey(a.n), { n: a.n, url: a.url, ts: Date.now() });
+  } catch (e) {}
+}
+/* Salva a arte na mesa e na conta (vira padrão nas outras mesas do mestre). */
+async function arteSalvar(n, url) {
+  const doc = { n, url, ts: Date.now() };
+  await S.db.set(P() + "/arteBest/" + arteKey(n), doc);
+  if (S.uid) await S.db.set(contaArtes() + "/" + arteKey(n), doc).catch(() => {});
+}
+async function arteGuardarTodasNaConta() {
+  const L = Object.entries(S.arteBest || {});
+  for (const [n, url] of L)
+    await S.db.set(contaArtes() + "/" + arteKey(n), { n, url, ts: Date.now() }).catch(() => {});
+  toast(`${L.length} arte(s) guardada(s) como padrão nas suas mesas.`);
 }
 function arteDaBase(n) {
   return (n && S.arteBest && S.arteBest[n]) || "";
@@ -40,10 +71,12 @@ async function galeriaArtes() {
   h.innerHTML = `<div class="modal-back"><div class="modal wide" id="galBest" role="dialog" aria-label="Artes do bestiário"><div class="row between"><h3 style="margin:0">Artes do bestiário</h3><button class="btn sm" id="gbX">Fechar</button></div>
    <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela fica guardada só nesta mesa e vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>
    <div class="row" style="flex-wrap:nowrap"><input type="search" id="gbQ" placeholder="Buscar criatura"><button class="btn sm" id="gbVarias" style="white-space:nowrap">Subir várias</button></div>
-   <p class="muted small" style="margin:0"><b>Subir várias:</b> escolha várias imagens de uma vez; cada uma vai para a criatura com o mesmo nome do arquivo (ex.: <code>zumbi-de-sangue.webp</code> ou <code>Zumbi de Sangue.png</code>).</p><div class="gb-grid" id="gbGrid"></div></div></div>`;
+   <p class="muted small" style="margin:0"><b>Subir várias:</b> escolha várias imagens de uma vez; cada uma vai para a criatura com o mesmo nome do arquivo (ex.: <code>zumbi-de-sangue.webp</code> ou <code>Zumbi de Sangue.png</code>).</p>
+   <p class="muted small" style="margin:0">As artes que você sobe ficam guardadas na sua conta e entram sozinhas em <b>todas as mesas em que você é mestre</b>. <button class="btn sm ghost" id="gbConta">Guardar as artes desta mesa como padrão</button></p><div class="gb-grid" id="gbGrid"></div></div></div>`;
   $("#gbX").onclick = () => (h.innerHTML = "");
   $("#gbQ").oninput = galeriaRender;
   $("#gbVarias").onclick = arteBestVarias;
+  $("#gbConta").onclick = arteGuardarTodasNaConta;
   galeriaRender();
 }
 /* Imagem inteira, no máximo 360 px (a mesma da escolha "Usar a imagem inteira"). */
@@ -68,8 +101,7 @@ async function arteBestVarias() {
       continue;
     }
     try {
-      const url = await arteInteira(file);
-      await S.db.set(P() + "/arteBest/" + arteKey(n), { n, url, ts: Date.now() });
+      await arteSalvar(n, await arteInteira(file));
       salvas.push(n);
     } catch (e) {
       sobra.push(file.name);
@@ -103,6 +135,7 @@ function galeriaRender() {
       (b.onclick = async () => {
         try {
           await S.db.del(P() + "/arteBest/" + arteKey(b.dataset.gbdel));
+          await S.db.del(contaArtes() + "/" + arteKey(b.dataset.gbdel)).catch(() => {}); // deixa de ser padrão
         } catch (e) {
           fail(e);
         }
@@ -141,10 +174,11 @@ async function arteBestEscolher(n) {
   $("#gbQ").value = q;
   $("#gbQ").oninput = galeriaRender;
   $("#gbVarias").onclick = arteBestVarias;
+  $("#gbConta").onclick = arteGuardarTodasNaConta;
   galeriaRender();
   if (!url) return;
   try {
-    await S.db.set(P() + "/arteBest/" + arteKey(n), { n, url, ts: Date.now() });
+    await arteSalvar(n, url);
     toast(`Arte de ${n} salva.`);
   } catch (e) {
     fail(e);
