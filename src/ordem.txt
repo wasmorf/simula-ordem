@@ -87,4 +87,9 @@ js/mapa/tokens-extras.js
 js/mestre/copiar-cena.js
 js/mapa/portas.js
 js/documentos/mural-notas.js
+js/sozinho/gerar.js
+js/sozinho/bots.js
+js/sozinho/sozinho.js
+js/sozinho/ia.js
+js/sozinho/missao.js
 js/iniciar.js

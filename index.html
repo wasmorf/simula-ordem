@@ -1494,6 +1494,15 @@ h3 .contador {
   border-color: var(--red);
   box-shadow: inset 3px 0 0 var(--red);
 }
+/* Jogar sozinho: a caixa da sua vez no combate */
+.sozvez {
+  border-color: var(--purple);
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+.sozvez small {
+  opacity: 0.75;
+  font-weight: 400;
+}
 .cb .iv {
   font-family: var(--f-mono);
   font-size: 19px;
@@ -1626,6 +1635,80 @@ h3 .contador {
 }
 .hb .hn {
   font-weight: 700;
+}
+/* Jogar sozinho: o cartão do mestre em cima do mapa (sozinho/missao) */
+.narrador {
+  position: absolute;
+  left: 50%;
+  bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(600px, calc(100% - 24px));
+  max-height: 55%;
+  overflow: auto;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--purple);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+.narrador .nar-txt p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.narrador .nar-txt p:last-child {
+  margin: 0;
+}
+.narrador .nar-txt p:not(:last-child) {
+  color: var(--muted);
+  font-size: 13px;
+}
+.narrador .nar-eu {
+  font-style: italic;
+}
+.nar-ops {
+  display: grid;
+  gap: 6px;
+}
+.nar-ops .btn {
+  justify-content: space-between;
+  text-align: left;
+}
+.nar-ops small,
+.narrador small {
+  opacity: 0.75;
+  font-weight: 400;
+}
+.sz-ia summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.nar-topo {
+  flex-wrap: nowrap;
+}
+.nar-topo .label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  /* no celular, o cartão do mestre mostra só a última fala */
+  .narrador .nar-txt p:not(:last-child) {
+    display: none;
+  }
+  .narrador {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    max-height: 62%;
+  }
+}
+.narrador > * {
+  min-width: 0;
+}
+.narrador {
+  overflow-x: hidden;
 }
 /* Janelas (modal), avisos (toast) e chamadas. */
 /* ---------- modal / toast ---------- */
@@ -5120,6 +5203,8 @@ const TIPOS_DANO = [
   "Energia",
   "Medo"
 ];
+// a letra do tipo na tabela de armas (C, I, P, B) → o nome do tipo de dano
+const TIPO_ARMA = { C: "Corte", I: "Impacto", P: "Perfuração", B: "Balístico" };
 const ARMAS_LIVRO = [
   ["Coronhada", "simples", "Corpo a corpo · leve", "—", "1d4/1d6", "x2", "—", "I", 0, 0],
   ["Faca", "simples", "Corpo a corpo · leve", "0", "1d4", "19", "Curto", "C", 1, 1],
@@ -9006,6 +9091,7 @@ function subscribeMeus() {
 function syncIndice() {
   // atualiza o índice das minhas fichas desta mesa (só quando algo muda)
   if (!S.mesaId || !S.uid) return;
+  if (S.mesa && S.mesa.sozinho) return; // Jogar sozinho: a cópia do agente e os bots não entram em Meus personagens
   const mesaNome = (S.mesa && S.mesa.nome) || "";
   for (const [fid, f] of Object.entries(S.fichas)) {
     if (f.dono !== S.uid || f.npc) continue;
@@ -9122,6 +9208,8 @@ function showLobby() {
      <button class="btn primary">Criar mesa como mestre</button>
      <div class="sub">Já tem um código?</div>
      <div class="row"><input type="text" id="codeIn" placeholder="Ex.: K7RQ2M" maxlength="10" style="flex:1;text-transform:uppercase"><button type="button" class="btn" id="btnEntrar">Entrar</button></div>
+     <div class="sub">Sem grupo hoje?</div>
+     <button type="button" class="btn" id="btnSozinho">Jogar sozinho com bots</button>
      <div class="row"><button type="button" class="btn sm ghost" id="btnAjuda">Como usar o site</button><button type="button" class="btn sm ghost" id="btnRestaurar">Restaurar mesa de um backup</button></div>
     </form>
    </section>
@@ -9202,6 +9290,7 @@ function showLobby() {
     else toast("Digite um código válido, como K7RQ2M.");
   };
   $("#btnRestaurar").onclick = importarMesa;
+  $("#btnSozinho").onclick = sozinhoNovo;
   $("#btnAjuda").onclick = ajudaModal;
   const g = $("#btnGoogle");
   if (g) g.onclick = googleLogin;
@@ -9354,16 +9443,18 @@ function setMesa(m) {
   renderRail();
   renderBoardTop();
   if (S.tool === "cenas") renderPanel();
+  if (m.sozinho) sozinhoAoEntrar(m); // Jogar sozinho: na primeira vez, monta o combate (sozinho/sozinho)
 }
 /* ---------- entrada na mesa (acesso) ---------- */
-async function criarMesa({ nome, desc, acesso, listada, senha }, id = rid()) {
+async function criarMesa({ nome, desc, acesso, listada, senha, sozinho }, id = rid()) {
   const base = {
     nome,
     desc: desc || "",
     mestre: S.uid,
     criada: Date.now(),
     acesso: acesso || "livre",
-    listada: !!listada
+    listada: !!listada,
+    ...(sozinho ? { sozinho: true } : {}) // Jogar sozinho (sozinho/sozinho)
   };
   await S.db.set("mesas/" + id, { ...base, cenaAtiva: null });
   await S.db.set("portas/" + id, { ...base, mestreNome: (S.authUser && S.authUser.displayName) || "" });
@@ -9606,6 +9697,7 @@ function startMesa(id) {
         S.combate = c;
         if (S.tool === "combate") renderPanel();
         if (!S.dragging) renderBoard();
+        botVez(); // Jogar sozinho: ao voltar para a mesa no meio da vez de um bot
       },
       () => {}
     )
@@ -9658,6 +9750,9 @@ function startMesa(id) {
 }
 function leaveMesa(show) {
   pararMapDocs(); // documentos/no-mapa
+  S.missao = null; // Jogar sozinho: o cartão do mestre sai junto com a mesa
+  const nar = $("#narrador");
+  if (nar) nar.remove();
   if (S.gateUnsub) {
     try {
       S.gateUnsub();
@@ -10699,7 +10794,7 @@ $("#zFit").onclick = () => {
 board.addEventListener(
   "wheel",
   e => {
-    if (!V.w) return;
+    if (!V.w || e.target.closest(".narrador")) return; // o cartão do mestre (Jogar sozinho) rola sozinho
     e.preventDefault();
     const r = board.getBoundingClientRect();
     zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX - r.left, e.clientY - r.top);
@@ -10720,7 +10815,7 @@ let pan = null,
 board.addEventListener("pointerdown", e => {
   if (
     e.target.closest(
-      ".tok,.mdoc,.porta,.passagem,.zoom,.board-top,.tokbar,.board-empty button,.callbar,.screens,.maptools"
+      ".tok,.mdoc,.porta,.passagem,.zoom,.board-top,.tokbar,.board-empty button,.callbar,.screens,.maptools,.narrador"
     )
   )
     return;
@@ -11642,6 +11737,25 @@ function armaInfo(nome) {
         agil: !!a[9]
       }
     : null;
+}
+/* A arma do catálogo (allArmas) como ela entra na ficha (f.armas) */
+function armaNova(a) {
+  return {
+    nome: a.nome,
+    pericia: /Fogo|Disparo|distância/.test(a.emp) ? "Pontaria" : "Luta",
+    dano: a.dano,
+    crit: a.crit,
+    alc: a.alc,
+    tipo: a.tipo,
+    cat: a.cat,
+    esp: a.esp,
+    agil: a.agil,
+    grupo: a.grupo,
+    emp: a.emp,
+    bonus: 0,
+    bdano: 0,
+    mods: []
+  };
 }
 function allArmas() {
   return ARMAS_LIVRO.map(a => armaInfo(a[0])).concat(
@@ -12615,45 +12729,54 @@ function tabHistoria(f) {
 "use strict";
 /* Ficha: testes de perícia, ataques e rituais. */
 /* ---------- rolagens da ficha ---------- */
-function testePericia(p) {
-  const f = fA();
+/* Teste de perícia da ficha: rola, registra e devolve o resultado (r.total) ou null.
+   opc.perito: gastar PE no Perito; opc.titulo: outro nome no registro (ex.: "Investigação · DT 15").
+   Usado pela ficha (testePericia) e pelo mestre do Jogar sozinho. */
+function rolarPericia(f, p, opc = {}) {
   const a = PERICIAS.find(x => x[0] === p)[1];
   let mod = modPericia(f, p);
   let extra = "";
-  const pc = $("#usarPerito");
   const D = derivados(f);
-  if (pc && pc.checked) {
+  if (opc.perito) {
     if (!grau(f, p)) {
       toast("Perito só funciona em perícia treinada.");
-      return;
+      return null;
     }
     if (cur(f, "pe") < D.perito[1]) {
       toast("PE insuficiente para Perito.");
-      return;
+      return null;
     }
     f.pe = cur(f, "pe") - D.perito[1];
     const r = rollExpr(D.perito[2]);
     mod += r.total;
     extra = ` · Perito ${r.detail} (−${D.perito[1]} PE)`;
-    saveFicha(S.openFicha, true);
   }
   const pen = penalidade(f, { tipo: "pericia", attr: a, nome: p });
   mod += pen.mod;
   const r = rollTest(f.attr[a], mod, pen.dados);
   logEntry({
     quem: f.nome,
-    titulo: p,
+    titulo: opc.titulo || p,
     total: r.total,
     det: `${r.dice.length}d20[${r.dice.join(",")}] fica ${r.mode} ${r.kept}${sgn(mod)}${extra}${pen.quem.length ? ` · condições: ${pen.quem.join(", ")}` : ""}`,
     flag: r.kept === 20 ? "crit" : r.kept === 1 ? "fail" : "",
     para: S.paraRolagem || ""
   });
-  if (pc && pc.checked) renderPanel();
+  return r;
 }
-function atacar(i) {
-  const f = fA();
-  const w = f.armas[i];
-  if (!w) return;
+function testePericia(p) {
+  const pc = $("#usarPerito");
+  const perito = !!(pc && pc.checked);
+  if (!rolarPericia(fA(), p, { perito })) return;
+  if (perito) {
+    saveFicha(S.openFicha, true);
+    renderPanel();
+  }
+}
+/* Ataque com a arma da ficha: rola o teste e o dano, registra e devolve o resultado.
+   Usado pela ficha (atacar) e pelos bots do modo Jogar sozinho (sozinho/bots).
+   opc.esp: usar o Ataque Especial; opc.noTeste: quanto do bônus dele vai para o teste. */
+function rolarAtaque(f, w, opc = {}) {
   const D = derivados(f);
   const corpo = w.pericia === "Luta";
   const attrK = corpo ? (w.agil && f.attr.AGI > f.attr.FOR ? "AGI" : "FOR") : "AGI";
@@ -12681,15 +12804,14 @@ function atacar(i) {
   });
   if (f.origem === "Lutador" && corpo) dmgB += 2;
   if (f.origem === "Militar" && /Fogo/.test(w.emp || w.nome)) dmgB += 2;
-  const esp = $("#usarPoderAtk");
-  const useEsp = esp && esp.checked && D.atq;
+  const useEsp = opc.esp && D.atq;
   if (useEsp) {
     if (cur(f, "pe") < D.atq[1]) {
       toast("PE insuficiente para Ataque Especial.");
-      return;
+      return null;
     }
     f.pe = cur(f, "pe") - D.atq[1];
-    const noTeste = Math.max(0, Math.min(D.atq[2], +($("#atqNoTeste") || {}).value || 0));
+    const noTeste = Math.max(0, Math.min(D.atq[2], +opc.noTeste || 0));
     mod += noTeste;
     dmgB += D.atq[2] - noTeste;
     notes.push(`Ataque Especial −${D.atq[1]} PE`);
@@ -12703,7 +12825,7 @@ function atacar(i) {
   const dm = rollExpr(dano, { critMult: crit ? mult : 1, explode6: false, extraDice });
   if (!dm) {
     toast("Dano inválido. Use algo como 2d6+2.");
-    return;
+    return null;
   }
   let tot = dm.total + dmgB;
   // danos extras de outro tipo: somam no total e aparecem separados (não multiplicam no crítico)
@@ -12719,38 +12841,50 @@ function atacar(i) {
     tot += e.total;
     exTxt = " + " + e.detail;
   }
-  logEntry({
-    quem: f.nome,
-    titulo: `${w.nome} · dano ${tot}${exTipos ? ` (${exTipos})` : ""}`,
-    total: r.total,
-    flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
-    para: S.paraRolagem || "",
-    det: `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${exDet}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`
-  });
-  if (useEsp) {
+  const det = `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${exDet}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`;
+  // as partes do dano com o tipo de cada uma (para resistências e vulnerabilidades)
+  const partes = [
+    { v: tot - extras.reduce((s, x) => s + x.r.total, 0), t: TIPO_ARMA[w.tipo] || w.tipo || "" }
+  ].concat(extras.map(x => ({ v: x.r.total, t: x.t })));
+  if (!opc.semRegistro)
+    logEntry({
+      quem: f.nome,
+      titulo: `${w.nome}${opc.alvo ? " em " + opc.alvo : ""} · dano ${tot}${exTipos ? ` (${exTipos})` : ""}`,
+      total: r.total,
+      flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
+      para: S.paraRolagem || "",
+      det
+    });
+  return { r, crit, tot, partes, det, esp: !!useEsp };
+}
+function atacar(i) {
+  const f = fA();
+  const w = f.armas[i];
+  if (!w) return;
+  const esp = $("#usarPoderAtk");
+  const a = rolarAtaque(f, w, { esp: esp && esp.checked, noTeste: ($("#atqNoTeste") || {}).value });
+  if (a && a.esp) {
     saveFicha(S.openFicha, true);
     renderPanel();
   }
 }
-function conjurar(n, k = 0) {
-  const f = fA();
+/* Conjura um ritual da ficha: paga o PE, rola o dado e registra. A cura vai para quem conjura ou
+   para opc.alvo (outra ficha); opc.alvoNome só diz em quem foi. Devolve { total, r, fm, dt } ou null.
+   Usado pela ficha e pelo Jogar sozinho. */
+function rolarRitual(f, n, k = 0, opc = {}) {
   const r = allRituais().find(x => x.n === n);
-  if (!r) return;
+  if (!r) return null;
   const D = derivados(f);
   const fm = r.formas[k] || r.formas[0];
   if (r.c > D.circ && !r.hb) {
     toast(`Você ainda não conjura rituais de ${r.c}º círculo.`);
-    return;
-  }
-  if ($("#semComp") && $("#semComp").checked && r.el !== "Medo") {
-    toast("Sem componentes ritualísticos não dá para conjurar este ritual.");
-    return;
+    return null;
   }
   let custo = fm.custo;
   if ((f.cond || []).includes("Alquebrado")) custo += 1;
   if (cur(f, "pe") < custo) {
     toast("PE insuficiente para conjurar.");
-    return;
+    return null;
   }
   f.pe = cur(f, "pe") - custo;
   let total = null,
@@ -12760,17 +12894,30 @@ function conjurar(n, k = 0) {
     total = roll.total;
     det = `${roll.detail} · ${det}`;
     if (r.tipo === "cura") {
-      f.pv = Math.min(D.pvMax, cur(f, "pv") + total);
-      det += " · cura aplicada";
+      const a = opc.alvo || f;
+      a.pv = Math.min(derivados(a).pvMax, cur(a, "pv") + total);
+      det += a === f ? " · cura aplicada" : ` · cura em ${a.nome}`;
     } else if (r.res) det += ` · ${r.res} DT ${D.dtRit}`;
   } else if (r.res) det += ` · ${r.res} DT ${D.dtRit}`;
+  const alvoNome = opc.alvo && opc.alvo !== f ? opc.alvo.nome : opc.alvoNome;
   logEntry({
     quem: f.nome,
-    titulo: `Ritual · ${r.n}${k ? ` (${fm.k})` : ""}`,
+    titulo: `Ritual · ${r.n}${k ? ` (${fm.k})` : ""}${alvoNome ? " em " + alvoNome : ""}`,
     total,
     det,
     para: S.paraRolagem || ""
   });
+  return { total, r, fm, dt: D.dtRit };
+}
+function conjurar(n, k = 0) {
+  const f = fA();
+  const r = allRituais().find(x => x.n === n);
+  if (!r) return;
+  if ($("#semComp") && $("#semComp").checked && r.el !== "Medo") {
+    toast("Sem componentes ritualísticos não dá para conjurar este ritual.");
+    return;
+  }
+  if (!rolarRitual(f, n, k)) return;
   saveFicha(S.openFicha, true);
   renderPanel();
 }
@@ -13195,22 +13342,7 @@ function bindFichaCompleta() {
   on("#btnAddArma", () => {
     const a = allArmas()[+$("#addArmaSel").value];
     if (!a) return;
-    const nova = {
-      nome: a.nome,
-      pericia: /Fogo|Disparo|distância/.test(a.emp) ? "Pontaria" : "Luta",
-      dano: a.dano,
-      crit: a.crit,
-      alc: a.alc,
-      tipo: a.tipo,
-      cat: a.cat,
-      esp: a.esp,
-      agil: a.agil,
-      grupo: a.grupo,
-      emp: a.emp,
-      bonus: 0,
-      bdano: 0,
-      mods: []
-    };
+    const nova = armaNova(a);
     if (!mudar(x => (x.armas = [...(x.armas || []), { ...nova }]))) return;
     sv();
     rr();
@@ -13806,7 +13938,7 @@ function combateHTML() {
     return `<div class="cb ${x.tipo} ${i === c.turno ? "now" : ""} ${pv <= 0 ? "down" : ""}"><span class="iv">${x.ini ?? "–"}</span><div style="min-width:0"><div class="cn">${tk ? `<button class="lnk" data-foco="${esc(tk)}" title="Mostrar no mapa">${esc(f ? f.nome : x.nome)} ⌖</button>` : esc(f ? f.nome : x.nome)}${escondido ? ' <span class="tag">oculto</span>' : ""}${x.el ? ` <span class="tag el-${esc(x.el)}" style="border-color:var(--el);color:var(--el)">${esc(x.el)}</span>` : ""}</div><div class="cs">PV ${pv}/${pvMax} · DEF ${def}${x.vd ? ` · VD ${x.vd}` : ""}${x.atk ? ` · ${esc(x.atk[0])} ${x.atk[1]}d20+${x.atk[2]} · ${esc(x.atk[3])}` : ""}</div></div>
      <div class="act">${f && f.npc && S.isM ? `<button class="btn sm" data-cfic="${esc(x.fichaId)}">Ficha</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="-5" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="5" aria-label="Dar 5 PV">+5</button>` : ""}${x.tipo === "npc" && S.isM ? `<button class="rollbtn" data-npcatk="${i}" ${x.atk ? "" : "disabled"}>Atacar</button><button class="btn sm" data-npcdmg="${i}" data-d="-1" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-npcdmg="${i}" data-d="1" aria-label="Dar 5 PV">+5</button>` : ""}${S.isM ? `<button class="btn sm ghost" data-rm="${i}" aria-label="Tirar do combate">✕</button>` : ""}</div></div>`;
   }).join("");
-  return `<div class="row between"><h3>Rodada ${c.rodada || 1}</h3>${S.isM ? `<div class="row"><button class="btn sm" id="btnIni">Rolar iniciativa</button><button class="btn sm primary" id="btnProx" ${L.length ? "" : "disabled"}>Próximo turno</button></div>` : ""}</div>
+  return `${sozinhoVezHTML()}<div class="row between"><h3>Rodada ${c.rodada || 1}</h3>${S.isM ? `<div class="row"><button class="btn sm" id="btnIni">Rolar iniciativa</button><button class="btn sm primary" id="btnProx" ${L.length ? "" : "disabled"}>Próximo turno</button></div>` : ""}</div>
    ${L.length ? `<div class="cards">${rows}</div>` : `<div class="empty">${S.isM ? "Ninguém em combate. Adicione os agentes e os inimigos abaixo, depois toque em <b>Rolar iniciativa</b>." : "Nenhum combate agora."}</div>`}
    ${
      S.isM
@@ -13835,9 +13967,50 @@ function saveCombate(c) {
   S.combate = c;
   queueSet(P() + "/estado/combate", JSON.parse(JSON.stringify(c)));
   renderPanel();
+  botVez(); // Jogar sozinho: se a vez é de um bot, ele age (sozinho/bots)
+}
+function rolarIniciativa() {
+  const c = combBase();
+  const det = [];
+  c.lista.forEach(x => {
+    if (x.fichaId) {
+      const f = S.fichas[x.fichaId];
+      if (!f) return;
+      migrar(f);
+      const r = rollTest(f.attr.AGI, modPericia(f, "Iniciativa"));
+      x.ini = r.total;
+      x.nome = f.nome;
+      if (entradaVisivelParaJogadores(x)) det.push(`${f.nome} ${r.total}`); // o registro é de todos
+    } else {
+      const r = rollTest(Math.max(1, x.agi || 1), Math.round((x.vd || 20) / 10));
+      x.ini = r.total;
+      if (entradaVisivelParaJogadores(x)) det.push(`${x.nome} ${x.ini}`);
+    }
+  });
+  c.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99));
+  c.turno = 0;
+  c.rodada = 1;
+  saveCombate(c);
+  logEntry({ quem: "Mestre", titulo: "Iniciativa", total: null, det: det.join(" · ") });
+}
+function proximoTurno() {
+  const c = combBase();
+  if (!c.lista.length) return;
+  c.turno = (c.turno || 0) + 1;
+  if (c.turno >= c.lista.length) {
+    c.turno = 0;
+    c.rodada = (c.rodada || 1) + 1;
+  }
+  saveCombate(c);
+  const x = c.lista[c.turno];
+  const f = x.fichaId && S.fichas[x.fichaId];
+  // vez de alguém escondido: não avisa no registro (os jogadores não sabem que ele está ali)
+  if (entradaVisivelParaJogadores(x))
+    logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
 }
 const combBase = () => JSON.parse(JSON.stringify(S.combate || { lista: [], turno: 0, rodada: 1 }));
 function bindCombate() {
+  bindSozinhoVez(); // Jogar sozinho: os botões da sua vez
   $$("[data-foco]").forEach(
     b =>
       (b.onclick = () => {
@@ -13913,45 +14086,8 @@ function bindCombate() {
         saveCombate(c);
       })
   );
-  $("#btnIni").onclick = () => {
-    const c = combBase();
-    const det = [];
-    c.lista.forEach(x => {
-      if (x.fichaId) {
-        const f = S.fichas[x.fichaId];
-        if (!f) return;
-        migrar(f);
-        const r = rollTest(f.attr.AGI, modPericia(f, "Iniciativa"));
-        x.ini = r.total;
-        x.nome = f.nome;
-        if (entradaVisivelParaJogadores(x)) det.push(`${f.nome} ${r.total}`); // o registro é de todos
-      } else {
-        const r = rollTest(Math.max(1, x.agi || 1), Math.round((x.vd || 20) / 10));
-        x.ini = r.total;
-        if (entradaVisivelParaJogadores(x)) det.push(`${x.nome} ${x.ini}`);
-      }
-    });
-    c.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99));
-    c.turno = 0;
-    c.rodada = 1;
-    saveCombate(c);
-    logEntry({ quem: "Mestre", titulo: "Iniciativa", total: null, det: det.join(" · ") });
-  };
-  $("#btnProx").onclick = () => {
-    const c = combBase();
-    if (!c.lista.length) return;
-    c.turno = (c.turno || 0) + 1;
-    if (c.turno >= c.lista.length) {
-      c.turno = 0;
-      c.rodada = (c.rodada || 1) + 1;
-    }
-    saveCombate(c);
-    const x = c.lista[c.turno];
-    const f = x.fichaId && S.fichas[x.fichaId];
-    // vez de alguém escondido: não avisa no registro (os jogadores não sabem que ele está ali)
-    if (entradaVisivelParaJogadores(x))
-      logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
-  };
+  $("#btnIni").onclick = rolarIniciativa;
+  $("#btnProx").onclick = proximoTurno;
   $$("[data-rm]").forEach(
     b =>
       (b.onclick = () => {
@@ -23390,6 +23526,44 @@ async function maImagem(M) {
   }
   throw new Error("grande");
 }
+/* Desenha o mapa: a imagem (sem as portas, que viram peças na mesa: mapa/portas), os nomes e a miniatura */
+async function mapaDesenhado(M) {
+  const pm = portasDoMapa(M);
+  const img = await maImagem({ ...M, paredes: pm.paredes, textos: [] });
+  const nomes = (M.textos || []).map(t => ({
+    t: t.t,
+    x: Math.round(t.x * img.tam),
+    y: Math.round(t.y * img.tam),
+    s: Math.round((t.tam || 0.5) * img.tam),
+    cor: t.cor || "#e9e4d8",
+    fonte: t.fonte || "",
+    ...(t.r ? { r: t.r } : {})
+  }));
+  return { pm, img, nomes, thumb: await thumbOf(img.url) };
+}
+/* Cria uma cena nova com o mapa desenhado. Devolve o id da cena (criador de mapas e Jogar sozinho). */
+async function cenaDoMapa(M, mapaId) {
+  const { pm, img, nomes, thumb } = await mapaDesenhado(M);
+  const sid = "c" + rid(8);
+  await S.db.set(P() + "/cenaImg/" + sid, { url: img.url });
+  await S.db.set(P() + "/cenas/" + sid, {
+    nome: M.nome || "Mapa",
+    thumb,
+    w: img.w,
+    h: img.h,
+    grade: false,
+    encaixe: true,
+    tam: img.tam,
+    nomes,
+    portas: portasEmPixels(pm.lista, img.tam),
+    nomesOn: true,
+    mapaId,
+    ver: Date.now(),
+    criada: Date.now()
+  });
+  S.sceneImg[sid] = img.url;
+  return sid;
+}
 async function meUsarCena() {
   if (!S.isM) return;
   const jaTinhaCena = !!(ME.M && ME.M.cenaId);
@@ -23400,21 +23574,9 @@ async function meUsarCena() {
   btn.textContent = "Desenhando…";
   try {
     await new Promise(r => setTimeout(r, 30));
-    // as portas saem da imagem e viram peças que abrem e fecham na mesa (mapa/portas)
-    const pm = portasDoMapa(M);
-    const img = await maImagem({ ...M, paredes: pm.paredes, textos: [] });
-    const nomes = (M.textos || []).map(t => ({
-      t: t.t,
-      x: Math.round(t.x * img.tam),
-      y: Math.round(t.y * img.tam),
-      s: Math.round((t.tam || 0.5) * img.tam),
-      cor: t.cor || "#e9e4d8",
-      fonte: t.fonte || "",
-      ...(t.r ? { r: t.r } : {})
-    }));
-    const thumb = await thumbOf(img.url);
     let sid = M.cenaId && S.cenas.find(c => c.id === M.cenaId) ? M.cenaId : null;
     if (sid) {
+      const { pm, img, nomes, thumb } = await mapaDesenhado(M);
       const old = S.cenas.find(c => c.id === sid);
       await S.db.set(P() + "/cenaImg/" + sid, { url: img.url });
       if (old && old.tam && old.tam !== img.tam) {
@@ -23446,24 +23608,7 @@ async function meUsarCena() {
       S.sceneImg[sid] = img.url;
       toast("Cena atualizada para todos.");
     } else {
-      sid = "c" + rid(8);
-      await S.db.set(P() + "/cenaImg/" + sid, { url: img.url });
-      await S.db.set(P() + "/cenas/" + sid, {
-        nome: M.nome || "Mapa",
-        thumb,
-        w: img.w,
-        h: img.h,
-        grade: false,
-        encaixe: true,
-        tam: img.tam,
-        nomes,
-        portas: portasEmPixels(pm.lista, img.tam),
-        nomesOn: true,
-        mapaId: ME.id,
-        ver: Date.now(),
-        criada: Date.now()
-      });
-      S.sceneImg[sid] = img.url;
+      sid = await cenaDoMapa(M, ME.id);
       M.cenaId = sid;
       toast("Cena criada. Abra Cenas para exibir aos jogadores.");
     }
@@ -27364,6 +27509,39 @@ function npcRolar(f, titulo, dados, bonus, extra = "") {
   });
   return r;
 }
+/* Ataque de NPC ou criatura (ficha rápida): rola o teste e o dano e registra os dois.
+   Devolve { r, crit, tot, tipo } (tot null se o dano não tem dados). Usado pela ficha e pelos bots. */
+function rolarAtaqueRapido(f, w, opc = {}) {
+  const r = npcRolar(
+    f,
+    `${w.n || "Ataque"}${opc.alvo ? " em " + opc.alvo : ""}`,
+    f.criatura && w.dd ? +w.dd : f.attr[w.a] || 0,
+    +w.b || 0
+  );
+  const cm = (w.c || "").match(/(\d+)\s*\/\s*x?(\d+)/i);
+  const mar = cm ? +cm[1] : 20,
+    mult = cm ? +cm[2] : 2;
+  const crit = r.kept >= mar;
+  let tot = null;
+  if (w.d && /\d*d\d+/i.test(w.d)) {
+    const expr = (w.d.match(/[\dd+\-\s]+/i) || [w.d])[0].replace(/\s/g, "");
+    try {
+      const dm = rollExpr(expr, { critMult: crit ? mult : 1 });
+      tot = dm.total;
+      logEntry({
+        quem: f.nome,
+        titulo: `${w.n} · dano${crit ? " (crítico!)" : ""}`,
+        total: dm.total,
+        det: dm.detail + (w.d.length > expr.length ? " · " + w.d : ""),
+        flag: crit ? "crit" : "",
+        para: S.paraRolagem || ""
+      });
+    } catch (e) {}
+  }
+  // o tipo vem escrito depois dos dados: "4d10+40 impacto", "2d6 de Sangue"
+  const tipo = (TIPOS_DANO.find(t => new RegExp(t, "i").test(w.d || "")) || "").trim();
+  return { r, crit, tot, tipo };
+}
 function bindNpcRapido(id, f) {
   const sv = now => saveFicha(id, now),
     rr = () => renderPanel();
@@ -27390,31 +27568,7 @@ function bindNpcRapido(id, f) {
         npcRolar(f, p.n || "Teste", f.attr[p.a] || 0, +p.b || 0);
       })
   );
-  $$("[data-qatk]").forEach(
-    b =>
-      (b.onclick = () => {
-        const w = f.ratq[+b.dataset.qatk];
-        const r = npcRolar(f, `${w.n || "Ataque"}`, f.criatura && w.dd ? +w.dd : f.attr[w.a] || 0, +w.b || 0);
-        const cm = (w.c || "").match(/(\d+)\s*\/\s*x?(\d+)/i);
-        const mar = cm ? +cm[1] : 20,
-          mult = cm ? +cm[2] : 2;
-        const crit = r.kept >= mar;
-        if (w.d && /\d*d\d+/i.test(w.d)) {
-          const expr = (w.d.match(/[\dd+\-\s]+/i) || [w.d])[0].replace(/\s/g, "");
-          try {
-            const dm = rollExpr(expr, { critMult: crit ? mult : 1 });
-            logEntry({
-              quem: f.nome,
-              titulo: `${w.n} · dano${crit ? " (crítico!)" : ""}`,
-              total: dm.total,
-              det: dm.detail + (w.d.length > expr.length ? " · " + w.d : ""),
-              flag: crit ? "crit" : "",
-              para: S.paraRolagem || ""
-            });
-          } catch (e) {}
-        }
-      })
-  );
+  $$("[data-qatk]").forEach(b => (b.onclick = () => rolarAtaqueRapido(f, f.ratq[+b.dataset.qatk])));
   on2("#qIni", () => npcRolar(f, "Iniciativa", f.attr.AGI || 0, 0));
   on2("#qPres", () => {
     let det = `DT ${f.pdt || "?"} (Vontade)`;
@@ -31038,7 +31192,7 @@ async function trocarEscolha(f, id, campo, valor) {
 /* Versão do site e aviso de versão nova. */
 // prettier-ignore
 // (sem espaços de propósito: versões antigas do site procuram exatamente este formato)
-const VERSAO_SITE="16/11 09h1756";
+const VERSAO_SITE="16/11 11h5925";
 /* Avisa quando sai uma versão nova do site (o navegador às vezes guarda a antiga) */
 (() => {
   let avisou = false;
@@ -32386,6 +32540,1559 @@ async function clicarNoMural(it) {
   if (it.tipo === "doc")
     abrirDoc({ id: it.id, titulo: it.titulo, doc: it.doc, quem: it.autorNome, para: "todos", mural: it });
   else if (it.autor === S.uid || S.isM) notaMural(it);
+}
+</script>
+<script>
+"use strict";
+/* Jogar sozinho: o que o bot cria sozinho — os aliados (agentes prontos), os inimigos do bestiário
+   e onde cada um começa no mapa. */
+
+const BOT_NOMES = [
+  "Rafa Sales",
+  "Bia Torres",
+  "Caio Mendes",
+  "Lu Ferraz",
+  "Duda Rocha",
+  "Igor Prado",
+  "Nina Alves",
+  "Téo Brandão",
+  "Jade Moreira",
+  "Vítor Lacerda",
+  "Malu Siqueira",
+  "Davi Paixão"
+];
+/* Como o bot monta cada classe: atributos, os que sobem nos NEX 20/50/80/95, perícias
+   (as duas primeiras sobem de grau com o NEX), armas da tabela do livro e rituais. */
+const BOT_PERFIS = {
+  Combatente: {
+    origem: "Lutador",
+    attr: { AGI: 2, FOR: 3, INT: 1, PRE: 1, VIG: 2 },
+    sobe: ["FOR", "VIG", "AGI", "FOR"],
+    per: ["Luta", "Fortitude", "Reflexos", "Iniciativa", "Percepção"],
+    armas: ["Espada", "Pistola"],
+    rituais: []
+  },
+  Especialista: {
+    origem: "Militar",
+    attr: { AGI: 3, FOR: 1, INT: 2, PRE: 1, VIG: 2 },
+    sobe: ["AGI", "INT", "VIG", "AGI"],
+    per: ["Pontaria", "Reflexos", "Iniciativa", "Percepção", "Furtividade"],
+    armas: ["Revólver", "Faca"],
+    rituais: []
+  },
+  Ocultista: {
+    origem: "Acadêmico",
+    attr: { AGI: 1, FOR: 1, INT: 3, PRE: 2, VIG: 2 },
+    sobe: ["PRE", "INT", "VIG", "PRE"],
+    per: ["Ocultismo", "Vontade", "Percepção", "Iniciativa", "Luta"],
+    armas: ["Faca"],
+    rituais: ["Eletrocussão", "Cicatrização", "Decadência", "Descarnar"]
+  }
+};
+/* Um agente feito pelo bot, na classe e no NEX pedidos. */
+function agenteBot(classe, nex, nome) {
+  const P = BOT_PERFIS[classe] || BOT_PERFIS.Combatente;
+  const f = novaFicha();
+  Object.assign(f, {
+    nome,
+    classe: BOT_PERFIS[classe] ? classe : "Combatente",
+    nex,
+    origem: P.origem,
+    jogador: "Bot",
+    bot: true,
+    dono: S.uid,
+    criada: Date.now(),
+    attr: { ...P.attr }
+  });
+  [20, 50, 80, 95].forEach((n, k) => {
+    if (nex >= n && f.attr[P.sobe[k]] < 5) f.attr[P.sobe[k]]++;
+  });
+  const g = nex >= 70 ? 15 : nex >= 35 ? 10 : 5;
+  P.per.forEach((p, k) => (f.per[p] = { g: k < 2 ? g : 5, b: 0 }));
+  f.armas = P.armas.map(n => armaNova(armaInfo(n)));
+  migrar(f);
+  const circ = Math.max(1, derivados(f).circ || 0);
+  f.rituais = P.rituais.filter(n => (allRituais().find(r => r.n === n) || { c: 9 }).c <= circ);
+  return f;
+}
+/* Classes dos aliados: sempre a que menos aparece no grupo (quem joga + quem já entrou) */
+function classesDosAliados(minha, n) {
+  const ordem = ["Combatente", "Ocultista", "Especialista"];
+  const tem = [minha];
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const conta = c => tem.filter(x => x === c).length;
+    const c = ordem.slice().sort((a, b) => conta(a) - conta(b))[0];
+    out.push(c);
+    tem.push(c);
+  }
+  return out;
+}
+/* Os inimigos do combate: criaturas do bestiário cuja soma de VD chega perto do desafio.
+   No normal, cada agente do grupo "vale" uns 3/4 do NEX dele em VD. */
+const BOT_DESAFIO = { facil: 0.5, normal: 0.75, dificil: 1.15 };
+function inimigosPara(nex, tamGrupo, nivel, R = Math.random, opc = {}) {
+  const alvo = Math.max(5, nex) * tamGrupo * (BOT_DESAFIO[nivel] || 0.75) * (opc.fator || 1);
+  const todos = allBest().filter(b => b.el && +b.pv > 0 && b.atk && !/\(/.test(b.n));
+  const doEl = opc.el ? todos.filter(b => b.el.split(" e ").includes(opc.el)) : todos;
+  const ok = doEl.some(b => b.vd <= alvo * 1.1) ? doEl : todos;
+  let pool = ok.filter(b => b.vd <= alvo * 1.1);
+  if (!pool.length)
+    pool = ok
+      .slice()
+      .sort((a, b) => a.vd - b.vd)
+      .slice(0, 3);
+  const out = [];
+  let soma = 0;
+  // um mais forte (até metade do desafio, ou o que couber) e o resto de ameaças menores
+  const fortes = pool.filter(b => b.vd >= alvo * 0.35);
+  const lider = (fortes.length ? fortes : pool)[Math.floor(R() * (fortes.length || pool.length))];
+  out.push(lider);
+  soma += lider.vd;
+  while (soma < alvo * 0.85 && out.length < 4) {
+    const cabe = pool.filter(b => b.vd <= alvo - soma + 5);
+    if (!cabe.length) break;
+    const b = cabe[Math.floor(R() * cabe.length)];
+    out.push(b);
+    soma += b.vd;
+  }
+  return out;
+}
+/* Mapas bons para combate (do criador de mapas) */
+const BOT_LUGARES = [
+  "Rua à noite",
+  "Floresta",
+  "Galpão",
+  "Cemitério à noite",
+  "Casa abandonada",
+  "Esgoto",
+  "Mercado",
+  "Clareira do ritual",
+  "Fazenda",
+  "Porto"
+];
+
+/* ---------- o mapa como grade: onde dá para pisar e por onde dá para passar ---------- */
+const BOT_PISO_FECHADO = new Set([".", "W", "V"]); // vazio, água funda, vazio dimensional
+/* Grade do mapa do criador de mapas (M): paredes (sem contar portas, que o bot abre), chão que
+   não dá para pisar e objetos que ocupam o lugar (móveis, carros; tapetes e manchas não). */
+function gradeDoMapa(M) {
+  const w = M.w,
+    h = M.h;
+  const paredes = new Set();
+  (M.paredes || []).forEach(s => {
+    const [o, x, y, ...resto] = s.split(",");
+    const v = resto.join(",");
+    const porta = v.match(/^a:([^:]+):/);
+    if (porta && !/janela/.test(porta[1])) return; // porta, portão: passa
+    paredes.add(`${o},${x},${y}`);
+  });
+  const ocupado = new Uint8Array(w * h);
+  (M.objs || []).forEach(o => {
+    const T = typeof MA_OBJ !== "undefined" && MA_OBJ[o.t];
+    if (!T || (T.z ?? 1) !== 1 || (T.w || 1) * (T.h || 1) < 0.5) return;
+    const a = ((o.r || 0) * Math.PI) / 180;
+    const ow = (T.w || 1) * (o.e || 1),
+      oh = (T.h || 1) * (o.e || 1);
+    const rx = (Math.abs(Math.cos(a)) * ow + Math.abs(Math.sin(a)) * oh) / 2;
+    const ry = (Math.abs(Math.sin(a)) * ow + Math.abs(Math.cos(a)) * oh) / 2;
+    for (let y = Math.floor(o.y - ry); y <= Math.floor(o.y + ry); y++)
+      for (let x = Math.floor(o.x - rx); x <= Math.floor(o.x + rx); x++) {
+        if (x < 0 || y < 0 || x >= w || y >= h) continue;
+        if (Math.abs(x + 0.5 - o.x) < rx && Math.abs(y + 0.5 - o.y) < ry) ocupado[y * w + x] = 1;
+      }
+  });
+  const piso = (x, y) => x >= 0 && y >= 0 && x < w && y < h && !BOT_PISO_FECHADO.has(M.chao[y * w + x]);
+  const livre = (x, y) => piso(x, y) && !ocupado[y * w + x];
+  // passo de uma célula para a vizinha (na diagonal, as duas retas também têm de dar)
+  const reto = (x, y, dx, dy) => {
+    if (dx === 1) return !paredes.has(`v,${x + 1},${y}`);
+    if (dx === -1) return !paredes.has(`v,${x},${y}`);
+    if (dy === 1) return !paredes.has(`h,${x},${y + 1}`);
+    return !paredes.has(`h,${x},${y}`);
+  };
+  const passa = (x, y, dx, dy) => {
+    if (!piso(x + dx, y + dy)) return false;
+    if (!dx || !dy) return reto(x, y, dx, dy);
+    return (
+      reto(x, y, dx, 0) &&
+      reto(x + dx, y, 0, dy) &&
+      reto(x, y, 0, dy) &&
+      reto(x, y + dy, dx, 0) &&
+      piso(x + dx, y) &&
+      piso(x, y + dy)
+    );
+  };
+  return { w, h, livre, passa };
+}
+const BOT_VIZ = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1]
+];
+/* Caminhos a partir de uma célula: distância (em passos) e de onde veio cada célula alcançada.
+   bloq: células ocupadas por outros tokens (não dá para parar nem passar por elas). */
+function caminhos(G, x0, y0, bloq = new Set(), max = 999) {
+  const dist = new Map([[x0 + "," + y0, 0]]);
+  const fila = [[x0, y0]];
+  while (fila.length) {
+    const [x, y] = fila.shift();
+    const d = dist.get(x + "," + y);
+    if (d >= max) continue;
+    for (const [dx, dy] of BOT_VIZ) {
+      const k = x + dx + "," + (y + dy);
+      if (dist.has(k) || bloq.has(k) || !G.passa(x, y, dx, dy)) continue;
+      dist.set(k, d + 1);
+      fila.push([x + dx, y + dy]);
+    }
+  }
+  return dist;
+}
+/* Onde cada lado começa: os agentes num canto livre do mapa e os inimigos a uns 10 passos
+   (ou o mais longe que der), todos em células livres e ligadas entre si. */
+function pontosDeInicio(M, nAgentes, nInimigos, R = Math.random) {
+  const G = gradeDoMapa(M);
+  const livres = [];
+  for (let y = 0; y < G.h; y++) for (let x = 0; x < G.w; x++) if (G.livre(x, y)) livres.push([x, y]);
+  if (!livres.length) return null;
+  // a maior área ligada: parte do meio do mapa
+  const meio = livres
+    .slice()
+    .sort(
+      (a, b) => Math.hypot(a[0] - G.w / 2, a[1] - G.h / 2) - Math.hypot(b[0] - G.w / 2, b[1] - G.h / 2)
+    )[0];
+  const daqui = caminhos(G, meio[0], meio[1]);
+  const ligadas = livres.filter(([x, y]) => daqui.has(x + "," + y));
+  const lado = R() < 0.5;
+  const ancoraA = ligadas
+    .slice()
+    .sort(
+      (a, b) => (lado ? a[0] - b[0] : b[0] - a[0]) || Math.abs(a[1] - G.h / 2) - Math.abs(b[1] - G.h / 2)
+    )[0];
+  const dA = caminhos(G, ancoraA[0], ancoraA[1]);
+  const longe = Math.min(10, Math.max(...dA.values()));
+  const candB = ligadas.filter(([x, y]) => {
+    const d = dA.get(x + "," + y) || 0;
+    return d >= longe && d <= longe + 3;
+  });
+  const ancoraB = candB[Math.floor(R() * candB.length)] || ligadas[ligadas.length - 1];
+  const usados = new Set();
+  const grupo = (anc, n) => {
+    const out = [];
+    const perto = [...caminhos(G, anc[0], anc[1]).entries()].sort((a, b) => a[1] - b[1]);
+    for (const [k] of perto) {
+      if (out.length >= n) break;
+      const [x, y] = k.split(",").map(Number);
+      if (!G.livre(x, y) || usados.has(k)) continue;
+      usados.add(k);
+      out.push([x, y]);
+    }
+    return out;
+  };
+  return { agentes: grupo(ancoraA, nAgentes), inimigos: grupo(ancoraB, nInimigos) };
+}
+</script>
+<script>
+"use strict";
+/* Jogar sozinho: no combate, os aliados feitos pelo bot e os inimigos agem sozinhos na vez deles —
+   andam pelo mapa (sem atravessar paredes), escolhem o alvo, atacam ou conjuram, curam quem está mal
+   e aplicam o dano com as resistências da criatura. Tudo no navegador de quem joga, sem custo. */
+
+/* a mesa é de Jogar sozinho e quem está aqui é quem joga (o dono da mesa) */
+function sozinho() {
+  return !!(S.mesa && S.mesa.sozinho && S.isM);
+}
+const ladoDe = f => (f.npc ? "inimigo" : "agente");
+// o que aconteceu, no registro (um instante depois, para ficar abaixo da rolagem que veio antes)
+const botDiz = titulo => setTimeout(() => logEntry({ quem: "Mestre", titulo, tipo: "chat" }), 40);
+
+/* O mapa da cena do combate como grade (sozinho/gerar), guardado enquanto a cena não muda */
+async function botMapa() {
+  const sc = curScene();
+  if (!sc || !sc.mapaId) return null;
+  if (S.botMapa && S.botMapa.sid === sc.id) return S.botMapa;
+  const M = await S.db.get(P() + "/mapas/" + sc.mapaId);
+  if (!M) return null;
+  S.botMapa = { sid: sc.id, M, G: gradeDoMapa(M), tam: sc.tam || tokenBase() };
+  return S.botMapa;
+}
+/* Quem está no combate, com a ficha, o token na cena e se ainda está de pé */
+function emCombate() {
+  return ((S.combate && S.combate.lista) || [])
+    .map(x => {
+      const f = x.fichaId && S.fichas[x.fichaId];
+      if (!f) return null;
+      const t = S.tokens.find(k => k.fichaId === x.fichaId && S.pos[k.id]);
+      return { x, f, id: x.fichaId, t, vivo: cur(f, "pv") > 0 };
+    })
+    .filter(Boolean);
+}
+const celulaDe = (c, tam) => [Math.floor(S.pos[c.t.id].x / tam), Math.floor(S.pos[c.t.id].y / tam)];
+const chebyshev = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
+/* deslocamento em quadrados (1,5 m cada) */
+function passosDe(f) {
+  const m = f.rapido ? +f.rdesl || 9 : parseFloat(String(f.desl || "9").replace(",", ".")) || 9;
+  return Math.max(1, Math.floor(m / 1.5));
+}
+/* alcance em quadrados: corpo a corpo é do lado; curto 9 m, médio 18 m, longo 36 m */
+const BOT_ALC = { toque: 1, curto: 6, médio: 12, medio: 12, longo: 24, extremo: 48 };
+function alcanceArma(w) {
+  if (w.pericia === "Luta") return 1;
+  return BOT_ALC[String(w.alc || "").toLowerCase()] || 6;
+}
+const alcanceRitual = r => BOT_ALC[String(r.al || "").toLowerCase()] || 0;
+
+/* A forma mais forte do ritual que a ficha conjura e paga agora (Normal, Discente, Verdadeiro) */
+function formaQuePaga(f, r, reserva = 0) {
+  const D = derivados(f);
+  const pe = cur(f, "pe") - reserva;
+  let k = -1;
+  r.formas.forEach((fm, i) => {
+    const circ = +((fm.req || "").match(/(\d)º círculo/) || [0, 0])[1];
+    const extra = /afinidade/i.test(fm.req || "") && i > 0;
+    if (fm.custo <= pe && circ <= D.circ && !extra) k = i;
+  });
+  return k;
+}
+/* Os rituais que o bot sabe usar: de dano em alguém e de cura */
+function ritualDo(f, tipo, reserva = 0) {
+  for (const n of f.rituais || []) {
+    const r = allRituais().find(x => x.n === n);
+    if (!r || r.tipo !== tipo || !alcanceRitual(r)) continue;
+    const k = formaQuePaga(f, r, reserva);
+    if (k >= 0) return { r, k };
+  }
+  return null;
+}
+/* O jeito de atacar, na ordem que o bot prefere: criatura usa o ataque dela; ocultista conjura;
+   especialista atira de longe; combatente vai para o corpo a corpo. */
+function ataquesDe(f) {
+  if (f.rapido)
+    return (f.ratq || [])
+      .filter(w => w.d)
+      .map(w => ({ tipo: "rapido", w, alc: 1, vezes: +((w.n || "").match(/\((\d)\s*[×x]\)/) || [0, 1])[1] }));
+  const armas = (f.armas || []).map(w => ({ tipo: "arma", w, alc: alcanceArma(w) }));
+  const longe = armas.filter(a => a.alc > 1),
+    perto = armas.filter(a => a.alc === 1 && a.w.nome !== "Ataque desarmado"),
+    soco = armas.filter(a => a.w.nome === "Ataque desarmado");
+  const rit = ritualDo(f, "dano", 2);
+  const rits = rit ? [{ tipo: "ritual", ...rit, alc: alcanceRitual(rit.r) }] : [];
+  if (f.classe === "Ocultista") return [...rits, ...perto, ...longe, ...soco];
+  if (f.classe === "Especialista") return [...longe, ...perto, ...soco];
+  return [...perto, ...longe, ...soco];
+}
+/* Para onde andar (até o deslocamento) para ter um alvo ao alcance: o menor caminho; empate, o
+   alvo com menos PV. Sem ninguém ao alcance, chega o mais perto que der do inimigo mais próximo. */
+function planoDeMovimento(B, eu, alvos, alc, outros) {
+  const de = celulaDe(eu, B.tam);
+  const bloq = new Set(outros.filter(c => c.t && c.id !== eu.id).map(c => celulaDe(c, B.tam).join(",")));
+  const dist = caminhos(B.G, de[0], de[1], bloq, passosDe(eu.f));
+  let melhor = null;
+  for (const [k, d] of dist) {
+    const cel = k.split(",").map(Number);
+    for (const a of alvos) {
+      if (chebyshev(cel, celulaDe(a, B.tam)) > alc) continue;
+      const pv = cur(a.f, "pv");
+      if (!melhor || d < melhor.d || (d === melhor.d && pv < melhor.pv)) melhor = { cel, d, alvo: a, pv };
+    }
+  }
+  if (melhor) return melhor;
+  // ninguém ao alcance: aproxima do mais perto
+  let perto = null;
+  for (const [k, d] of dist) {
+    const cel = k.split(",").map(Number);
+    for (const a of alvos) {
+      const dd = chebyshev(cel, celulaDe(a, B.tam));
+      if (!perto || dd < perto.dd || (dd === perto.dd && d < perto.d))
+        perto = { cel, d, dd, alvo: a, longe: true };
+    }
+  }
+  return perto;
+}
+function botAndar(B, eu, cel) {
+  const de = celulaDe(eu, B.tam);
+  if (de[0] === cel[0] && de[1] === cel[1]) return;
+  porEmCena(eu.t.id, { x: Math.round((cel[0] + 0.5) * B.tam), y: Math.round((cel[1] + 0.5) * B.tam) });
+}
+
+/* ---------- dano ---------- */
+/* Quanto do dano entra, com imunidade, resistência e vulnerabilidade da criatura (rimu, rres, rvul).
+   "dano 20" vale para tudo; "Corte 5" só para aquele tipo; vulnerável sofre o dobro. */
+function danoContra(f, partes) {
+  const low = s => String(s || "").toLowerCase();
+  const imu = low(f.rimu),
+    vul = low(f.rvul),
+    res = low(f.rres);
+  let geral = 0;
+  const porTipo = {};
+  res.split(/[;,\n]/).forEach(p => {
+    const m = p.match(/([a-zà-ú][a-zà-ú ]*?)\s*(\d+)/i);
+    if (!m) return;
+    const t = m[1].trim();
+    if (t === "dano") geral = Math.max(geral, +m[2]);
+    else porTipo[t] = +m[2];
+  });
+  let tot = 0;
+  partes.forEach(({ v, t }) => {
+    const k = low(t);
+    if (!v) return;
+    if (k && imu.includes(k)) return;
+    let d = v;
+    if (k && porTipo[k]) d = Math.max(0, d - porTipo[k]);
+    if (k && vul.includes(k)) d *= 2;
+    tot += d;
+  });
+  return Math.max(0, tot - geral);
+}
+/* Tira PV da ficha, grava e conta no registro como ficou */
+function botFerir(alvo, n) {
+  const f = alvo.f;
+  const max = derivados(f).pvMax;
+  f.pv = Math.max(0, cur(f, "pv") - n);
+  saveFicha(alvo.id, true);
+  if (f.pv <= 0) alvo.vivo = false;
+  return `${n} de dano em ${f.nome} (PV ${f.pv}/${max})${f.pv <= 0 ? (f.npc ? " — caiu!" : " — caiu, morrendo!") : ""}`;
+}
+/* O teste de resistência do alvo contra um ritual (Fortitude, Reflexos ou Vontade) */
+function resistiu(alvo, r, dt) {
+  const m = String(r.res || "").match(/Fortitude|Reflexos|Vontade/);
+  if (!m) return false;
+  const f = alvo.f;
+  let t;
+  if (f.rapido) {
+    const p = (f.rper || []).find(x => x.n === m[0]) || { a: "VIG", b: 0 };
+    t = rollTest(f.attr[p.a] || 1, +p.b || 0);
+  } else {
+    const a = (PERICIAS.find(x => x[0] === m[0]) || [])[1] || "VIG";
+    t = rollTest(f.attr[a], modPericia(f, m[0]));
+  }
+  return t.total >= dt;
+}
+
+/* ---------- a vez do bot ---------- */
+/* Faz o bot agir. Devolve quando terminou (o turno passa depois). */
+async function botAgir(id) {
+  const B = await botMapa();
+  const todos = emCombate();
+  const eu = todos.find(c => c.id === id);
+  if (!B || !eu || !eu.t) return;
+  const f = eu.f;
+  const meus = todos.filter(c => c.vivo && c.t && ladoDe(c.f) === ladoDe(f));
+  const deles = todos.filter(c => c.vivo && c.t && ladoDe(c.f) !== ladoDe(f));
+  if (!deles.length) return;
+  // quem cura: socorre o aliado com menos de 40% da vida
+  const cura = !f.npc && ritualDo(f, "cura");
+  if (cura) {
+    const fr = c => cur(c.f, "pv") / derivados(c.f).pvMax;
+    const mal = meus.filter(c => fr(c) <= 0.4).sort((a, b) => fr(a) - fr(b));
+    for (const ferido of mal) {
+      const p = planoDeMovimento(B, eu, [ferido], alcanceRitual(cura.r), todos);
+      if (!p || p.longe) continue;
+      botAndar(B, eu, p.cel);
+      const res = rolarRitual(f, cura.r.n, cura.k, { alvo: ferido.f });
+      if (res) {
+        saveFicha(id, true);
+        saveFicha(ferido.id, true);
+        return;
+      }
+    }
+  }
+  // ataque: o primeiro jeito de atacar que alcança alguém andando até o deslocamento
+  const jeitos = ataquesDe(f);
+  let plano = null,
+    jeito = null;
+  for (const j of jeitos) {
+    const p = planoDeMovimento(B, eu, deles, j.alc, todos);
+    if (p && !p.longe) {
+      plano = p;
+      jeito = j;
+      break;
+    }
+  }
+  if (!plano) {
+    const p = planoDeMovimento(B, eu, deles, 1, todos);
+    if (p) botAndar(B, eu, p.cel);
+    botDiz(`${f.nome} avança${p ? " na direção de " + p.alvo.f.nome : ""}.`);
+    return;
+  }
+  botAndar(B, eu, plano.cel);
+  const alvo = plano.alvo;
+  const def = derivados(alvo.f).def;
+  if (jeito.tipo === "ritual") {
+    const res = rolarRitual(f, jeito.r.n, jeito.k, { alvoNome: alvo.f.nome });
+    saveFicha(id, true);
+    if (!res || !res.total) return;
+    const passou = resistiu(alvo, jeito.r, res.dt);
+    const v = passou
+      ? /reduz|parcial|metade/i.test(jeito.r.res)
+        ? Math.floor(res.total / 2)
+        : 0
+      : res.total;
+    const n = danoContra(alvo.f, [{ v, t: jeito.r.el }]);
+    botDiz(
+      `${alvo.f.nome} ${passou ? "resistiu em parte" : "não resistiu"} a ${jeito.r.n}: ${botFerir(alvo, n)}`
+    );
+    return;
+  }
+  for (let i = 0; i < (jeito.vezes || 1) && alvo.vivo; i++) {
+    let a, partes;
+    if (jeito.tipo === "rapido") {
+      a = rolarAtaqueRapido(f, jeito.w, { alvo: alvo.f.nome });
+      partes = [{ v: a.tot || 0, t: a.tipo }];
+    } else {
+      const D = derivados(f);
+      // combatente usa o Ataque Especial enquanto tiver mais da metade do PE
+      const esp = !!(D.atq && cur(f, "pe") - D.atq[1] >= D.peMax / 2);
+      a = rolarAtaque(f, jeito.w, { alvo: alvo.f.nome, esp, noTeste: esp ? D.atq[2] : 0 });
+      if (!a) return;
+      if (a.esp) saveFicha(id, true);
+      partes = a.partes;
+    }
+    if (a.r.total >= def) botDiz(`${f.nome} acertou: ${botFerir(alvo, danoContra(alvo.f, partes))}`);
+    else botDiz(`${f.nome} errou ${alvo.f.nome} (${a.r.total} contra Defesa ${def}).`);
+  }
+}
+/* Chamado sempre que o combate muda: se a vez é de um bot (ou de alguém caído), age sozinho e
+   passa o turno. Na vez de quem joga, só avisa. */
+function botVez() {
+  if (!sozinho()) return;
+  const c = S.combate;
+  if (!c || !(c.lista || []).length || c.lista.some(x => x.ini == null)) return;
+  if (sozinhoFim()) return;
+  const x = c.lista[c.turno || 0];
+  const f = x && x.fichaId && S.fichas[x.fichaId];
+  if (!f) return;
+  const chave = `${c.inicio || 0}:${c.rodada}:${c.turno}`;
+  if (S.botFeito === chave) return;
+  S.botFeito = chave;
+  clearTimeout(S.botT);
+  const mesma = () =>
+    S.combate && `${S.combate.inicio || 0}:${S.combate.rodada}:${S.combate.turno}` === chave;
+  if (cur(f, "pv") <= 0) {
+    S.botT = setTimeout(() => {
+      if (!mesma()) return;
+      botDiz(`${f.nome} está caído e perde a vez.`);
+      proximoTurno();
+    }, 700);
+    return;
+  }
+  if (!f.bot && !f.npc) {
+    toast(`Sua vez, ${f.nome}!`);
+    if (S.tool !== "combate" && window.innerWidth > 760) openTool("combate");
+    return;
+  }
+  S.botT = setTimeout(async () => {
+    if (!mesma()) return;
+    try {
+      await botAgir(x.fichaId);
+    } catch (e) {
+      console.error(e);
+    }
+    renderBoard();
+    S.botT = setTimeout(() => {
+      if (mesma() && !sozinhoFim()) proximoTurno();
+    }, 900);
+  }, 900);
+}
+</script>
+<script>
+"use strict";
+/* Jogar sozinho: começar pelo início do site, montar a cena (mapa, grupo com aliados bots e
+   inimigos do bestiário), a vez de quem joga no combate e o fim do combate.
+   O que os bots fazem na vez deles fica em sozinho/bots; o que o bot cria, em sozinho/gerar. */
+
+const SOZ_NIVEIS = [
+  ["facil", "Fácil"],
+  ["normal", "Normal"],
+  ["dificil", "Difícil"]
+];
+const espera = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- começar ---------- */
+async function sozinhoNovo() {
+  if (toqueDuplo("sozinhoNovo")) return;
+  const meus = S.solos || [];
+  const p = formBox(
+    "Jogar sozinho",
+    `<p class="muted small" style="margin:0">O site faz o papel do mestre e dos outros jogadores. Os aliados e os inimigos jogam sozinhos na vez deles; na sua vez, você anda com o seu token e escolhe o que fazer.</p>
+     <div class="field"><label class="label" for="szMo">O que jogar</label><select id="szMo" name="modo"><option value="missao">Missão (investigação e combate)</option><option value="combate">Só um combate</option></select></div>
+     <div class="field"><label class="label" for="szAg">Seu agente</label><select id="szAg" name="ag">${meus
+       .map(
+         c =>
+           `<option value="s:${esc(c.id)}">${esc(c.nome)} · ${esc(c.classe)} · NEX ${+c.nex || 5}%</option>`
+       )
+       .join("")}${Object.keys(BOT_PERFIS)
+       .map(k => `<option value="p:${k}">Agente pronto: ${k}</option>`)
+       .join("")}</select></div>
+     <div class="field" id="szNexW"><label class="label" for="szNex">NEX do agente pronto</label><select id="szNex" name="nex">${[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 99].map(n => `<option value="${n}">${n}%</option>`).join("")}</select></div>
+     <div class="row" style="flex-wrap:nowrap"><div class="field" style="flex:1"><label class="label" for="szAl">Aliados</label><select id="szAl" name="aliados">${[0, 1, 2, 3].map(n => `<option value="${n}" ${n === 2 ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+     <div class="field" style="flex:1"><label class="label" for="szNv">Desafio</label><select id="szNv" name="nivel">${SOZ_NIVEIS.map(([k, n]) => `<option value="${k}" ${k === "normal" ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
+     <details class="box stack sz-ia"><summary>Mestre com IA (grátis, opcional)</summary>
+      <p class="muted small" style="margin:0">Com a IA, o mestre escreve a história e você pode escrever o que quer fazer na investigação. Ela usa o Gemini do Google no plano grátis, com uma chave sua: entre em <b>aistudio.google.com/apikey</b> com a sua conta Google, toque em <b>Create API key</b> e cole aqui. A chave fica só neste navegador, e o limite grátis do dia é seu. No plano grátis, o Google pode usar o que é enviado para melhorar os produtos dele.</p>
+      <div class="field"><label class="label" for="szIa">Chave do Gemini</label><input type="password" id="szIa" name="chave" autocomplete="off" value="${esc(iaChave())}" placeholder="Deixe vazio para jogar sem IA"></div>
+     </details>
+     <div class="field" id="szLuW"><label class="label" for="szLu">Lugar</label><select id="szLu" name="lugar"><option value="">Sortear</option>${BOT_LUGARES.map(n => `<option>${esc(n)}</option>`).join("")}</select></div>`,
+    "Começar"
+  );
+  const ag = $("#szAg"),
+    mo = $("#szMo");
+  const vis = () => {
+    $("#szNexW").hidden = !ag.value.startsWith("p:");
+    $("#szLuW").hidden = mo.value === "missao"; // na missão, o caso escolhe os lugares
+  };
+  ag.onchange = mo.onchange = vis;
+  vis();
+  const r = await p;
+  if (!r) return;
+  iaGuardarChave(r.chave);
+  const lugar = r.lugar || BOT_LUGARES[Math.floor(Math.random() * BOT_LUGARES.length)];
+  let f;
+  if (r.ag.startsWith("s:")) {
+    const c = meus.find(x => "s:" + x.id === r.ag);
+    if (!c) return;
+    const { id: _id, solo: _solo, ...dados } = c;
+    f = { ...dados, dono: S.uid, criada: Date.now(), pv: null, pe: null, san: null, cond: [] };
+  } else {
+    const nome = BOT_NOMES[Math.floor(Math.random() * BOT_NOMES.length)];
+    const { bot: _bot, ...dados } = agenteBot(r.ag.slice(2), +r.nex || 5, nome);
+    f = { ...dados, jogador: "" };
+  }
+  try {
+    const nivel = (SOZ_NIVEIS.find(x => x[0] === r.nivel) || SOZ_NIVEIS[1])[1];
+    const missao = r.modo === "missao";
+    const id = await criarMesa({
+      nome: "Sozinho · " + (missao ? "Missão" : lugar),
+      desc: `${missao ? "Missão" : "Combate"} com bots · ${nivel}`,
+      acesso: "aprovacao",
+      listada: false,
+      sozinho: true
+    });
+    const fid = "f" + rid(8);
+    await S.db.set("mesas/" + id + "/fichas/" + fid, JSON.parse(JSON.stringify(f)));
+    await S.db.merge("mesas/" + id, {
+      sozPlano: { fid, aliados: +r.aliados || 0, nivel: r.nivel, lugar, modo: missao ? "missao" : "combate" }
+    });
+    location.hash = "mesa-" + id;
+  } catch (e) {
+    fail(e);
+  }
+}
+/* Ao entrar na mesa de Jogar sozinho: na primeira vez monta tudo; depois, a missão volta de onde parou */
+function sozinhoAoEntrar(m) {
+  const pl = m.sozPlano;
+  if (!S.isM || !pl || S.sozMontando === m.id) return;
+  if (pl.montado) {
+    if (pl.modo === "missao" && S.narRetomado !== m.id) {
+      S.narRetomado = m.id;
+      missaoRetomar().catch(fail);
+    }
+    return;
+  }
+  S.sozMontando = S.narRetomado = m.id;
+  (pl.modo === "missao" ? missaoMontar(pl) : sozinhoMontar(pl))
+    .catch(fail)
+    .finally(() => (S.sozMontando = null));
+}
+/* ---------- montar a cena e o combate ---------- */
+async function tokenNoLugar(id, cel, tam) {
+  const f = S.fichas[id];
+  let t = S.tokens.find(x => x.fichaId === id);
+  if (!t) {
+    const doc = f.npc
+      ? {
+          nome: f.nome,
+          url: arteCriatura(f.rel || "", sementeDe(f.base || f.nome)),
+          fichaId: id,
+          ameaca: f.base,
+          forma: "livre",
+          usaFoto: true
+        }
+      : {
+          nome: f.nome,
+          url: f.foto ? "" : artePessoa(maH((f.nome || "").length, (f.nome || "x").charCodeAt(0), 9)),
+          fichaId: id,
+          forma: "quadrado",
+          cor: f.bot ? "#6d5a8c" : corDe(S.uid),
+          usaFoto: true
+        };
+    const tid = await criarToken(doc, false);
+    if (!tid) return;
+    t = { id: tid, ...doc, dono: S.uid };
+    S.tokens.push(t);
+  }
+  if (cel) porEmCena(t.id, { x: Math.round((cel[0] + 0.5) * tam), y: Math.round((cel[1] + 0.5) * tam) });
+}
+/* O mapa de um lugar (criador de mapas) vira a cena exibida. Devolve { sid, mapaId, M }. */
+async function sozinhoCena(lugar) {
+  const mod = MA_MODELOS.find(x => x.nome === lugar && x.fn) || MA_MODELOS.find(x => x.fn === mbRua);
+  const M = mod.fn();
+  M.nome = lugar;
+  const mapaId = "m" + rid(8);
+  await S.db.set(P() + "/mapas/" + mapaId, JSON.parse(JSON.stringify({ ...M, atualizado: Date.now() })));
+  const sid = await cenaDoMapa(M, mapaId);
+  await S.db.merge(P(), { cenaAtiva: sid });
+  for (let i = 0; i < 50 && !(S.cenas.some(c => c.id === sid) && S.loaded.fichas); i++) await espera(100);
+  await viewScene(sid);
+  S.botMapa = null;
+  return { sid, mapaId, M };
+}
+/* O grupo: quem joga e os aliados que o bot cria (uma vez só). Devolve os ids, quem joga primeiro. */
+async function sozinhoGrupo(plano, R = Math.random) {
+  for (let i = 0; i < 50 && !S.fichas[plano.fid]; i++) await espera(100);
+  const eu = S.fichas[plano.fid];
+  if (!eu) throw new Error("Não achei a ficha do seu agente.");
+  if (!plano.grupoPronto) {
+    const usados = new Set([eu.nome]);
+    for (const cls of classesDosAliados(eu.classe, plano.aliados || 0)) {
+      const livres = BOT_NOMES.filter(n => !usados.has(n));
+      const nome = livres[Math.floor(R() * livres.length)] || "Agente " + (usados.size + 1);
+      usados.add(nome);
+      const id = "f" + rid(8);
+      S.fichas[id] = agenteBot(cls, +eu.nex || 5, nome);
+      saveFicha(id, true);
+    }
+    plano.grupoPronto = true;
+  }
+  return Object.keys(S.fichas)
+    .filter(id => !S.fichas[id].npc)
+    .sort((a, b) => (a === plano.fid ? -1 : b === plano.fid ? 1 : 0));
+}
+/* Inimigos novos do bestiário (fichas de criatura). opc.el: só desse elemento; opc.fator: mais ou menos. */
+function sozinhoInimigos(nex, tamGrupo, nivel, opc = {}, R = Math.random) {
+  const inim = [];
+  for (const b of inimigosPara(nex, tamGrupo, nivel, R, opc)) {
+    const n = Object.values(S.fichas).filter(f => f.npc && f.base === b.n).length;
+    const f = criaturaDe(b);
+    f.nome = b.n + (n ? " " + (n + 1) : "");
+    f.criada = Date.now();
+    const id = "n" + rid(8);
+    S.fichas[id] = f;
+    saveFicha(id, true);
+    inim.push(id);
+  }
+  return inim;
+}
+/* Põe o grupo (e os inimigos) nos pontos de início do mapa M da cena exibida */
+async function sozinhoPosicionar(M, grupo, inim = [], R = Math.random) {
+  const tam = (curScene() || {}).tam || tokenBase();
+  const pts = (M && pontosDeInicio(M, grupo.length, inim.length, R)) || { agentes: [], inimigos: [] };
+  for (const [i, id] of grupo.entries()) await tokenNoLugar(id, pts.agentes[i], tam);
+  for (const [i, id] of inim.entries()) await tokenNoLugar(id, pts.inimigos[i], tam);
+}
+/* Começa o combate com todos e rola a iniciativa */
+function sozinhoCombate(ids, lugar) {
+  S.combate = {
+    lista: ids.map(id => ({
+      id: rid(5),
+      tipo: S.fichas[id].npc ? "npcf" : "pc",
+      fichaId: id,
+      nome: S.fichas[id].nome,
+      ini: null
+    })),
+    turno: 0,
+    rodada: 1,
+    inicio: Date.now()
+  };
+  botDiz(
+    `Combate em ${lugar}: ${ids
+      .filter(id => S.fichas[id].npc)
+      .map(id => S.fichas[id].nome)
+      .join(", ")}.`
+  );
+  rolarIniciativa();
+  openTool("combate");
+}
+/* Monta o combate rápido: na primeira vez cria o mapa, a cena e os aliados; depois (outro combate)
+   usa a mesma cena e o mesmo grupo. Os inimigos saem do bestiário pelo NEX e pelo desafio. */
+async function sozinhoMontar(plano) {
+  toast("Montando o combate…");
+  plano = { ...plano };
+  let M = null;
+  if (!plano.sid) {
+    const c = await sozinhoCena(plano.lugar);
+    Object.assign(plano, { sid: c.sid, mapaId: c.mapaId });
+    M = c.M;
+  } else {
+    M = await S.db.get(P() + "/mapas/" + plano.mapaId);
+    if (S.viewSid !== plano.sid) await viewScene(plano.sid);
+  }
+  const grupo = await sozinhoGrupo(plano);
+  const eu = S.fichas[plano.fid];
+  const inim = sozinhoInimigos(+eu.nex || 5, grupo.length, plano.nivel);
+  await sozinhoPosicionar(M, grupo, inim);
+  await S.db.merge(P(), { sozPlano: { ...plano, montado: true } });
+  sozinhoCombate([...grupo, ...inim], plano.lugar);
+}
+
+/* ---------- a vez de quem joga ---------- */
+const sozChave = () => {
+  const c = S.combate || {};
+  return `${c.inicio || 0}:${c.rodada}:${c.turno}`;
+};
+function sozinhoVezHTML() {
+  if (!sozinho()) return "";
+  const x = vezAtual();
+  const f = x && x.fichaId && S.fichas[x.fichaId];
+  if (!f || f.npc || f.bot || cur(f, "pv") <= 0 || (S.combate.lista || []).some(y => y.ini == null))
+    return "";
+  if (S.sozAgiu === sozChave())
+    return `<div class="box sozvez muted">Pronto. Agora é a vez do próximo…</div>`;
+  const todos = emCombate();
+  const eu = todos.find(c => c.id === x.fichaId);
+  const tam = (curScene() || {}).tam || tokenBase();
+  const dist = c => (eu && eu.t && c.t ? chebyshev(celulaDe(eu, tam), celulaDe(c, tam)) : 99);
+  const inim = todos.filter(c => c.vivo && c.f.npc && c.t).sort((a, b) => dist(a) - dist(b));
+  const amigos = todos.filter(c => c.vivo && !c.f.npc);
+  const D = derivados(f);
+  const rits = (f.rituais || [])
+    .map(n => allRituais().find(r => r.n === n))
+    .filter(r => r && (r.tipo === "dano" || r.tipo === "cura") && alcanceRitual(r));
+  const alc = w => (alcanceArma(w) === 1 ? "do lado" : `até ${alcanceArma(w) * 1.5} m`);
+  return `<div class="box stack sozvez"><div class="row between"><b>Sua vez, ${esc(f.nome)}</b><span class="muted small">PV ${cur(f, "pv")}/${D.pvMax} · PE ${cur(f, "pe")}/${D.peMax}</span></div>
+   <div class="field"><label class="label" for="szAlvo">Alvo</label><select id="szAlvo">${inim.map(c => `<option value="${esc(c.id)}">${esc(c.f.nome)} · a ${dist(c) * 1.5} m · PV ${cur(c.f, "pv")}</option>`).join("")}</select></div>
+   <div class="row">${(f.armas || []).map((w, i) => `<button class="btn sm primary" data-szatk="${i}">${esc(w.nome)} <small>${alc(w)}</small></button>`).join("")}</div>
+   ${rits.length ? `<div class="row">${rits.map(r => `<button class="btn sm" data-szrit="${esc(r.n)}">${esc(r.n)} <small>${r.formas[0].custo} PE · ${r.tipo === "cura" ? "cura" : "dano"}</small></button>`).join("")}</div>` : ""}
+   ${rits.some(r => r.tipo === "cura") ? `<div class="field"><label class="label" for="szCura">Curar quem</label><select id="szCura">${amigos.map(c => `<option value="${esc(c.id)}">${esc(c.f.nome)} · PV ${cur(c.f, "pv")}/${derivados(c.f).pvMax}</option>`).join("")}</select></div>` : ""}
+   <div class="row between"><span class="muted small">Arraste o seu token para andar (até ${passosDe(f)} quadrados) e depois ataque.</span><button class="btn sm ghost" id="szPassa">Passar a vez</button></div></div>`;
+}
+function bindSozinhoVez() {
+  $$("[data-szatk]").forEach(b => (b.onclick = () => sozinhoAgir({ arma: +b.dataset.szatk })));
+  $$("[data-szrit]").forEach(b => (b.onclick = () => sozinhoAgir({ ritual: b.dataset.szrit })));
+  const ps = $("#szPassa");
+  if (ps)
+    ps.onclick = () => {
+      const f = S.fichas[vezAtual().fichaId];
+      botDiz(`${f.nome} passa a vez.`);
+      sozinhoFimDaVez();
+    };
+}
+/* O ataque (arma ou ritual) de quem joga, com o alcance conferido no mapa */
+function sozinhoAgir({ arma, ritual }) {
+  const x = vezAtual();
+  const todos = emCombate();
+  const eu = todos.find(c => c.id === (x && x.fichaId));
+  if (!eu || S.sozAgiu === sozChave()) return;
+  const f = eu.f;
+  const tam = (curScene() || {}).tam || tokenBase();
+  const longe = (c, alc) => {
+    const d = eu.t && c.t ? chebyshev(celulaDe(eu, tam), celulaDe(c, tam)) : 99;
+    if (d <= alc) return false;
+    toast(
+      alc === 1
+        ? `Chegue do lado de ${c.f.nome} primeiro (arraste o seu token).`
+        : `${c.f.nome} está longe demais (${d * 1.5} m).`
+    );
+    return true;
+  };
+  const r = ritual && allRituais().find(k => k.n === ritual);
+  if (r && r.tipo === "cura") {
+    const alvo = todos.find(c => c.id === ($("#szCura") || {}).value);
+    if (!alvo || (alvo !== eu && longe(alvo, alcanceRitual(r)))) return;
+    if (!rolarRitual(f, r.n, 0, { alvo: alvo.f })) return;
+    saveFicha(eu.id, true);
+    saveFicha(alvo.id, true);
+    return sozinhoFimDaVez();
+  }
+  const alvo = todos.find(c => c.id === ($("#szAlvo") || {}).value);
+  if (!alvo) {
+    toast("Nenhum inimigo de pé.");
+    return;
+  }
+  if (r) {
+    if (longe(alvo, alcanceRitual(r))) return;
+    const res = rolarRitual(f, r.n, 0, { alvoNome: alvo.f.nome });
+    if (!res) return;
+    saveFicha(eu.id, true);
+    if (res.total) {
+      const passou = resistiu(alvo, r, res.dt);
+      const v = passou ? (/reduz|parcial|metade/i.test(r.res) ? Math.floor(res.total / 2) : 0) : res.total;
+      botDiz(
+        `${alvo.f.nome} ${passou ? "resistiu em parte" : "não resistiu"} a ${r.n}: ${botFerir(alvo, danoContra(alvo.f, [{ v, t: r.el }]))}`
+      );
+    }
+    return sozinhoFimDaVez();
+  }
+  const w = (f.armas || [])[arma];
+  if (!w || longe(alvo, alcanceArma(w))) return;
+  const a = rolarAtaque(f, w, { alvo: alvo.f.nome });
+  if (!a) return;
+  const def = derivados(alvo.f).def;
+  botDiz(
+    a.r.total >= def
+      ? `${f.nome} acertou: ${botFerir(alvo, danoContra(alvo.f, a.partes))}`
+      : `${f.nome} errou ${alvo.f.nome} (${a.r.total} contra Defesa ${def}).`
+  );
+  sozinhoFimDaVez();
+}
+function sozinhoFimDaVez() {
+  const chave = sozChave();
+  S.sozAgiu = chave;
+  renderPanel();
+  renderBoard();
+  setTimeout(() => {
+    if (sozChave() === chave && !sozinhoFim()) proximoTurno();
+  }, 900);
+}
+
+/* ---------- fim do combate ---------- */
+/* Todos os inimigos caíram (vitória) ou todo o grupo caiu (derrota)? Avisa uma vez só. */
+function sozinhoFim() {
+  const c = S.combate;
+  if (!c || !c.inicio) return false;
+  const todos = emCombate();
+  const ag = todos.filter(x => !x.f.npc),
+    ini = todos.filter(x => x.f.npc);
+  const venceu = ini.length > 0 && ini.every(x => !x.vivo);
+  const perdeu = ag.length > 0 && ag.every(x => !x.vivo);
+  if (!venceu && !perdeu) return false;
+  if (S.sozFim !== c.inicio) {
+    S.sozFim = c.inicio;
+    clearTimeout(S.botT);
+    if (S.mesa.sozPlano && S.mesa.sozPlano.modo === "missao") {
+      missaoFim(venceu).catch(fail); // a missão termina com o mestre fechando a história
+      return true;
+    }
+    botDiz(venceu ? "Vitória! Todos os inimigos caíram." : "Derrota. Todo o grupo caiu.");
+    const h = $("#modalHost");
+    h.innerHTML = `<div class="modal-back"><div class="modal" role="dialog" aria-label="Fim do combate"><h3>${venceu ? "Vitória!" : "Derrota"}</h3><p class="muted" style="margin:0">${venceu ? "Todos os inimigos caíram." : "Todo o grupo caiu."} Quer jogar outro combate? O grupo volta com a vida e o PE cheios.</p><div class="row" style="justify-content:flex-end"><button class="btn" id="szSair">Voltar ao início</button><button class="btn primary" id="szDeNovo">Outro combate</button></div></div></div>`;
+    $("#szSair").onclick = () => {
+      h.innerHTML = "";
+      location.hash = "";
+    };
+    $("#szDeNovo").onclick = () => {
+      h.innerHTML = "";
+      sozinhoDeNovo().catch(fail);
+    };
+  }
+  return true;
+}
+/* Outro combate na mesma cena: os inimigos saem, o grupo volta inteiro e entram inimigos novos */
+async function sozinhoDeNovo() {
+  for (const [id, f] of Object.entries(S.fichas)) {
+    if (f.npc) {
+      for (const t of S.tokens.filter(k => k.fichaId === id)) {
+        if (S.pos[t.id]) await tirarDeCena(t.id);
+        await S.db.del(P() + "/tokens/" + t.id);
+      }
+      S.tokens = S.tokens.filter(k => k.fichaId !== id);
+      await S.db.del(fichaPath(id));
+      delete S.fichas[id];
+    } else {
+      Object.assign(f, { pv: null, pe: null, cond: [] });
+      saveFicha(id, true);
+    }
+  }
+  await sozinhoMontar({ ...S.mesa.sozPlano });
+}
+</script>
+<script>
+"use strict";
+/* Jogar sozinho — mestre com IA. Usa o Gemini do Google no plano grátis, com a chave de quem joga:
+   cada pessoa usa a sua, então o limite grátis do dia é de cada um, e nada passa por servidor nosso.
+   A chave fica só neste navegador. A IA só escreve: os testes, a DT, o dano e as criaturas continuam
+   com as regras do site. Se ela falhar ou o limite do dia acabar, a missão segue com os modelos. */
+
+const IA_URL = "https://generativelanguage.googleapis.com/v1beta/";
+const iaChave = () => String(lsGet("ms_iaChave", "") || "").trim();
+const iaHoje = () => new Date().toISOString().slice(0, 10);
+function iaLigada() {
+  return !!iaChave() && lsGet("ms_iaPausa", "") !== iaHoje();
+}
+function iaGuardarChave(chave) {
+  chave = String(chave || "").trim();
+  if (chave === iaChave()) return;
+  lsSet("ms_iaChave", chave);
+  lsSet("ms_iaModelo", "");
+  lsSet("ms_iaPausa", "");
+  S.iaModelo = null;
+}
+/* Erro da IA com o motivo que importa para quem joga */
+function iaErro(status, corpo) {
+  const e = new Error("ia " + status);
+  e.status = status;
+  e.limite = status === 429;
+  e.chave = status === 403 || (status === 400 && /API_KEY|api key/i.test(corpo || ""));
+  return e;
+}
+/* Quando a IA não dá: avisa uma vez e o mestre continua com os modelos */
+function iaFalhou(e) {
+  console.warn("IA:", e && e.message);
+  if (e && e.limite) {
+    lsSet("ms_iaPausa", iaHoje());
+    toast("A IA chegou no limite grátis de hoje. O mestre continua sem IA até amanhã.");
+  } else if (e && e.chave) {
+    lsSet("ms_iaChave", "");
+    toast("A chave do Gemini não funcionou. O mestre continua sem IA. Confira a chave em Jogar sozinho.");
+  } else if (!S.iaAvisou) {
+    S.iaAvisou = true;
+    toast("A IA não respondeu agora. Esta parte foi com o texto padrão.");
+  }
+  if (S.missao) missaoMostrar();
+}
+/* O modelo: o Flash-Lite mais novo (é o que tem mais pedidos grátis por dia); senão, o Flash */
+async function iaModelo() {
+  if (S.iaModelo) return S.iaModelo;
+  const salvo = lsGet("ms_iaModelo", "");
+  if (salvo) return (S.iaModelo = salvo);
+  const r = await fetch(IA_URL + "models?pageSize=200", { headers: { "x-goog-api-key": iaChave() } });
+  if (!r.ok) throw iaErro(r.status, await r.text());
+  const j = await r.json();
+  const ok = (j.models || []).filter(
+    m =>
+      (m.supportedGenerationMethods || []).includes("generateContent") &&
+      /gemini/.test(m.name) &&
+      !/preview|exp|tts|image|live|embedding|audio|thinking/i.test(m.name)
+  );
+  const ver = n => parseFloat((n.match(/gemini-(\d+(\.\d+)?)/) || [0, 0])[1]);
+  const melhor = re => ok.filter(m => re.test(m.name)).sort((a, b) => ver(b.name) - ver(a.name))[0];
+  const m = melhor(/flash-lite/) || melhor(/flash/) || ok[0];
+  if (!m) throw new Error("sem modelo");
+  S.iaModelo = m.name.replace(/^models\//, "");
+  lsSet("ms_iaModelo", S.iaModelo);
+  return S.iaModelo;
+}
+/* Um pedido para a IA. json: a resposta vem como objeto. */
+async function iaPedir(sistema, texto, json = false, tentativa = 0) {
+  const modelo = await iaModelo();
+  const r = await fetch(`${IA_URL}models/${modelo}:generateContent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": iaChave() },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: sistema }] },
+      contents: [{ role: "user", parts: [{ text: texto }] }],
+      generationConfig: {
+        temperature: 0.9,
+        maxOutputTokens: 600,
+        ...(json ? { responseMimeType: "application/json" } : {})
+      }
+    })
+  });
+  if (r.status === 404 && !tentativa) {
+    // o modelo guardado saiu do ar: escolhe outro e tenta de novo
+    lsSet("ms_iaModelo", "");
+    S.iaModelo = null;
+    return iaPedir(sistema, texto, json, 1);
+  }
+  if (!r.ok) throw iaErro(r.status, await r.text());
+  const j = await r.json();
+  const c = (j.candidates || [])[0];
+  const out = ((c && c.content && c.content.parts) || [])
+    .map(p => p.text || "")
+    .join("")
+    .trim();
+  if (!out) throw new Error("resposta vazia");
+  return json ? JSON.parse(out.replace(/^```(json)?|```$/g, "")) : out;
+}
+const IA_MESTRE =
+  "Você é o mestre de uma partida solo de RPG de investigação paranormal, no clima de Ordem Paranormal: agentes da Ordem investigam o Outro Lado e as criaturas dos elementos Sangue, Morte, Conhecimento, Energia e Medo. " +
+  "Escreva em português do Brasil, falando com o agente em segunda pessoa, com 2 a 4 frases curtas e clima de suspense. " +
+  "Mantenha todos os fatos do texto-base (nomes, lugares, a pista, a consequência e os números). Você pode trocar as palavras e acrescentar detalhes de ambiente, sons e reações das pessoas. " +
+  "Não invente regras, números, itens nem criaturas novas, não decida resultados de testes e não copie textos de livros. Responda só com o texto, sem aspas nem títulos.";
+/* O texto do mestre escrito pela IA, a partir do texto-base dos modelos (sozinho/missao) */
+async function iaNarrar(tipo, c, base) {
+  const m = c.m;
+  const ctx = [
+    `Momento da história: ${tipo}.`,
+    `Caso: "${m.titulo}" em ${m.cidade}; elemento ${m.el}; quem pediu ajuda: ${m.pessoa}.`,
+    `Agente: ${c.eu}${c.aliados ? `; aliados: ${c.aliados}` : ""}.`,
+    c.acao ? `O que o agente fez: ${c.acao}.` : "",
+    c.extra ? `Nas palavras do jogador: "${c.extra}".` : "",
+    `Texto-base: ${base}`
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const t = await iaPedir(IA_MESTRE, ctx);
+  return t.slice(0, 900);
+}
+/* Ação escrita pelo jogador: a IA escolhe a perícia do teste (a DT e a rolagem são do site) */
+async function iaInterpretar(acao, M) {
+  const pericias = PERICIAS.map(p => p[0]).filter(p => !["Profissão"].includes(p));
+  const j = await iaPedir(
+    "Você ajuda o mestre de um RPG de investigação paranormal a aplicar as regras. O jogador escreveu o que o agente faz. " +
+      `Escolha UMA perícia desta lista que represente a ação: ${pericias.join(", ")}. ` +
+      'Diga também se a ação faz sentido na cena (investigar, conversar, procurar, estudar algo do caso). Responda só em JSON: {"pericia": "...", "faz_sentido": true, "motivo": "uma frase curta, em português, para quando não faz sentido"}.',
+    `Caso: "${M.m.titulo}" em ${M.m.cidade}, elemento ${M.m.el}, lugar: ${M.m.local1}. Ação do jogador: "${acao}"`,
+    true
+  );
+  const pericia =
+    pericias.find(p => p.toLowerCase() === String(j.pericia || "").toLowerCase()) || "Investigação";
+  return { pericia, ok: j.faz_sentido !== false, motivo: String(j.motivo || "").slice(0, 200) };
+}
+</script>
+<script>
+"use strict";
+/* Jogar sozinho — Missão: o site faz o papel do mestre. Sorteia um caso (cidade, elemento, pessoa que
+   pediu ajuda, lugar da investigação e lugar do confronto), conta a história num cartão em cima do mapa,
+   pede os testes de perícia, entrega as pistas como documentos e termina num combate com os bots
+   (sozinho/bots). Cada pista achada deixa o confronto mais fácil; cada falha, mais difícil.
+   O texto do mestre sai de modelos escritos aqui; com a IA ligada (sozinho/ia), sai dela. */
+
+const MIS_CIDADES = [
+  "Vila Aurora",
+  "São Brás do Ribeirão",
+  "Pedra Funda",
+  "Santa Luzia do Vale",
+  "Porto Cinzento",
+  "Lagoa Rasa",
+  "Carvalhal",
+  "Serra do Breu"
+];
+const MIS_PESSOAS = [
+  "Dona Cida, dona da padaria",
+  "Seu Ademar, o vigia noturno",
+  "Marta Quintela, professora",
+  "o padre Osvaldo",
+  "Joana, dona do bar da esquina",
+  "Lia, enfermeira do posto",
+  "o delegado Bastos",
+  "Caio, um entregador"
+];
+/* Cada elemento: o que está acontecendo, os sinais, a causa e onde termina */
+const MIS_TEMAS = {
+  Sangue: {
+    titulo: "Noites de Caça",
+    fato: "três pessoas apareceram mortas, sem uma gota de sangue no corpo",
+    sinais: [
+      "marcas fundas de garras na madeira",
+      "um cheiro de ferro que não sai do ar",
+      "sangue seco desenhando um símbolo torto"
+    ],
+    causa: "alguém está alimentando uma criatura com sangue, de propósito",
+    final: ["Clareira do ritual", "Galpão", "Floresta"]
+  },
+  Morte: {
+    titulo: "A Hora Parada",
+    fato: "os relógios pararam todos na mesma hora e quem dorme depois das três não acorda mais",
+    sinais: [
+      "um lodo preto escorrendo do ralo",
+      "flores murchas em vasos trocados ontem",
+      "um relógio de bolso parado às 3h03"
+    ],
+    causa: "alguém está roubando o tempo dos outros para não morrer",
+    final: ["Cemitério à noite", "Paróquia", "Hospital"]
+  },
+  Conhecimento: {
+    titulo: "Nomes Esquecidos",
+    fato: "os moradores estão esquecendo o próprio nome, um por um",
+    sinais: [
+      "letras douradas riscadas na parede",
+      "livros com todas as páginas em branco",
+      "a mesma frase escrita centenas de vezes num caderno"
+    ],
+    causa: "alguém está tentando aprender o que ninguém deveria saber",
+    final: ["Escola", "Mansão antiga", "Prédio de apartamentos"]
+  },
+  Energia: {
+    titulo: "Curto-Circuito",
+    fato: "as luzes piscam sozinhas à noite e duas casas pegaram fogo sem explicação",
+    sinais: [
+      "aparelhos ligando sozinhos",
+      "um zumbido que só alguns ouvem",
+      "marcas de queimado em espiral no chão"
+    ],
+    causa: "alguém abriu uma passagem para algo que não segue regra nenhuma",
+    final: ["Galpão", "Estação de metrô", "Rua à noite"]
+  }
+};
+const MIS_LOCAL1 = [
+  "Casa abandonada",
+  "Mercado",
+  "Rua à noite",
+  "Motel de estrada",
+  "Prédio de apartamentos",
+  "Fazenda"
+];
+/* O que dá para investigar. A pista que cada um dá depende da ordem (causa, onde, quem). */
+const MIS_PONTOS = [
+  { id: "lugar", nome: "Revistar o lugar onde tudo começou", per: "Investigação", doc: "diario" },
+  { id: "pessoa", nome: "Conversar com {pessoa}", per: "Diplomacia", doc: "carta" },
+  { id: "sinais", nome: "Estudar os sinais estranhos", per: "Ocultismo", doc: "amaldicoado" },
+  { id: "rastros", nome: "Procurar rastros por perto", per: "Percepção", doc: "bilhete" },
+  { id: "jornal", nome: "Ler as notícias da cidade", per: "Atualidades", doc: "jornal" },
+  { id: "corpo", nome: "Examinar o laudo da última vítima", per: "Medicina", doc: "laudo" }
+];
+const MIS_PISTAS = ["causa", "onde", "quem"];
+const pickR = (l, R) => l[Math.floor(R() * l.length)];
+const comArtigo = lugar =>
+  (/^(Casa|Rua|Floresta|Clareira|Paróquia|Escola|Mansão|Estação|Fazenda)/.test(lugar) ? "a " : "o ") +
+  lugar.toLowerCase();
+
+/* ---------- sortear o caso ---------- */
+function missaoGerar(nex, tamGrupo, nivel, R = Math.random) {
+  const el = pickR(Object.keys(MIS_TEMAS), R);
+  const T = MIS_TEMAS[el];
+  const pontos = MIS_PONTOS.slice()
+    .sort(() => R() - 0.5)
+    .slice(0, 4)
+    .map(p => p.id);
+  // a criatura por trás de tudo já fica escolhida (a pista "quem" fala dela)
+  const chefe = inimigosPara(nex, tamGrupo, nivel, R, { el })[0];
+  return {
+    el,
+    titulo: T.titulo,
+    cidade: pickR(MIS_CIDADES, R),
+    pessoa: pickR(MIS_PESSOAS, R),
+    sinal: pickR(T.sinais, R),
+    local1: pickR(MIS_LOCAL1, R),
+    local2: pickR(T.final, R),
+    pontos,
+    chefe: chefe ? chefe.n : ""
+  };
+}
+/* DT dos testes da investigação pelo NEX */
+const missaoDT = nex => (nex >= 75 ? 25 : nex >= 40 ? 20 : 15);
+
+/* ---------- o texto do mestre (modelos; a IA troca quando está ligada) ---------- */
+function missaoTextoPadrao(tipo, c) {
+  const m = c.m,
+    T = MIS_TEMAS[m.el];
+  if (tipo === "briefing")
+    return `${c.eu}, a Ordem precisa de você em ${m.cidade}. Na última semana, ${T.fato}. Quem chamou foi ${m.pessoa}, que jura ter visto ${m.sinal}. Vá até ${comArtigo(m.local1)} com ${c.aliados || "a sua coragem"} e descubra o que está por trás disso antes que piore.`;
+  if (tipo === "pista") {
+    if (c.pista === "causa")
+      return `Você junta as peças: ${m.sinal} não é coincidência. ${T.causa[0].toUpperCase() + T.causa.slice(1)}.`;
+    if (c.pista === "onde")
+      return `Tudo aponta para o mesmo lugar: ${comArtigo(m.local2)}. É lá que vai acontecer de novo.`;
+    if (c.pista === "quem") {
+      const b = allBest().find(x => x.n === m.chefe);
+      return `Os registros da Ordem descrevem algo parecido: ${m.chefe || "uma criatura de " + m.el}.${b && b.vul ? ` É vulnerável a ${b.vul}.` : ""}`;
+    }
+    return `Mais um detalhe confirma o que vocês já sabiam: o elemento por trás de tudo é ${m.el}.`;
+  }
+  if (tipo === "falha") return c.consequencia;
+  if (tipo === "chegada")
+    return `Vocês chegam ${comArtigo(m.local2)}. O ar pesa, e ${m.sinal} está por toda parte. ${c.pistas >= 3 ? "Graças à investigação, vocês chegam antes de tudo começar." : c.semOnde ? "Sem saber direito para onde ir, vocês demoram, e chegam tarde." : "Não dá para voltar atrás."} Preparem-se!`;
+  if (tipo === "vitoria")
+    return `Acabou. ${m.cidade} amanhece em silêncio, e ninguém mais vai sofrer com ${m.sinal}. A Ordem registra a missão "${m.titulo}" como cumprida.`;
+  if (tipo === "derrota")
+    return `O grupo caiu ${comArtigo(m.local2)}. A Ordem vai mandar outra equipe para ${m.cidade}… e o que aconteceu com vocês vira mais um arquivo confidencial.`;
+  return "";
+}
+/* O mestre fala: com a IA ligada pergunta a ela; sem IA (ou se ela falhar), usa o modelo */
+async function missaoTexto(tipo, c) {
+  const padrao = missaoTextoPadrao(tipo, c);
+  if (iaLigada()) {
+    try {
+      const t = await iaNarrar(tipo, c, padrao);
+      if (t) return t;
+    } catch (e) {
+      iaFalhou(e);
+    }
+  }
+  return padrao;
+}
+
+/* ---------- estado da missão ---------- */
+function missaoSalvar() {
+  S.db.set(P() + "/estado/missao", JSON.parse(JSON.stringify(S.missao))).catch(fail);
+}
+const nomeGrupo = () => {
+  const n = Object.values(S.fichas)
+    .filter(f => f.bot)
+    .map(f => f.nome);
+  return n.length > 1 ? n.slice(0, -1).join(", ") + " e " + n[n.length - 1] : n[0] || "";
+};
+
+/* Começo: o lugar da investigação, o grupo no mapa, o dossiê e o primeiro texto do mestre */
+async function missaoMontar(plano) {
+  toast("Preparando a missão…");
+  plano = { ...plano };
+  const R = Math.random;
+  for (let i = 0; i < 50 && !S.fichas[plano.fid]; i++) await espera(100);
+  const eu = S.fichas[plano.fid];
+  if (!eu) throw new Error("Não achei a ficha do seu agente.");
+  const nex = +eu.nex || 5;
+  const m = missaoGerar(nex, 1 + (plano.aliados || 0), plano.nivel, R);
+  const c = await sozinhoCena(m.local1);
+  Object.assign(plano, { sid: c.sid, mapaId: c.mapaId });
+  const grupo = await sozinhoGrupo(plano);
+  await sozinhoPosicionar(c.M, grupo);
+  S.missao = {
+    m,
+    etapa: "briefing",
+    feitos: {},
+    pistas: [],
+    fator: 1,
+    textos: [],
+    nivel: plano.nivel,
+    fid: plano.fid
+  };
+  const texto = await missaoTexto("briefing", { m, eu: eu.nome, aliados: nomeGrupo() });
+  S.missao.textos.push({ t: texto, quem: "Mestre" });
+  await S.db.merge(P(), { sozPlano: { ...plano, montado: true } });
+  missaoSalvar();
+  await missaoDoc(
+    "relatorio",
+    `Dossiê: ${m.titulo}`,
+    {
+      org: "Ordem · Divisão de Campo",
+      numero: "Nº " + (100 + Math.floor(R() * 899)) + "/26",
+      agente: eu.nome,
+      local: m.cidade
+    },
+    texto
+  );
+  missaoMostrar();
+}
+/* Ao voltar para a mesa no meio da missão */
+async function missaoRetomar() {
+  if (S.missao && S.missao.m) return missaoMostrar();
+  S.missao = await S.db.get(P() + "/estado/missao");
+  if (S.missao) missaoMostrar();
+}
+/* Um documento da missão: vai para a pasta Documentos e abre na tela */
+async function missaoDoc(modelo, titulo, campos, texto) {
+  const d = { modelo, titulo, nome: titulo, campos, texto, criado: Date.now() };
+  try {
+    const id = await S.db.add(P() + "/docs", d);
+    abrirDoc({ titulo, quem: "Mestre", para: "todos", doc: docSnapshot({ ...d, id }) });
+  } catch (e) {
+    fail(e);
+  }
+}
+
+/* ---------- o cartão do mestre (em cima do mapa) ---------- */
+function missaoMostrar() {
+  const M = S.missao;
+  let el = $("#narrador");
+  if (!M || !sozinho()) {
+    if (el) el.remove();
+    return;
+  }
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "narrador";
+    el.className = "narrador";
+    $("#board").appendChild(el);
+  }
+  const m = M.m;
+  const eu = S.fichas[M.fid];
+  const ult = M.textos.slice(-2);
+  const dt = missaoDT(+((eu && eu.nex) || 5));
+  let acoes = "";
+  if (M.etapa === "briefing")
+    acoes = `<button class="btn primary" data-nar="investigar">Começar a investigação</button>`;
+  else if (M.etapa === "investigar") {
+    const falta = m.pontos.filter(id => !M.feitos[id]);
+    acoes = `<div class="nar-ops">${falta
+      .map(id => {
+        const p = MIS_PONTOS.find(x => x.id === id);
+        return `<button class="btn sm" data-narp="${id}">${esc(p.nome.replace("{pessoa}", m.pessoa.split(",")[0]))} <small>${esc(p.per)} · DT ${dt}</small></button>`;
+      })
+      .join("")}</div>
+     ${iaLigada() ? `<form class="row nar-livre" id="narLivre" style="flex-wrap:nowrap"><input type="text" id="narTxt" maxlength="200" placeholder="Ou escreva o que você faz…" style="flex:1"><button class="btn sm">Fazer</button></form>` : ""}
+     <div class="row between"><span class="muted small">Pistas: ${M.pistas.length}/3</span><button class="btn sm primary" data-nar="seguir" ${M.pistas.length || !falta.length ? "" : "disabled"}>Seguir para ${esc(m.local2.toLowerCase())}</button></div>`;
+  } else if (M.etapa === "fim")
+    acoes = `<div class="row" style="justify-content:flex-end"><button class="btn" data-nar="sair">Voltar ao início</button><button class="btn primary" data-nar="nova">Nova missão</button></div>`;
+  el.innerHTML = `<div class="row between nar-topo"><span class="label">${esc(m.titulo)} · ${esc(m.cidade)} · ${iaLigada() ? "mestre com IA" : "mestre sem IA"}</span><button class="btn sm ghost" id="narMin" aria-label="${M.min ? "Abrir" : "Esconder"} o cartão do mestre">${M.min ? "▴" : "▾"}</button></div>
+   ${M.min ? "" : `<div class="nar-txt">${ult.map(x => `<p${x.quem !== "Mestre" ? ' class="nar-eu"' : ""}>${esc(x.t)}</p>`).join("")}</div>${M.etapa === "combate" ? "" : acoes}`}`;
+  $("#narMin").onclick = () => {
+    M.min = !M.min;
+    missaoMostrar();
+  };
+  $$("[data-narp]", el).forEach(b => (b.onclick = () => missaoInvestigar(b.dataset.narp)));
+  $$("[data-nar]", el).forEach(
+    b =>
+      (b.onclick = () => {
+        const k = b.dataset.nar;
+        if (k === "investigar") {
+          M.etapa = "investigar";
+          missaoSalvar();
+          missaoMostrar();
+        } else if (k === "seguir") missaoConfronto().catch(fail);
+        else if (k === "sair") location.hash = "";
+        else if (k === "nova") missaoNova().catch(fail);
+      })
+  );
+  const fl = $("#narLivre");
+  if (fl)
+    fl.onsubmit = ev => {
+      ev.preventDefault();
+      const t = $("#narTxt").value.trim();
+      if (t) missaoLivre(t).catch(fail);
+    };
+}
+
+/* ---------- investigar ---------- */
+/* Quem do grupo é melhor na perícia (os aliados investigam junto: vale o melhor resultado) */
+function melhorAjudante(per) {
+  return Object.entries(S.fichas)
+    .filter(([, f]) => f.bot && cur(f, "pv") > 0)
+    .sort((a, b) => modPericia(b[1], per) - modPericia(a[1], per))[0];
+}
+/* Um teste de perícia de quem joga (e do melhor aliado), contra a DT. Devolve se passou. */
+function missaoTeste(per, titulo) {
+  const M = S.missao;
+  const eu = S.fichas[M.fid];
+  const dt = missaoDT(+eu.nex || 5);
+  const r1 = rolarPericia(eu, per, { titulo: `${titulo} · ${per} DT ${dt}` });
+  const aj = melhorAjudante(per);
+  const r2 = aj && rolarPericia(aj[1], per, { titulo: `Ajuda: ${per} DT ${dt}` });
+  return Math.max(r1 ? r1.total : 0, r2 ? r2.total : 0) >= dt;
+}
+async function missaoInvestigar(id) {
+  const M = S.missao;
+  if (!M || M.feitos[id] || S.narOcupado) return;
+  S.narOcupado = true;
+  try {
+    const p = MIS_PONTOS.find(x => x.id === id);
+    const m = M.m;
+    const nome = p.nome.replace("{pessoa}", m.pessoa.split(",")[0]);
+    const passou = missaoTeste(p.per, nome);
+    M.feitos[id] = passou ? "ok" : "falha";
+    await missaoResultado(passou, p.per, nome, p.doc);
+  } finally {
+    S.narOcupado = false;
+  }
+}
+/* O que acontece depois do teste: pista (com documento) ou consequência */
+async function missaoResultado(passou, per, nome, modeloDoc, extra = "") {
+  const M = S.missao;
+  const m = M.m;
+  const eu = S.fichas[M.fid];
+  let texto;
+  if (passou) {
+    const pista = MIS_PISTAS.find(k => !M.pistas.includes(k)) || "extra";
+    if (pista !== "extra") M.pistas.push(pista);
+    M.fator = Math.max(0.6, M.fator - 0.1);
+    texto = await missaoTexto("pista", { m, pista, eu: eu.nome, acao: nome, extra });
+    if (modeloDoc)
+      await missaoDoc(
+        modeloDoc,
+        modeloDoc === "jornal" ? `Coisas estranhas em ${m.cidade}` : `Pista: ${nome}`,
+        modeloDoc === "jornal"
+          ? { jornal: `Gazeta de ${m.cidade}`, sub: "Moradores pedem explicações" }
+          : modeloDoc === "amaldicoado"
+            ? { elemento: m.el }
+            : {},
+        texto
+      );
+  } else {
+    // a falha custa: tempo (o confronto fica mais difícil), sanidade ou vida
+    M.fator += 0.15;
+    let consequencia = `${nome}: nada de útil, e o tempo passa. O que está por trás disso fica mais forte.`;
+    if (per === "Ocultismo") {
+      const r = rollExpr("1d4");
+      eu.san = Math.max(0, cur(eu, "san") - r.total);
+      saveFicha(M.fid, true);
+      consequencia = `Os sinais parecem se mexer quando você olha. Você perde ${r.total} de Sanidade.`;
+    } else if (per === "Medicina" || per === "Percepção") {
+      const r = rollExpr("1d4");
+      eu.pv = Math.max(1, cur(eu, "pv") - r.total);
+      saveFicha(M.fid, true);
+      consequencia = `Você se machuca no meio da busca: ${r.total} de dano.`;
+    } else if (per === "Diplomacia")
+      consequencia = `${m.pessoa.split(",")[0]} se fecha e não quer mais conversar. O tempo passa.`;
+    texto = await missaoTexto("falha", { m, eu: eu.nome, acao: nome, consequencia, extra });
+  }
+  M.textos.push({ t: texto, quem: "Mestre" });
+  missaoSalvar();
+  missaoMostrar();
+}
+
+/* Com a IA: o jogador escreve o que faz; a IA escolhe a perícia e o site rola o teste */
+async function missaoLivre(t) {
+  const M = S.missao;
+  if (!M || S.narOcupado || M.etapa !== "investigar") return;
+  S.narOcupado = true;
+  try {
+    M.textos.push({ t, quem: "eu" });
+    missaoMostrar();
+    let j = { pericia: "Investigação", ok: true, motivo: "" };
+    try {
+      j = await iaInterpretar(t, M);
+    } catch (e) {
+      iaFalhou(e);
+    }
+    if (!j.ok) {
+      M.textos.push({ t: j.motivo || "Isso não ajuda na investigação agora.", quem: "Mestre" });
+      missaoSalvar();
+      missaoMostrar();
+      return;
+    }
+    const nome = t.length > 60 ? t.slice(0, 57) + "…" : t;
+    await missaoResultado(missaoTeste(j.pericia, nome), j.pericia, nome, null, t);
+  } finally {
+    S.narOcupado = false;
+  }
+}
+
+/* ---------- o confronto ---------- */
+async function missaoConfronto() {
+  const M = S.missao;
+  if (!M || S.narOcupado) return;
+  S.narOcupado = true;
+  try {
+    const plano = { ...S.mesa.sozPlano };
+    const eu = S.fichas[M.fid];
+    const semOnde = !M.pistas.includes("onde");
+    if (semOnde) M.fator += 0.2;
+    M.etapa = "combate";
+    const texto = await missaoTexto("chegada", { m: M.m, eu: eu.nome, pistas: M.pistas.length, semOnde });
+    M.textos.push({ t: texto, quem: "Mestre" });
+    missaoSalvar();
+    missaoMostrar();
+    const c = await sozinhoCena(M.m.local2);
+    await S.db.merge(P(), { sozPlano: { ...plano, sid: c.sid, mapaId: c.mapaId } });
+    const grupo = await sozinhoGrupo(plano);
+    // o chefe da pista "quem" vem primeiro; o resto completa o desafio
+    const inim = [];
+    const chefe = allBest().find(b => b.n === M.m.chefe);
+    if (chefe) {
+      const f = criaturaDe(chefe);
+      const id = "n" + rid(8);
+      S.fichas[id] = f;
+      saveFicha(id, true);
+      inim.push(id);
+    }
+    const resto = sozinhoInimigos(+eu.nex || 5, grupo.length, M.nivel, {
+      el: M.m.el,
+      fator: Math.max(0, M.fator - (chefe ? 0.6 : 0))
+    });
+    inim.push(...resto.slice(0, chefe ? 2 : 4));
+    await sozinhoPosicionar(c.M, grupo, inim);
+    sozinhoCombate([...grupo, ...inim], M.m.local2);
+  } finally {
+    S.narOcupado = false;
+  }
+}
+/* Fim do combate da missão: o mestre fecha a história */
+async function missaoFim(venceu) {
+  const M = S.missao;
+  if (!M || M.etapa === "fim") return;
+  M.etapa = "fim";
+  M.min = false;
+  const eu = S.fichas[M.fid];
+  M.textos.push({
+    t: await missaoTexto(venceu ? "vitoria" : "derrota", { m: M.m, eu: eu.nome, pistas: M.pistas.length }),
+    quem: "Mestre"
+  });
+  missaoSalvar();
+  missaoMostrar();
+}
+/* Nova missão na mesma mesa: limpa criaturas e documentos, cura o grupo e sorteia outro caso */
+async function missaoNova() {
+  for (const [id, f] of Object.entries(S.fichas)) {
+    if (f.npc) {
+      for (const t of S.tokens.filter(k => k.fichaId === id)) await S.db.del(P() + "/tokens/" + t.id);
+      S.tokens = S.tokens.filter(k => k.fichaId !== id);
+      await S.db.del(fichaPath(id));
+      delete S.fichas[id];
+    } else {
+      Object.assign(f, { pv: null, pe: null, san: null, cond: [] });
+      saveFicha(id, true);
+    }
+  }
+  saveCombate({ lista: [], turno: 0, rodada: 1 });
+  S.missao = null;
+  const nar = $("#narrador");
+  if (nar) nar.remove();
+  await missaoMontar({ ...S.mesa.sozPlano, sid: null, mapaId: null });
 }
 </script>
 <script>

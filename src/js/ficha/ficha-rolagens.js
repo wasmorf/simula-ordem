@@ -1,45 +1,54 @@
 "use strict";
 /* Ficha: testes de perícia, ataques e rituais. */
 /* ---------- rolagens da ficha ---------- */
-function testePericia(p) {
-  const f = fA();
+/* Teste de perícia da ficha: rola, registra e devolve o resultado (r.total) ou null.
+   opc.perito: gastar PE no Perito; opc.titulo: outro nome no registro (ex.: "Investigação · DT 15").
+   Usado pela ficha (testePericia) e pelo mestre do Jogar sozinho. */
+function rolarPericia(f, p, opc = {}) {
   const a = PERICIAS.find(x => x[0] === p)[1];
   let mod = modPericia(f, p);
   let extra = "";
-  const pc = $("#usarPerito");
   const D = derivados(f);
-  if (pc && pc.checked) {
+  if (opc.perito) {
     if (!grau(f, p)) {
       toast("Perito só funciona em perícia treinada.");
-      return;
+      return null;
     }
     if (cur(f, "pe") < D.perito[1]) {
       toast("PE insuficiente para Perito.");
-      return;
+      return null;
     }
     f.pe = cur(f, "pe") - D.perito[1];
     const r = rollExpr(D.perito[2]);
     mod += r.total;
     extra = ` · Perito ${r.detail} (−${D.perito[1]} PE)`;
-    saveFicha(S.openFicha, true);
   }
   const pen = penalidade(f, { tipo: "pericia", attr: a, nome: p });
   mod += pen.mod;
   const r = rollTest(f.attr[a], mod, pen.dados);
   logEntry({
     quem: f.nome,
-    titulo: p,
+    titulo: opc.titulo || p,
     total: r.total,
     det: `${r.dice.length}d20[${r.dice.join(",")}] fica ${r.mode} ${r.kept}${sgn(mod)}${extra}${pen.quem.length ? ` · condições: ${pen.quem.join(", ")}` : ""}`,
     flag: r.kept === 20 ? "crit" : r.kept === 1 ? "fail" : "",
     para: S.paraRolagem || ""
   });
-  if (pc && pc.checked) renderPanel();
+  return r;
 }
-function atacar(i) {
-  const f = fA();
-  const w = f.armas[i];
-  if (!w) return;
+function testePericia(p) {
+  const pc = $("#usarPerito");
+  const perito = !!(pc && pc.checked);
+  if (!rolarPericia(fA(), p, { perito })) return;
+  if (perito) {
+    saveFicha(S.openFicha, true);
+    renderPanel();
+  }
+}
+/* Ataque com a arma da ficha: rola o teste e o dano, registra e devolve o resultado.
+   Usado pela ficha (atacar) e pelos bots do modo Jogar sozinho (sozinho/bots).
+   opc.esp: usar o Ataque Especial; opc.noTeste: quanto do bônus dele vai para o teste. */
+function rolarAtaque(f, w, opc = {}) {
   const D = derivados(f);
   const corpo = w.pericia === "Luta";
   const attrK = corpo ? (w.agil && f.attr.AGI > f.attr.FOR ? "AGI" : "FOR") : "AGI";
@@ -67,15 +76,14 @@ function atacar(i) {
   });
   if (f.origem === "Lutador" && corpo) dmgB += 2;
   if (f.origem === "Militar" && /Fogo/.test(w.emp || w.nome)) dmgB += 2;
-  const esp = $("#usarPoderAtk");
-  const useEsp = esp && esp.checked && D.atq;
+  const useEsp = opc.esp && D.atq;
   if (useEsp) {
     if (cur(f, "pe") < D.atq[1]) {
       toast("PE insuficiente para Ataque Especial.");
-      return;
+      return null;
     }
     f.pe = cur(f, "pe") - D.atq[1];
-    const noTeste = Math.max(0, Math.min(D.atq[2], +($("#atqNoTeste") || {}).value || 0));
+    const noTeste = Math.max(0, Math.min(D.atq[2], +opc.noTeste || 0));
     mod += noTeste;
     dmgB += D.atq[2] - noTeste;
     notes.push(`Ataque Especial −${D.atq[1]} PE`);
@@ -89,7 +97,7 @@ function atacar(i) {
   const dm = rollExpr(dano, { critMult: crit ? mult : 1, explode6: false, extraDice });
   if (!dm) {
     toast("Dano inválido. Use algo como 2d6+2.");
-    return;
+    return null;
   }
   let tot = dm.total + dmgB;
   // danos extras de outro tipo: somam no total e aparecem separados (não multiplicam no crítico)
@@ -105,38 +113,50 @@ function atacar(i) {
     tot += e.total;
     exTxt = " + " + e.detail;
   }
-  logEntry({
-    quem: f.nome,
-    titulo: `${w.nome} · dano ${tot}${exTipos ? ` (${exTipos})` : ""}`,
-    total: r.total,
-    flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
-    para: S.paraRolagem || "",
-    det: `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${exDet}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`
-  });
-  if (useEsp) {
+  const det = `${w.pericia} ${r.dice.length}d20[${r.dice.join(",")}] ${r.kept}${sgn(mod)}${crit ? ` · CRÍTICO ×${mult}` : ""} → dano ${dm.detail}${sgn(dmgB)}${exDet}${exTxt}${notes.length ? " · " + notes.join(", ") : ""}`;
+  // as partes do dano com o tipo de cada uma (para resistências e vulnerabilidades)
+  const partes = [
+    { v: tot - extras.reduce((s, x) => s + x.r.total, 0), t: TIPO_ARMA[w.tipo] || w.tipo || "" }
+  ].concat(extras.map(x => ({ v: x.r.total, t: x.t })));
+  if (!opc.semRegistro)
+    logEntry({
+      quem: f.nome,
+      titulo: `${w.nome}${opc.alvo ? " em " + opc.alvo : ""} · dano ${tot}${exTipos ? ` (${exTipos})` : ""}`,
+      total: r.total,
+      flag: crit ? "crit" : r.kept === 1 ? "fail" : "",
+      para: S.paraRolagem || "",
+      det
+    });
+  return { r, crit, tot, partes, det, esp: !!useEsp };
+}
+function atacar(i) {
+  const f = fA();
+  const w = f.armas[i];
+  if (!w) return;
+  const esp = $("#usarPoderAtk");
+  const a = rolarAtaque(f, w, { esp: esp && esp.checked, noTeste: ($("#atqNoTeste") || {}).value });
+  if (a && a.esp) {
     saveFicha(S.openFicha, true);
     renderPanel();
   }
 }
-function conjurar(n, k = 0) {
-  const f = fA();
+/* Conjura um ritual da ficha: paga o PE, rola o dado e registra. A cura vai para quem conjura ou
+   para opc.alvo (outra ficha); opc.alvoNome só diz em quem foi. Devolve { total, r, fm, dt } ou null.
+   Usado pela ficha e pelo Jogar sozinho. */
+function rolarRitual(f, n, k = 0, opc = {}) {
   const r = allRituais().find(x => x.n === n);
-  if (!r) return;
+  if (!r) return null;
   const D = derivados(f);
   const fm = r.formas[k] || r.formas[0];
   if (r.c > D.circ && !r.hb) {
     toast(`Você ainda não conjura rituais de ${r.c}º círculo.`);
-    return;
-  }
-  if ($("#semComp") && $("#semComp").checked && r.el !== "Medo") {
-    toast("Sem componentes ritualísticos não dá para conjurar este ritual.");
-    return;
+    return null;
   }
   let custo = fm.custo;
   if ((f.cond || []).includes("Alquebrado")) custo += 1;
   if (cur(f, "pe") < custo) {
     toast("PE insuficiente para conjurar.");
-    return;
+    return null;
   }
   f.pe = cur(f, "pe") - custo;
   let total = null,
@@ -146,17 +166,30 @@ function conjurar(n, k = 0) {
     total = roll.total;
     det = `${roll.detail} · ${det}`;
     if (r.tipo === "cura") {
-      f.pv = Math.min(D.pvMax, cur(f, "pv") + total);
-      det += " · cura aplicada";
+      const a = opc.alvo || f;
+      a.pv = Math.min(derivados(a).pvMax, cur(a, "pv") + total);
+      det += a === f ? " · cura aplicada" : ` · cura em ${a.nome}`;
     } else if (r.res) det += ` · ${r.res} DT ${D.dtRit}`;
   } else if (r.res) det += ` · ${r.res} DT ${D.dtRit}`;
+  const alvoNome = opc.alvo && opc.alvo !== f ? opc.alvo.nome : opc.alvoNome;
   logEntry({
     quem: f.nome,
-    titulo: `Ritual · ${r.n}${k ? ` (${fm.k})` : ""}`,
+    titulo: `Ritual · ${r.n}${k ? ` (${fm.k})` : ""}${alvoNome ? " em " + alvoNome : ""}`,
     total,
     det,
     para: S.paraRolagem || ""
   });
+  return { total, r, fm, dt: D.dtRit };
+}
+function conjurar(n, k = 0) {
+  const f = fA();
+  const r = allRituais().find(x => x.n === n);
+  if (!r) return;
+  if ($("#semComp") && $("#semComp").checked && r.el !== "Medo") {
+    toast("Sem componentes ritualísticos não dá para conjurar este ritual.");
+    return;
+  }
+  if (!rolarRitual(f, n, k)) return;
   saveFicha(S.openFicha, true);
   renderPanel();
 }

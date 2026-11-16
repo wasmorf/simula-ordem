@@ -28,16 +28,18 @@ function setMesa(m) {
   renderRail();
   renderBoardTop();
   if (S.tool === "cenas") renderPanel();
+  if (m.sozinho) sozinhoAoEntrar(m); // Jogar sozinho: na primeira vez, monta o combate (sozinho/sozinho)
 }
 /* ---------- entrada na mesa (acesso) ---------- */
-async function criarMesa({ nome, desc, acesso, listada, senha }, id = rid()) {
+async function criarMesa({ nome, desc, acesso, listada, senha, sozinho }, id = rid()) {
   const base = {
     nome,
     desc: desc || "",
     mestre: S.uid,
     criada: Date.now(),
     acesso: acesso || "livre",
-    listada: !!listada
+    listada: !!listada,
+    ...(sozinho ? { sozinho: true } : {}) // Jogar sozinho (sozinho/sozinho)
   };
   await S.db.set("mesas/" + id, { ...base, cenaAtiva: null });
   await S.db.set("portas/" + id, { ...base, mestreNome: (S.authUser && S.authUser.displayName) || "" });
@@ -280,6 +282,7 @@ function startMesa(id) {
         S.combate = c;
         if (S.tool === "combate") renderPanel();
         if (!S.dragging) renderBoard();
+        botVez(); // Jogar sozinho: ao voltar para a mesa no meio da vez de um bot
       },
       () => {}
     )
@@ -332,6 +335,9 @@ function startMesa(id) {
 }
 function leaveMesa(show) {
   pararMapDocs(); // documentos/no-mapa
+  S.missao = null; // Jogar sozinho: o cartão do mestre sai junto com a mesa
+  const nar = $("#narrador");
+  if (nar) nar.remove();
   if (S.gateUnsub) {
     try {
       S.gateUnsub();

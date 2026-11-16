@@ -23,6 +23,7 @@ function subscribeMeus() {
 function syncIndice() {
   // atualiza o índice das minhas fichas desta mesa (só quando algo muda)
   if (!S.mesaId || !S.uid) return;
+  if (S.mesa && S.mesa.sozinho) return; // Jogar sozinho: a cópia do agente e os bots não entram em Meus personagens
   const mesaNome = (S.mesa && S.mesa.nome) || "";
   for (const [fid, f] of Object.entries(S.fichas)) {
     if (f.dono !== S.uid || f.npc) continue;
@@ -139,6 +140,8 @@ function showLobby() {
      <button class="btn primary">Criar mesa como mestre</button>
      <div class="sub">Já tem um código?</div>
      <div class="row"><input type="text" id="codeIn" placeholder="Ex.: K7RQ2M" maxlength="10" style="flex:1;text-transform:uppercase"><button type="button" class="btn" id="btnEntrar">Entrar</button></div>
+     <div class="sub">Sem grupo hoje?</div>
+     <button type="button" class="btn" id="btnSozinho">Jogar sozinho com bots</button>
      <div class="row"><button type="button" class="btn sm ghost" id="btnAjuda">Como usar o site</button><button type="button" class="btn sm ghost" id="btnRestaurar">Restaurar mesa de um backup</button></div>
     </form>
    </section>
@@ -219,6 +222,7 @@ function showLobby() {
     else toast("Digite um código válido, como K7RQ2M.");
   };
   $("#btnRestaurar").onclick = importarMesa;
+  $("#btnSozinho").onclick = sozinhoNovo;
   $("#btnAjuda").onclick = ajudaModal;
   const g = $("#btnGoogle");
   if (g) g.onclick = googleLogin;

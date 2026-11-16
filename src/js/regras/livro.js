@@ -358,6 +358,8 @@ const TIPOS_DANO = [
   "Energia",
   "Medo"
 ];
+// a letra do tipo na tabela de armas (C, I, P, B) → o nome do tipo de dano
+const TIPO_ARMA = { C: "Corte", I: "Impacto", P: "Perfuração", B: "Balístico" };
 const ARMAS_LIVRO = [
   ["Coronhada", "simples", "Corpo a corpo · leve", "—", "1d4/1d6", "x2", "—", "I", 0, 0],
   ["Faca", "simples", "Corpo a corpo · leve", "0", "1d4", "19", "Curto", "C", 1, 1],

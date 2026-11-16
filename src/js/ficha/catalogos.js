@@ -59,6 +59,25 @@ function armaInfo(nome) {
       }
     : null;
 }
+/* A arma do catálogo (allArmas) como ela entra na ficha (f.armas) */
+function armaNova(a) {
+  return {
+    nome: a.nome,
+    pericia: /Fogo|Disparo|distância/.test(a.emp) ? "Pontaria" : "Luta",
+    dano: a.dano,
+    crit: a.crit,
+    alc: a.alc,
+    tipo: a.tipo,
+    cat: a.cat,
+    esp: a.esp,
+    agil: a.agil,
+    grupo: a.grupo,
+    emp: a.emp,
+    bonus: 0,
+    bdano: 0,
+    mods: []
+  };
+}
 function allArmas() {
   return ARMAS_LIVRO.map(a => armaInfo(a[0])).concat(
     hbOf("arma").map(h => ({

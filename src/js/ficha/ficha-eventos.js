@@ -417,22 +417,7 @@ function bindFichaCompleta() {
   on("#btnAddArma", () => {
     const a = allArmas()[+$("#addArmaSel").value];
     if (!a) return;
-    const nova = {
-      nome: a.nome,
-      pericia: /Fogo|Disparo|distância/.test(a.emp) ? "Pontaria" : "Luta",
-      dano: a.dano,
-      crit: a.crit,
-      alc: a.alc,
-      tipo: a.tipo,
-      cat: a.cat,
-      esp: a.esp,
-      agil: a.agil,
-      grupo: a.grupo,
-      emp: a.emp,
-      bonus: 0,
-      bdano: 0,
-      mods: []
-    };
+    const nova = armaNova(a);
     if (!mudar(x => (x.armas = [...(x.armas || []), { ...nova }]))) return;
     sv();
     rr();

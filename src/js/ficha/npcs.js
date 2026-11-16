@@ -440,6 +440,39 @@ function npcRolar(f, titulo, dados, bonus, extra = "") {
   });
   return r;
 }
+/* Ataque de NPC ou criatura (ficha rápida): rola o teste e o dano e registra os dois.
+   Devolve { r, crit, tot, tipo } (tot null se o dano não tem dados). Usado pela ficha e pelos bots. */
+function rolarAtaqueRapido(f, w, opc = {}) {
+  const r = npcRolar(
+    f,
+    `${w.n || "Ataque"}${opc.alvo ? " em " + opc.alvo : ""}`,
+    f.criatura && w.dd ? +w.dd : f.attr[w.a] || 0,
+    +w.b || 0
+  );
+  const cm = (w.c || "").match(/(\d+)\s*\/\s*x?(\d+)/i);
+  const mar = cm ? +cm[1] : 20,
+    mult = cm ? +cm[2] : 2;
+  const crit = r.kept >= mar;
+  let tot = null;
+  if (w.d && /\d*d\d+/i.test(w.d)) {
+    const expr = (w.d.match(/[\dd+\-\s]+/i) || [w.d])[0].replace(/\s/g, "");
+    try {
+      const dm = rollExpr(expr, { critMult: crit ? mult : 1 });
+      tot = dm.total;
+      logEntry({
+        quem: f.nome,
+        titulo: `${w.n} · dano${crit ? " (crítico!)" : ""}`,
+        total: dm.total,
+        det: dm.detail + (w.d.length > expr.length ? " · " + w.d : ""),
+        flag: crit ? "crit" : "",
+        para: S.paraRolagem || ""
+      });
+    } catch (e) {}
+  }
+  // o tipo vem escrito depois dos dados: "4d10+40 impacto", "2d6 de Sangue"
+  const tipo = (TIPOS_DANO.find(t => new RegExp(t, "i").test(w.d || "")) || "").trim();
+  return { r, crit, tot, tipo };
+}
 function bindNpcRapido(id, f) {
   const sv = now => saveFicha(id, now),
     rr = () => renderPanel();
@@ -466,31 +499,7 @@ function bindNpcRapido(id, f) {
         npcRolar(f, p.n || "Teste", f.attr[p.a] || 0, +p.b || 0);
       })
   );
-  $$("[data-qatk]").forEach(
-    b =>
-      (b.onclick = () => {
-        const w = f.ratq[+b.dataset.qatk];
-        const r = npcRolar(f, `${w.n || "Ataque"}`, f.criatura && w.dd ? +w.dd : f.attr[w.a] || 0, +w.b || 0);
-        const cm = (w.c || "").match(/(\d+)\s*\/\s*x?(\d+)/i);
-        const mar = cm ? +cm[1] : 20,
-          mult = cm ? +cm[2] : 2;
-        const crit = r.kept >= mar;
-        if (w.d && /\d*d\d+/i.test(w.d)) {
-          const expr = (w.d.match(/[\dd+\-\s]+/i) || [w.d])[0].replace(/\s/g, "");
-          try {
-            const dm = rollExpr(expr, { critMult: crit ? mult : 1 });
-            logEntry({
-              quem: f.nome,
-              titulo: `${w.n} · dano${crit ? " (crítico!)" : ""}`,
-              total: dm.total,
-              det: dm.detail + (w.d.length > expr.length ? " · " + w.d : ""),
-              flag: crit ? "crit" : "",
-              para: S.paraRolagem || ""
-            });
-          } catch (e) {}
-        }
-      })
-  );
+  $$("[data-qatk]").forEach(b => (b.onclick = () => rolarAtaqueRapido(f, f.ratq[+b.dataset.qatk])));
   on2("#qIni", () => npcRolar(f, "Iniciativa", f.attr.AGI || 0, 0));
   on2("#qPres", () => {
     let det = `DT ${f.pdt || "?"} (Vontade)`;

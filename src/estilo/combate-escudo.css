@@ -14,6 +14,15 @@
   border-color: var(--red);
   box-shadow: inset 3px 0 0 var(--red);
 }
+/* Jogar sozinho: a caixa da sua vez no combate */
+.sozvez {
+  border-color: var(--purple);
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+.sozvez small {
+  opacity: 0.75;
+  font-weight: 400;
+}
 .cb .iv {
   font-family: var(--f-mono);
   font-size: 19px;
@@ -146,4 +155,78 @@
 }
 .hb .hn {
   font-weight: 700;
+}
+/* Jogar sozinho: o cartão do mestre em cima do mapa (sozinho/missao) */
+.narrador {
+  position: absolute;
+  left: 50%;
+  bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(600px, calc(100% - 24px));
+  max-height: 55%;
+  overflow: auto;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--purple);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+.narrador .nar-txt p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.narrador .nar-txt p:last-child {
+  margin: 0;
+}
+.narrador .nar-txt p:not(:last-child) {
+  color: var(--muted);
+  font-size: 13px;
+}
+.narrador .nar-eu {
+  font-style: italic;
+}
+.nar-ops {
+  display: grid;
+  gap: 6px;
+}
+.nar-ops .btn {
+  justify-content: space-between;
+  text-align: left;
+}
+.nar-ops small,
+.narrador small {
+  opacity: 0.75;
+  font-weight: 400;
+}
+.sz-ia summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.nar-topo {
+  flex-wrap: nowrap;
+}
+.nar-topo .label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  /* no celular, o cartão do mestre mostra só a última fala */
+  .narrador .nar-txt p:not(:last-child) {
+    display: none;
+  }
+  .narrador {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    max-height: 62%;
+  }
+}
+.narrador > * {
+  min-width: 0;
+}
+.narrador {
+  overflow-x: hidden;
 }

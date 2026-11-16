@@ -1310,6 +1310,44 @@ async function maImagem(M) {
   }
   throw new Error("grande");
 }
+/* Desenha o mapa: a imagem (sem as portas, que viram peças na mesa: mapa/portas), os nomes e a miniatura */
+async function mapaDesenhado(M) {
+  const pm = portasDoMapa(M);
+  const img = await maImagem({ ...M, paredes: pm.paredes, textos: [] });
+  const nomes = (M.textos || []).map(t => ({
+    t: t.t,
+    x: Math.round(t.x * img.tam),
+    y: Math.round(t.y * img.tam),
+    s: Math.round((t.tam || 0.5) * img.tam),
+    cor: t.cor || "#e9e4d8",
+    fonte: t.fonte || "",
+    ...(t.r ? { r: t.r } : {})
+  }));
+  return { pm, img, nomes, thumb: await thumbOf(img.url) };
+}
+/* Cria uma cena nova com o mapa desenhado. Devolve o id da cena (criador de mapas e Jogar sozinho). */
+async function cenaDoMapa(M, mapaId) {
+  const { pm, img, nomes, thumb } = await mapaDesenhado(M);
+  const sid = "c" + rid(8);
+  await S.db.set(P() + "/cenaImg/" + sid, { url: img.url });
+  await S.db.set(P() + "/cenas/" + sid, {
+    nome: M.nome || "Mapa",
+    thumb,
+    w: img.w,
+    h: img.h,
+    grade: false,
+    encaixe: true,
+    tam: img.tam,
+    nomes,
+    portas: portasEmPixels(pm.lista, img.tam),
+    nomesOn: true,
+    mapaId,
+    ver: Date.now(),
+    criada: Date.now()
+  });
+  S.sceneImg[sid] = img.url;
+  return sid;
+}
 async function meUsarCena() {
   if (!S.isM) return;
   const jaTinhaCena = !!(ME.M && ME.M.cenaId);
@@ -1320,21 +1358,9 @@ async function meUsarCena() {
   btn.textContent = "Desenhando…";
   try {
     await new Promise(r => setTimeout(r, 30));
-    // as portas saem da imagem e viram peças que abrem e fecham na mesa (mapa/portas)
-    const pm = portasDoMapa(M);
-    const img = await maImagem({ ...M, paredes: pm.paredes, textos: [] });
-    const nomes = (M.textos || []).map(t => ({
-      t: t.t,
-      x: Math.round(t.x * img.tam),
-      y: Math.round(t.y * img.tam),
-      s: Math.round((t.tam || 0.5) * img.tam),
-      cor: t.cor || "#e9e4d8",
-      fonte: t.fonte || "",
-      ...(t.r ? { r: t.r } : {})
-    }));
-    const thumb = await thumbOf(img.url);
     let sid = M.cenaId && S.cenas.find(c => c.id === M.cenaId) ? M.cenaId : null;
     if (sid) {
+      const { pm, img, nomes, thumb } = await mapaDesenhado(M);
       const old = S.cenas.find(c => c.id === sid);
       await S.db.set(P() + "/cenaImg/" + sid, { url: img.url });
       if (old && old.tam && old.tam !== img.tam) {
@@ -1366,24 +1392,7 @@ async function meUsarCena() {
       S.sceneImg[sid] = img.url;
       toast("Cena atualizada para todos.");
     } else {
-      sid = "c" + rid(8);
-      await S.db.set(P() + "/cenaImg/" + sid, { url: img.url });
-      await S.db.set(P() + "/cenas/" + sid, {
-        nome: M.nome || "Mapa",
-        thumb,
-        w: img.w,
-        h: img.h,
-        grade: false,
-        encaixe: true,
-        tam: img.tam,
-        nomes,
-        portas: portasEmPixels(pm.lista, img.tam),
-        nomesOn: true,
-        mapaId: ME.id,
-        ver: Date.now(),
-        criada: Date.now()
-      });
-      S.sceneImg[sid] = img.url;
+      sid = await cenaDoMapa(M, ME.id);
       M.cenaId = sid;
       toast("Cena criada. Abra Cenas para exibir aos jogadores.");
     }

@@ -16,7 +16,7 @@ function combateHTML() {
     return `<div class="cb ${x.tipo} ${i === c.turno ? "now" : ""} ${pv <= 0 ? "down" : ""}"><span class="iv">${x.ini ?? "–"}</span><div style="min-width:0"><div class="cn">${tk ? `<button class="lnk" data-foco="${esc(tk)}" title="Mostrar no mapa">${esc(f ? f.nome : x.nome)} ⌖</button>` : esc(f ? f.nome : x.nome)}${escondido ? ' <span class="tag">oculto</span>' : ""}${x.el ? ` <span class="tag el-${esc(x.el)}" style="border-color:var(--el);color:var(--el)">${esc(x.el)}</span>` : ""}</div><div class="cs">PV ${pv}/${pvMax} · DEF ${def}${x.vd ? ` · VD ${x.vd}` : ""}${x.atk ? ` · ${esc(x.atk[0])} ${x.atk[1]}d20+${x.atk[2]} · ${esc(x.atk[3])}` : ""}</div></div>
      <div class="act">${f && f.npc && S.isM ? `<button class="btn sm" data-cfic="${esc(x.fichaId)}">Ficha</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="-5" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-cfd="${esc(x.fichaId)}" data-d="5" aria-label="Dar 5 PV">+5</button>` : ""}${x.tipo === "npc" && S.isM ? `<button class="rollbtn" data-npcatk="${i}" ${x.atk ? "" : "disabled"}>Atacar</button><button class="btn sm" data-npcdmg="${i}" data-d="-1" aria-label="Tirar 5 PV">−5</button><button class="btn sm" data-npcdmg="${i}" data-d="1" aria-label="Dar 5 PV">+5</button>` : ""}${S.isM ? `<button class="btn sm ghost" data-rm="${i}" aria-label="Tirar do combate">✕</button>` : ""}</div></div>`;
   }).join("");
-  return `<div class="row between"><h3>Rodada ${c.rodada || 1}</h3>${S.isM ? `<div class="row"><button class="btn sm" id="btnIni">Rolar iniciativa</button><button class="btn sm primary" id="btnProx" ${L.length ? "" : "disabled"}>Próximo turno</button></div>` : ""}</div>
+  return `${sozinhoVezHTML()}<div class="row between"><h3>Rodada ${c.rodada || 1}</h3>${S.isM ? `<div class="row"><button class="btn sm" id="btnIni">Rolar iniciativa</button><button class="btn sm primary" id="btnProx" ${L.length ? "" : "disabled"}>Próximo turno</button></div>` : ""}</div>
    ${L.length ? `<div class="cards">${rows}</div>` : `<div class="empty">${S.isM ? "Ninguém em combate. Adicione os agentes e os inimigos abaixo, depois toque em <b>Rolar iniciativa</b>." : "Nenhum combate agora."}</div>`}
    ${
      S.isM
@@ -45,9 +45,50 @@ function saveCombate(c) {
   S.combate = c;
   queueSet(P() + "/estado/combate", JSON.parse(JSON.stringify(c)));
   renderPanel();
+  botVez(); // Jogar sozinho: se a vez é de um bot, ele age (sozinho/bots)
+}
+function rolarIniciativa() {
+  const c = combBase();
+  const det = [];
+  c.lista.forEach(x => {
+    if (x.fichaId) {
+      const f = S.fichas[x.fichaId];
+      if (!f) return;
+      migrar(f);
+      const r = rollTest(f.attr.AGI, modPericia(f, "Iniciativa"));
+      x.ini = r.total;
+      x.nome = f.nome;
+      if (entradaVisivelParaJogadores(x)) det.push(`${f.nome} ${r.total}`); // o registro é de todos
+    } else {
+      const r = rollTest(Math.max(1, x.agi || 1), Math.round((x.vd || 20) / 10));
+      x.ini = r.total;
+      if (entradaVisivelParaJogadores(x)) det.push(`${x.nome} ${x.ini}`);
+    }
+  });
+  c.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99));
+  c.turno = 0;
+  c.rodada = 1;
+  saveCombate(c);
+  logEntry({ quem: "Mestre", titulo: "Iniciativa", total: null, det: det.join(" · ") });
+}
+function proximoTurno() {
+  const c = combBase();
+  if (!c.lista.length) return;
+  c.turno = (c.turno || 0) + 1;
+  if (c.turno >= c.lista.length) {
+    c.turno = 0;
+    c.rodada = (c.rodada || 1) + 1;
+  }
+  saveCombate(c);
+  const x = c.lista[c.turno];
+  const f = x.fichaId && S.fichas[x.fichaId];
+  // vez de alguém escondido: não avisa no registro (os jogadores não sabem que ele está ali)
+  if (entradaVisivelParaJogadores(x))
+    logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
 }
 const combBase = () => JSON.parse(JSON.stringify(S.combate || { lista: [], turno: 0, rodada: 1 }));
 function bindCombate() {
+  bindSozinhoVez(); // Jogar sozinho: os botões da sua vez
   $$("[data-foco]").forEach(
     b =>
       (b.onclick = () => {
@@ -123,45 +164,8 @@ function bindCombate() {
         saveCombate(c);
       })
   );
-  $("#btnIni").onclick = () => {
-    const c = combBase();
-    const det = [];
-    c.lista.forEach(x => {
-      if (x.fichaId) {
-        const f = S.fichas[x.fichaId];
-        if (!f) return;
-        migrar(f);
-        const r = rollTest(f.attr.AGI, modPericia(f, "Iniciativa"));
-        x.ini = r.total;
-        x.nome = f.nome;
-        if (entradaVisivelParaJogadores(x)) det.push(`${f.nome} ${r.total}`); // o registro é de todos
-      } else {
-        const r = rollTest(Math.max(1, x.agi || 1), Math.round((x.vd || 20) / 10));
-        x.ini = r.total;
-        if (entradaVisivelParaJogadores(x)) det.push(`${x.nome} ${x.ini}`);
-      }
-    });
-    c.lista.sort((a, b) => (b.ini ?? -99) - (a.ini ?? -99));
-    c.turno = 0;
-    c.rodada = 1;
-    saveCombate(c);
-    logEntry({ quem: "Mestre", titulo: "Iniciativa", total: null, det: det.join(" · ") });
-  };
-  $("#btnProx").onclick = () => {
-    const c = combBase();
-    if (!c.lista.length) return;
-    c.turno = (c.turno || 0) + 1;
-    if (c.turno >= c.lista.length) {
-      c.turno = 0;
-      c.rodada = (c.rodada || 1) + 1;
-    }
-    saveCombate(c);
-    const x = c.lista[c.turno];
-    const f = x.fichaId && S.fichas[x.fichaId];
-    // vez de alguém escondido: não avisa no registro (os jogadores não sabem que ele está ali)
-    if (entradaVisivelParaJogadores(x))
-      logEntry({ quem: "Mestre", titulo: `Vez de ${f ? f.nome : x.nome}`, tipo: "chat" });
-  };
+  $("#btnIni").onclick = rolarIniciativa;
+  $("#btnProx").onclick = proximoTurno;
   $$("[data-rm]").forEach(
     b =>
       (b.onclick = () => {

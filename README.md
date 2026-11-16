@@ -1,7 +1,8 @@
 # Simula Ordem
 
 Mesa virtual gratuita para jogar **Ordem Paranormal RPG** com os amigos: fichas, mapas, tokens, rolagens,
-NPCs, criaturas, documentos com tarjas e escudo do mestre. Feito por wasmorf.
+NPCs, criaturas, documentos com tarjas e escudo do mestre. Também dá para **jogar sozinho com bots**: o site
+faz o papel do mestre e dos outros jogadores. Feito por wasmorf.
 
 Projeto de fã, sem fins lucrativos e sem ligação oficial com Ordem Paranormal, Rafael Lange (Cellbit) ou
 Jambô Editora.
@@ -255,6 +256,21 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 | `passar.js` | Documentos: passar de mão em mão, recolher, mover |
 | `no-mapa.js` | Documentos jogados no mapa como papéis numa mesa: girados (`rot`), tamanho (`esc`), o último mexido por cima (`z`); `papelHTML` desenha, `medirPapel` acerta a altura |
 | `mural-notas.js` | Anotações e grifos do jogador e o mural de pistas |
+
+#### `js/sozinho/` — Jogar sozinho com bots
+
+Botão **Jogar sozinho com bots** no início do site. Cria uma mesa só sua (`mesas/<código>` com `sozinho: true`
+e o plano em `sozPlano`) em que você é o dono, e o site joga o resto. Tudo roda no seu navegador: sem servidor
+e sem custo. Os aliados e os inimigos usam as mesmas fichas e as mesmas rolagens de sempre (`rolarAtaque`,
+`rolarAtaqueRapido`, `rolarRitual`, `rolarPericia`, em `ficha/ficha-rolagens.js` e `ficha/npcs.js`).
+
+| Arquivo | O que faz |
+| --- | --- |
+| `gerar.js` | O que o bot cria: aliados por classe e NEX (`agenteBot`, `BOT_PERFIS`), inimigos pelo VD (`inimigosPara`), o mapa como grade com paredes, água funda e móveis (`gradeDoMapa`), caminhos (`caminhos`) e onde cada lado começa (`pontosDeInicio`) |
+| `bots.js` | A vez do bot no combate (`botVez`, chamada em `saveCombate` e quando o combate muda): anda sem atravessar parede, escolhe alvo e ataque (arma, ataque da criatura ou ritual), cura aliado com menos de 40% da vida, aplica o dano com imunidade, resistência e vulnerabilidade (`danoContra`) e passa o turno |
+| `sozinho.js` | Começar (`sozinhoNovo`), montar o combate rápido (`sozinhoMontar`, com `sozinhoCena`, `sozinhoGrupo`, `sozinhoInimigos`, `sozinhoPosicionar`, `sozinhoCombate`), a sua vez no painel Combate (`sozinhoVezHTML`: alvo, armas, rituais, alcance conferido no mapa) e o fim (`sozinhoFim`) |
+| `missao.js` | Missão com o site de mestre: sorteia o caso (`missaoGerar`: cidade, elemento, quem pediu ajuda, lugar da investigação e do confronto, a criatura), o cartão do mestre em cima do mapa (`missaoMostrar`), testes com a ajuda do melhor aliado (`missaoTeste`), pistas que viram documentos, falhas que custam vida, sanidade ou tempo, e o confronto (`missaoConfronto`). Fica em `estado/missao` |
+| `ia.js` | Mestre com IA (opcional): o Gemini do Google no plano grátis, com a chave de quem joga, guardada só no navegador (`ms_iaChave`). Escolhe o Flash-Lite mais novo (`iaModelo`), reescreve o texto do mestre mantendo os fatos (`iaNarrar`) e transforma a ação escrita pelo jogador em teste de perícia (`iaInterpretar`). Limite do dia acabou ou chave errada: a missão segue com os textos dos modelos (`iaFalhou`) |
 
 `js/iniciar.js` chama `boot()` e é sempre o último arquivo.
 

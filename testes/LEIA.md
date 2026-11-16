@@ -65,3 +65,5 @@ cada aviso no arquivo de `src/` de onde veio (`src/js/ficha/npcs.js:375`). As re
 | `regras-da-ficha` | Travas da ficha (atributos, perícias, poderes, rituais, itens), extras do mestre e subir de NEX |
 | `sobrevivente` | Classe Sobrevivente e ameaças dos suplementos |
 | `suplementos` | Origens, poderes e rituais dos suplementos |
+| `jogar-sozinho` | Jogar sozinho, combate rápido: monta a mesa com mapa, aliados bots e inimigos; alcance conferido no mapa; bots andam sem atravessar parede, atacam e passam a vez; resistências no dano; vitória e outro combate; bots fora de Meus personagens |
+| `missao-sozinho` | Jogar sozinho, missão: dossiê, cartão do mestre, testes com ajuda do aliado, pista vira documento, falha custa, confronto com a criatura da pista, fim e nova missão; com IA (Gemini falso): texto da IA, Flash-Lite, ação escrita vira teste, limite do dia volta para o texto padrão |

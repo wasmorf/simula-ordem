@@ -46,7 +46,7 @@ $("#zFit").onclick = () => {
 board.addEventListener(
   "wheel",
   e => {
-    if (!V.w) return;
+    if (!V.w || e.target.closest(".narrador")) return; // o cartão do mestre (Jogar sozinho) rola sozinho
     e.preventDefault();
     const r = board.getBoundingClientRect();
     zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX - r.left, e.clientY - r.top);
@@ -67,7 +67,7 @@ let pan = null,
 board.addEventListener("pointerdown", e => {
   if (
     e.target.closest(
-      ".tok,.mdoc,.porta,.passagem,.zoom,.board-top,.tokbar,.board-empty button,.callbar,.screens,.maptools"
+      ".tok,.mdoc,.porta,.passagem,.zoom,.board-top,.tokbar,.board-empty button,.callbar,.screens,.maptools,.narrador"
     )
   )
     return;
