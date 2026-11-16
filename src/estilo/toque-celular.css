@@ -43,6 +43,18 @@ textarea,
   input[type="number"] {
     font-size: 16px !important;
   }
+  /* botões pequenos e abas: no dedo precisam de mais altura (eram 26 px) */
+  .btn.sm,
+  .tabs2 button {
+    min-height: 36px;
+  }
+  /* setas ‹ › das barras de vida do escudo do mestre */
+  .sbar {
+    grid-template-columns: 40px 1fr 40px;
+  }
+  .sbar button {
+    min-height: 34px;
+  }
 }
 .mesa-capa {
   display: block;

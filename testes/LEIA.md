@@ -44,7 +44,7 @@ cada aviso no arquivo de `src/` de onde veio (`src/js/ficha/npcs.js:375`). As re
 | `ficha-do-jogador` | Ficha de jogador: dono, pedir de volta |
 | `foto-da-ficha` | Pôr e recortar a foto do agente |
 | `foto-npc-no-token` | Jogador vê a foto do NPC no token |
-| `layout-no-celular` | Nenhum painel cortado ou vazando no celular |
+| `layout-no-celular` | Nenhum painel cortado ou vazando no celular; a barra de cima do mapa cabe na tela; botões e abas com altura de dedo |
 | `locais-escondidos` | Esconder salas no criador de mapas e revelar na mesa |
 | `menus-notas-relatorio` | Menus Opções e Mais, anotações do mestre, Sobrevivente, relatório de erros |
 | `meus-personagens` | Personagens fora de mesa: criar, levar e trazer |
@@ -60,7 +60,7 @@ cada aviso no arquivo de `src/` de onde veio (`src/js/ficha/npcs.js:375`). As re
 | `dano-bonus-tipo` | Danos extras da arma, vários tipos (ex.: +2 Energia, +1d6 Sangue), na linha e na rolagem; dado aparece fora de mesa |
 | `melhorias-ficha-dados` | Poderes que mudam números, barra pela metade, fotos por estado, graus, deslocamento, visual/som do dado, data no registro, bestiário por elemento e criaturas completadas depois (Aniquilação a Kian, com PV) |
 | `arte-criaturas` | Arte das criaturas sem imagem: todo elemento desenha, cada nome dá uma criatura diferente |
-| `artes-em-lote` | Artes do bestiário: várias de uma vez pelo nome do arquivo; o backup leva as artes; mesa nova do mestre já começa com elas |
+| `artes-em-lote` | Artes do bestiário: várias de uma vez pelo nome do arquivo; o backup leva as artes; mesa nova do mestre já começa com elas; o jogador só baixa a arte da criatura que entra em cena |
 | `pessoas-no-bestiario` | Pessoas e animais do bestiário entram como NPC; filtro "Pessoas e animais"; elementos misturados nos dois filtros |
 | `regras-da-ficha` | Travas da ficha (atributos, perícias, poderes, rituais, itens), extras do mestre e subir de NEX |
 | `sobrevivente` | Classe Sobrevivente e ameaças dos suplementos |

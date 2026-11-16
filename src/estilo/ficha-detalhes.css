@@ -290,6 +290,26 @@ details.more summary {
     flex-wrap: wrap;
   }
 }
+/* celular: a barra do mapa fica numa linha só; o código da mesa e o "exibindo para jogadores" somem
+   (a bolinha da cena já diz se ela está exibida) e o nome longo termina em "…" em vez de sair da tela */
+@media (max-width: 760px) {
+  .board-top .chip {
+    min-width: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+  }
+  .board-top .chip .muted {
+    display: none;
+  }
+  .board-top .chip b {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .board-top > .btn {
+    flex-shrink: 0;
+  }
+}
 
 .per2 {
   display: grid;

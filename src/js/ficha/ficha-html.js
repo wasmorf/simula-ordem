@@ -284,7 +284,7 @@ function tabCombate(f, D, c) {
    }</div>
    <p class="muted small" style="margin:0">Luta usa FOR (armas ágeis podem usar AGI) e soma FOR no dano; Pontaria usa AGI. No crítico, os dados de dano são multiplicados. Cada modificação aumenta a categoria em I.</p>
   </div>
-  <div class="box stack"><div class="row between"><h3>Proteções</h3><div class="row" style="flex-wrap:nowrap"><select id="protSel" style="width:auto">${PROTECOES.map((p, i) => `<option value="${i}" ${naoCabe(p[1], p[2]) ? "disabled" : ""}>${p[0]} · +${p[3]} Def${naoCabe(p[1], p[2]) ? " · " + naoCabe(p[1], p[2]) : ""}</option>`).join("")}</select><button type="button" class="btn sm" id="protAdd">Adicionar</button></div></div>
+  <div class="box stack"><div class="row between"><h3>Proteções</h3><div class="row" style="flex-wrap:nowrap"><select id="protSel" style="width:auto;max-width:180px">${PROTECOES.map((p, i) => `<option value="${i}" ${naoCabe(p[1], p[2]) ? "disabled" : ""}>${p[0]} · +${p[3]} Def${naoCabe(p[1], p[2]) ? " · " + naoCabe(p[1], p[2]) : ""}</option>`).join("")}</select><button type="button" class="btn sm" id="protAdd">Adicionar</button></div></div>
    ${
      (f.protecoes || []).length
        ? `<div class="cards">${f.protecoes

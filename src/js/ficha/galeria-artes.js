@@ -12,29 +12,72 @@ function arteKey(n) {
       .slice(0, 80) || "x"
   );
 }
+/* Quem baixa o quê: o jogador só baixa a arte das criaturas que aparecem para ele (token ou ficha),
+   uma por uma, quando alguém pede (arteDaBase). O mestre baixa todas, porque usa a galeria, a lista
+   de ameaças e copia as artes da conta para a mesa (arteTodas). Assim o celular do jogador não baixa
+   as dezenas de artes da mesa ao entrar. */
 function subscribeArteBest() {
   if (S.arteUnsub) return;
   S.arteBest = {};
-  S.arteUnsub = S.db.listenCol(
-    P() + "/arteBest",
-    {},
-    l => {
-      const m = {};
-      l.forEach(x => {
-        if (x.n && x.url) m[x.n] = x.url;
-      });
-      S.arteBest = m;
-      arteContaNaMesa(); // artes padrão da conta do mestre entram nesta mesa
-      // subir várias manda dezenas de artes seguidas: redesenha uma vez só, quando acalmar
-      clearTimeout(S.arteT);
-      S.arteT = setTimeout(() => {
-        renderBoard();
-        if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
-        if ($("#galBest")) galeriaRender();
-      }, 250);
-    },
-    () => {}
+  S.arteDocs = new Map(); // nome → parar de ouvir a arte daquela criatura
+  S.arteTudo = null; // ouvindo a coleção inteira (mestre)
+  S.arteUnsub = () => {
+    S.arteDocs.forEach(f => f());
+    S.arteDocs.clear();
+    if (S.arteTudo) S.arteTudo();
+    S.arteTudo = null;
+  };
+  arteContaNaMesa();
+}
+// redesenha uma vez só quando as artes param de chegar (subir várias manda dezenas seguidas)
+function arteRedesenhar() {
+  clearTimeout(S.arteT);
+  S.arteT = setTimeout(() => {
+    renderBoard();
+    if (["agentes", "tokens"].includes(S.tool) && !isEditing()) renderPanel();
+    if ($("#galBest")) galeriaRender();
+  }, 250);
+}
+/* Jogador: começa a ouvir a arte de uma criatura na primeira vez que ela é pedida. */
+function arteOuvir(n) {
+  if (!S.mesaId || !S.arteDocs || S.arteTudo || S.arteDocs.has(n)) return;
+  if (S.isM) return void arteTodas(); // o mestre vê a lista inteira de ameaças: baixa todas de uma vez
+  S.arteDocs.set(
+    n,
+    S.db.listenDoc(
+      P() + "/arteBest/" + arteKey(n),
+      d => {
+        if (d && d.url) S.arteBest[n] = d.url;
+        else delete S.arteBest[n];
+        arteRedesenhar();
+      },
+      () => {}
+    )
   );
+}
+/* Mestre: ouve todas as artes da mesa. Resolve quando a primeira lista chega. */
+function arteTodas() {
+  if (!S.arteDocs) return Promise.resolve();
+  if (S.arteTudo) return S.arteTodasPronto;
+  S.arteTodasPronto = new Promise(ok => {
+    S.arteTudo = S.db.listenCol(
+      P() + "/arteBest",
+      {},
+      l => {
+        const m = {};
+        l.forEach(x => {
+          if (x.n && x.url) m[x.n] = x.url;
+        });
+        S.arteBest = m;
+        ok();
+        arteRedesenhar();
+      },
+      () => ok()
+    );
+  });
+  S.arteDocs.forEach(f => f()); // a coleção inteira já cobre as que eram ouvidas uma a uma
+  S.arteDocs.clear();
+  return S.arteTodasPronto;
 }
 /* Artes padrão: o mestre guarda as artes na própria conta (usuarios/<uid>/artes) e elas entram
    sozinhas em toda mesa em que ele é mestre. Na mesa ficam em arteBest, que os jogadores leem. */
@@ -48,6 +91,7 @@ async function arteContaNaMesa(tentativa = 0) {
   }
   S.arteContaMesa = S.mesaId;
   try {
+    await arteTodas(); // o mestre precisa saber quais artes a mesa já tem
     const conta = await S.db.getCol(contaArtes());
     const falta = conta.filter(a => a.n && a.url && !(S.arteBest || {})[a.n]);
     for (const a of falta)
@@ -67,9 +111,12 @@ async function arteGuardarTodasNaConta() {
   toast(`${L.length} arte(s) guardada(s) como padrão nas suas mesas.`);
 }
 function arteDaBase(n) {
-  return (n && S.arteBest && S.arteBest[n]) || "";
+  if (!n) return "";
+  arteOuvir(n);
+  return (S.arteBest && S.arteBest[n]) || "";
 }
 async function galeriaArtes() {
+  arteTodas();
   const h = $("#modalHost");
   h.innerHTML = `<div class="modal-back"><div class="modal wide" id="galBest" role="dialog" aria-label="Artes do bestiário"><div class="row between"><h3 style="margin:0">Artes do bestiário</h3><button class="btn sm" id="gbX">Fechar</button></div>
    <p class="muted small" style="margin:0">Suba uma imagem por criatura. Ela vira o token sempre que a criatura entrar em cena, inclusive nas que já estão no mapa. PNG sem fundo fica recortado no mapa.</p>

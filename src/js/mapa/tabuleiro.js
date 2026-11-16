@@ -907,7 +907,7 @@ function renderBoardTop() {
   let h = `<span class="chip"><b style="font-family:var(--f-display);font-weight:400;font-size:15px">${esc(S.mesa ? S.mesa.nome : "")}</b><span class="muted" style="font-family:var(--f-mono);font-size:12px">${esc(S.mesaId)}</span></span>`;
   if (sc) {
     const isLive = sc.id === live;
-    h += `<span class="chip ${isLive ? "" : "hidden-scene"}"><span class="dot"></span>${esc(sc.nome)}${S.isM ? ` · <span class="muted">${isLive ? "exibindo para jogadores" : "oculta para jogadores"}</span>` : ""}</span>`;
+    h += `<span class="chip ${isLive ? "" : "hidden-scene"}"><span class="dot"></span>${esc(sc.nome)}${S.isM ? `<span class="muted">&nbsp;· ${isLive ? "exibindo para jogadores" : "oculta para jogadores"}</span>` : ""}</span>`;
     if (S.isM && !isLive) h += `<button class="btn sm primary" id="btLive">Exibir para jogadores</button>`;
     if (S.isM && live && !isLive) h += `<button class="btn sm" id="btBack">Voltar à cena exibida</button>`;
   }

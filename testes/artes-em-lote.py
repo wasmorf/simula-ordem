@@ -2,7 +2,8 @@ import asyncio,sys,io
 from playwright.async_api import async_playwright
 from PIL import Image
 # Artes do bestiário: subir várias de uma vez (o nome do arquivo diz a criatura), o backup da mesa leva as artes
-# e as artes ficam na conta do mestre: uma mesa nova dele já começa com elas, e o jogador vê.
+# e as artes ficam na conta do mestre: uma mesa nova dele já começa com elas. O jogador só baixa a arte
+# das criaturas que aparecem para ele (não as da mesa inteira).
 SP=sys.argv[1] if len(sys.argv)>1 else ".";U="http://localhost:8765/index.html"
 def png(cor):
   b=io.BytesIO();Image.new("RGB",(200,240),cor).save(b,"PNG");return b.getvalue()
@@ -39,8 +40,18 @@ async def main():
     code=(await A.evaluate("location.hash"))[6:]
     B=await ctx.new_page();B.on("pageerror",lambda e:errs.append("B:"+str(e)))
     await B.goto(U+"#mesa-"+code);await B.wait_for_timeout(3000)
-    jog=await B.evaluate("Object.keys(S.arteBest||{}).sort()");print("jogador vê:",jog)
-    ok=artes==["Vulto","Zumbi de Sangue"] and "criatura-que-nao-existe" in aviso and bk==artes and nova==artes and jog==artes
+    jog=await B.evaluate("Object.keys(S.arteBest||{}).sort()");print("jogador, sem criatura em cena, baixou:",jog)
+    # o mestre põe o Vulto em cena: o jogador baixa só essa arte
+    await A.evaluate("""(async()=>{const c=document.createElement('canvas');c.width=800;c.height=600;const sid='c'+rid(6);
+      await S.db.set(P()+'/cenas/'+sid,{nome:'Rua',w:800,h:600,ordem:1,criada:Date.now()});await S.db.set(P()+'/cenaImg/'+sid,{url:c.toDataURL('image/jpeg',.5)});
+      await S.db.merge(P(),{cenaAtiva:sid});await viewScene(sid);})()""");await A.wait_for_timeout(1000)
+    await A.evaluate("S.tokTab='ameacas';S.ameOculto=false;openTool('tokens')");await A.wait_for_timeout(400)
+    await A.fill("#tokQ","Vulto");await A.dispatch_event("#tokQ","input");await A.wait_for_timeout(400)
+    await A.click("[data-ame='Vulto']");await A.wait_for_timeout(2500)
+    jog2=await B.evaluate("Object.keys(S.arteBest||{}).sort()")
+    tok=await B.evaluate("(()=>{const u=S.arteBest.Vulto;return !!u&&[...document.querySelectorAll('#board img, #board image')].some(i=>(i.src||i.getAttribute('href'))===u)})()")
+    print("com o Vulto em cena, o jogador baixou:",jog2,"| token com a arte:",tok)
+    ok=artes==["Vulto","Zumbi de Sangue"] and "criatura-que-nao-existe" in aviso and bk==artes and nova==artes and jog==[] and jog2==["Vulto"] and tok
     print("OK" if ok else "FALHOU")
     print("ERRS",errs);await b.close()
 asyncio.run(main())
