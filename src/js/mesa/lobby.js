@@ -11,7 +11,11 @@ function subscribeMeus() {
     "usuarios/" + S.uid + "/fichas",
     null,
     list => {
-      S.meus = list;
+      // fichas de mesas de Jogar sozinho não são personagens: saem do índice (vieram de uma versão antiga)
+      list
+        .filter(x => /^Sozinho · /.test(x.mesaNome || ""))
+        .forEach(x => S.db.del("usuarios/" + S.uid + "/fichas/" + x.id).catch(() => {}));
+      S.meus = list.filter(x => !/^Sozinho · /.test(x.mesaNome || ""));
       S.loaded.meus = true;
       if (!S.mesaId) showLobby();
     },
@@ -22,11 +26,17 @@ function subscribeMeus() {
 }
 function syncIndice() {
   // atualiza o índice das minhas fichas desta mesa (só quando algo muda)
-  if (!S.mesaId || !S.uid) return;
-  if (S.mesa && S.mesa.sozinho) return; // Jogar sozinho: a cópia do agente e os bots não entram em Meus personagens
+  if (!S.mesaId || !S.uid || !S.loaded.mesa) return; // espera a mesa carregar (para saber se é de Jogar sozinho)
+  if (S.mesa && S.mesa.sozinho) {
+    // Jogar sozinho: a cópia do agente e os bots não entram em Meus personagens
+    (S.meus || [])
+      .filter(x => x.mesaId === S.mesaId)
+      .forEach(x => S.db.del("usuarios/" + S.uid + "/fichas/" + x.id).catch(() => {}));
+    return;
+  }
   const mesaNome = (S.mesa && S.mesa.nome) || "";
   for (const [fid, f] of Object.entries(S.fichas)) {
-    if (f.dono !== S.uid || f.npc) continue;
+    if (f.dono !== S.uid || f.npc || f.bot) continue;
     const r = {
       mesaId: S.mesaId,
       fichaId: fid,
@@ -155,7 +165,7 @@ function showLobby() {
             .sort((x, y) => (y.ts || 0) - (x.ts || 0))
             .map(
               c =>
-                `<div class="mesa-card pchar"><button class="pc-open" data-meu="${esc(c.id)}">${c.foto ? `<img class="avatar" src="${c.foto}" alt="" style="width:52px;height:52px;object-fit:cover">` : `<div class="avatar ph" style="width:52px;height:52px">${esc((c.nome || "?").charAt(0).toUpperCase())}</div>`}<div style="min-width:0;text-align:left"><b>${esc(c.nome)}</b><div class="muted small">${esc(c.classe)}${c.trilha ? " · " + esc(c.trilha) : ""} · NEX ${c.nex}%</div><div class="muted small">Mesa: ${esc(c.mesaNome || c.mesaId)}</div></div></button><button class="btn sm ghost" data-copiar="${esc(c.id)}">Levar para outra mesa</button></div>`
+                `<div class="mesa-card pchar"><button class="pc-open" data-meu="${esc(c.id)}">${c.foto ? `<img class="avatar" src="${c.foto}" alt="" style="width:52px;height:52px;object-fit:cover">` : `<div class="avatar ph" style="width:52px;height:52px">${esc((c.nome || "?").charAt(0).toUpperCase())}</div>`}<div style="min-width:0;text-align:left"><b>${esc(c.nome)}</b><div class="muted small">${esc(c.classe)}${c.trilha ? " · " + esc(c.trilha) : ""} · NEX ${c.nex}%</div><div class="muted small">Mesa: ${esc(c.mesaNome || c.mesaId)}</div></div></button><span class="row" style="gap:6px"><button class="btn sm ghost" data-copiar="${esc(c.id)}">Levar para outra mesa</button><button class="btn sm ghost" data-tirarmeu="${esc(c.id)}" title="Tira só desta lista; a ficha continua na mesa">Tirar da lista</button></span></div>`
             )
             .join("")}</div>`
         : (S.solos || []).length
@@ -186,6 +196,22 @@ function showLobby() {
   );
   bindSoloCards();
   $$("[data-delmesa]").forEach(b => (b.onclick = () => apagarMesa(b.dataset.delmesa, b.dataset.nome)));
+  $$("[data-tirarmeu]").forEach(
+    b =>
+      (b.onclick = async () => {
+        const c = (S.meus || []).find(x => x.id === b.dataset.tirarmeu);
+        if (
+          !c ||
+          !(await confirmBox(
+            `Tirar ${c.nome} da lista?`,
+            "A ficha continua na mesa. Ela só deixa de aparecer aqui.",
+            "Tirar"
+          ))
+        )
+          return;
+        S.db.del("usuarios/" + S.uid + "/fichas/" + c.id).catch(fail);
+      })
+  );
   $$("[data-copiar]").forEach(
     b => (b.onclick = () => copiarFicha(S.meus.find(x => x.id === b.dataset.copiar)))
   );

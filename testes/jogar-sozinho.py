@@ -85,6 +85,14 @@ async def main():
     ok.append(fim and all(de_novo.values()))
     meus=await x.evaluate("S.db.getCol('usuarios/'+S.uid+'/fichas').then(l=>l.length)")
     print("fichas em Meus personagens:",meus);ok.append(meus==0)
+    # Meus personagens: o que veio de mesa de Jogar sozinho some sozinho; os outros têm "Tirar da lista"
+    await x.evaluate("""(async()=>{await S.db.set('usuarios/'+S.uid+'/fichas/VELHA_f1',{mesaId:'VELHA',fichaId:'f1',mesaNome:'Sozinho · Rua à noite',nome:'Bot antigo',classe:'Combatente',nex:5,ts:1});
+      await S.db.set('usuarios/'+S.uid+'/fichas/OUTRA_f2',{mesaId:'OUTRA',fichaId:'f2',mesaNome:'Campanha',nome:'Iara',classe:'Ocultista',nex:5,ts:2})})()""")
+    await x.evaluate("location.hash=''");await x.wait_for_timeout(1500)
+    lista=await x.evaluate("({nomes:[...document.querySelectorAll('.pchar b')].map(b=>b.textContent),idx:null})")
+    await x.click("[data-tirarmeu='OUTRA_f2']");await x.wait_for_timeout(200);await x.click("#mYes");await x.wait_for_timeout(800)
+    resta=await x.evaluate("S.db.getCol('usuarios/'+S.uid+'/fichas').then(l=>l.map(c=>c.id))")
+    print("lista:",lista["nomes"],"| depois de tirar:",resta);ok.append(lista["nomes"]==["Iara"] and resta==[])
     print("OK" if all(ok) else "FALHOU "+str(ok))
     print("ERRS",errs);await b.close()
 asyncio.run(main())

@@ -211,6 +211,8 @@ function startMesa(id) {
         }
         S.loaded.mesa = true;
         setMesa({ id, ...m });
+        clearTimeout(S.idxT);
+        S.idxT = setTimeout(syncIndice, 1500); // Meus personagens: só depois de saber como é a mesa
       },
       failMesa
     )

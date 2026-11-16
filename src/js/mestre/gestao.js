@@ -66,6 +66,9 @@ async function apagarMesa(id, nome) {
     try {
       await S.db.del("usuarios/" + S.uid + "/mesas/" + id);
     } catch (e) {}
+    // as fichas dessa mesa saem de Meus personagens (a mesa não existe mais)
+    for (const c of (S.meus || []).filter(x => x.mesaId === id))
+      await S.db.del("usuarios/" + S.uid + "/fichas/" + c.id).catch(() => {});
     try {
       const L = lsGet("ms_visitadas", []);
       if (Array.isArray(L))

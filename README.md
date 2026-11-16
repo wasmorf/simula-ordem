@@ -187,7 +187,7 @@ A ordem dos `.css` importa: quando duas regras empatam, vale a que vem depois.
 
 | Arquivo | O que faz |
 | --- | --- |
-| `lobby.js` | Tela inicial: criar mesa, entrar com código, Meus personagens, mesas públicas |
+| `lobby.js` | Tela inicial: criar mesa, entrar com código, Meus personagens (com "Tirar da lista"; fichas de mesas de Jogar sozinho não entram), mesas públicas |
 | `mesa.js` | Entrar e sair de uma mesa: senha, aprovação, assinaturas do banco |
 | `navegacao.js` | Barra de ferramentas (trilho e barra de baixo) e o painel lateral |
 | `backup.js` | Backup: baixar e restaurar fichas e mesas inteiras (.json), com as artes do bestiário |
