@@ -105,7 +105,6 @@ function allBest() {
 }
 function parseCrit(s) {
   s = String(s || "x2");
-  const m = s.match(/^(\d+)?\/?x?(\d+)?$/);
   let marg = 20,
     mult = 2;
   if (/^\d+$/.test(s)) {

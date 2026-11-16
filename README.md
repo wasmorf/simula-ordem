@@ -34,7 +34,8 @@ sem regras de segurança, e o selo **MODO DE TESTE** aparece na tela. Servidor l
 python3 -m http.server 8765    # e abra http://localhost:8765/index.html#teste
 ```
 
-Os testes automáticos ficam em `testes/` (veja `testes/LEIA.md`).
+Os testes automáticos ficam em `testes/` (veja `testes/LEIA.md`): `sh testes/rodar.sh` roda todos e
+`sh testes/lint.sh` confere o código com o ESLint.
 
 ### Quando algo der errado
 
@@ -118,7 +119,7 @@ fez. Se chega uma versão nova enquanto a ficha está salvando, ela espera e ent
 | `build.sh` | Junta `src/` em `index.html` e carimba a versão |
 | `index.html` | O site pronto: é o arquivo que vai para o GitHub |
 | `firestore.rules` | Quem pode ler e escrever o quê no Firebase |
-| `testes/` | Testes automáticos (abrem o site num navegador e conferem cada recurso) |
+| `testes/` | Testes automáticos (abrem o site num navegador e conferem cada recurso) e o lint (`testes/lint/`) |
 | `data/` | Material de origem usado para montar a lista de rituais (o site não carrega) |
 | `assets/` | Logos em PNG e WebP (para redes sociais e divulgação; o site usa o logo em SVG) |
 | `audio/` | Músicas livres (MP3) da Trilha sonora, sem anúncio. Os nomes dos arquivos estão em `TRILHAS_LIVRES` (`js/jogo/trilha-sonora.js`). Músicas de Kevin MacLeod (incompetech.com), licença CC BY 4.0 |

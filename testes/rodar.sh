@@ -14,19 +14,15 @@ python3 -m http.server 8765 >/dev/null 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null' EXIT
 sleep 1
-falhas=0
-for t in testes/*.py; do
-  n=$(basename "$t" .py)
-  timeout 300 python3 "$t" "$OUT/fotos" > "$OUT/$n.txt" 2>&1
-  rc=$?
-  # falhou se o teste quebrou ou se a página teve erro de JavaScript (ERRS [...] com algo dentro)
-  if [ $rc -ne 0 ] || grep -qE "ERRS \[.+\]|Traceback|^FALHOU" "$OUT/$n.txt"; then
-    echo "FALHOU  $n"
-    falhas=$((falhas + 1))
-  else
-    echo "OK      $n"
-  fi
-done
+# vários testes ao mesmo tempo (um Chrome cada): um por núcleo do processador, até 4.
+# Para mudar: JUNTOS=1 sh testes/rodar.sh (um de cada vez, como antes)
+JUNTOS=${JUNTOS:-$(n=$(nproc 2>/dev/null || echo 2); [ "$n" -gt 4 ] && echo 4 || echo "$n")}
+export OUT
+inicio=$(date +%s)
+ls testes/*.py | xargs -P "$JUNTOS" -n 1 sh testes/um-teste.sh > "$OUT/resumo.txt"
+sort -k2 "$OUT/resumo.txt"
+falhas=$(grep -c "^FALHOU" "$OUT/resumo.txt")
 echo
-[ $falhas -eq 0 ] && echo "Tudo certo: todos os testes passaram." || echo "$falhas teste(s) falharam. Veja testes/saida/<nome>.txt"
-exit $falhas
+echo "($JUNTOS teste(s) ao mesmo tempo, $(( ($(date +%s) - inicio) / 60 )) min)"
+[ "$falhas" -eq 0 ] && echo "Tudo certo: todos os testes passaram." || echo "$falhas teste(s) falharam. Veja testes/saida/<nome>.txt"
+exit "$falhas"

@@ -972,7 +972,6 @@ function maDrawFloor(g, M, s, area) {
           g.fillRect(px, py, s, s);
         }
         if (F.cat === "Água" && N.cat !== "Água" && nk !== ".") {
-          const gw = g.createLinearGradient(0, 0, 0, 0);
           g.strokeStyle = "rgba(200,230,235,.28)";
           g.lineWidth = Math.max(1, s * 0.025);
           g.beginPath();
@@ -1432,9 +1431,7 @@ function maDrawWalls(g, M, s) {
     const t = P.cerca ? s * 0.12 : P.t * s;
     const hz = a.o === "h";
     const x0 = a.x * s,
-      y0 = a.y * s,
-      x1 = hz ? x0 + s : x0,
-      y1 = hz ? y0 : y0 + s;
+      y0 = a.y * s;
     g.save();
     g.translate(x0, y0);
     if (!hz) {

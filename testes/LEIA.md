@@ -8,10 +8,22 @@ sh testes/rodar.sh
 ```
 
 O comando monta o `index.html`, liga um servidor local, roda todos os testes e mostra `OK` ou `FALHOU`
-para cada um. A saída de cada teste e as fotos de tela ficam em `testes/saida/` (essa pasta não vai para
+para cada um. Roda vários ao mesmo tempo (um por núcleo do processador, até 4); `JUNTOS=1 sh testes/rodar.sh`
+roda um de cada vez, e `OUT=testes/saida sh testes/um-teste.sh testes/<nome>.py` roda um teste só. A saída de cada teste e as fotos de tela ficam em `testes/saida/` (essa pasta não vai para
 o GitHub).
 
 Precisa de Python 3 com `playwright` e `Pillow`, e do Google Chrome em `/usr/bin/google-chrome`.
+
+## Lint
+
+```sh
+sh testes/lint.sh
+```
+
+Confere o JavaScript com o ESLint (`npm i -g eslint`): variável que não existe, nome repetido, código que
+nunca roda, variável criada e não usada. Como o site é todo global, ele olha o `index.html` montado e mostra
+cada aviso no arquivo de `src/` de onde veio (`src/js/ficha/npcs.js:375`). As regras ficam em
+`testes/lint/eslint.config.mjs`. Hoje sai limpo: mantenha assim.
 
 | Teste | O que confere |
 | --- | --- |

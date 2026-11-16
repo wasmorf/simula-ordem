@@ -154,7 +154,6 @@ async function enterMesa(id) {
 }
 function semAcesso() {
   if (!S.mesaId) return;
-  const id = S.mesaId;
   toast("Você não tem mais acesso a esta mesa.");
   leaveMesa(false);
   location.hash = "";

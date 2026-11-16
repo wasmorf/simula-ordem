@@ -59,7 +59,6 @@ function quemNome() {
   return id && S.fichas[id] ? S.fichas[id].nome : S.isM ? "Mestre" : "Jogador";
 }
 function bindRolagens() {
-  const sec = () => false;
   const para = () => S.paraRolagem || "";
   $("#paraSel").onchange = () => {
     S.paraRolagem = $("#paraSel").value;

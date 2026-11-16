@@ -56,7 +56,6 @@ function subscribePrivado() {
     l => {
       S.privC = l;
       S.privB = [...(S.privB || []).filter(x => x.para !== "todos"), ...l.filter(x => x.autor === S.uid)];
-      const novos = l.filter(x => !S.privSeen.has(x.id) && x.autor !== S.uid);
       S.privA = [...(S.privA || []).filter(x => x.para !== "todos"), ...l];
       merge();
     },

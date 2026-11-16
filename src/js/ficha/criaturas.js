@@ -255,8 +255,6 @@ async function porGrupoEmCena(pasta, kind) {
   const rr = board.getBoundingClientRect();
   const cx = (rr.width / 2 - V.x) / V.z,
     cy = (rr.height / 2 - V.y) / V.z;
-  const cols = Math.min(5, ids.length);
-  let k = 0;
   const c = r.comb ? combBase() : null;
   for (const id of ids) {
     const f = S.fichas[id];
@@ -297,7 +295,6 @@ async function porGrupoEmCena(pasta, kind) {
           }
       porEmCena(t.id, spot || { x: cx, y: cy });
     }
-    k++;
     if (c && !c.lista.some(x => x.fichaId === id))
       c.lista.push({ id: rid(5), tipo: "npcf", fichaId: id, nome: f.nome, ini: null });
   }

@@ -372,7 +372,6 @@ function npcRapidoHTML(id, f) {
   const D = derivados(f);
   const ed = canEditFicha(f);
   const dis = ed ? "" : "disabled";
-  const pv = cur(f, "pv");
   const num = (k, lbl, v, min = 0) =>
     `<div class="field"><label class="label" for="q_${k}">${lbl}</label><input type="number" id="q_${k}" data-q="${k}" value="${v ?? ""}" min="${min}" max="999" ${dis}></div>`;
   const attrSel = (v, attr) =>

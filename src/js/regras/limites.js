@@ -230,7 +230,6 @@ function trava(f, mudar) {
 function pendencias(f) {
   if (!regrasAtivas(f)) return [];
   const L = limitesFicha(f);
-  const c = CLASSES[f.classe] || CLASSES.Combatente;
   const out = [];
   const add = (n, um, varios, aba) => {
     if (n > 0) out.push({ n, texto: n === 1 ? um : `${n} ${varios}`, aba });
